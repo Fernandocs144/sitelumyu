@@ -1,10 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { Play, ArrowRight, Globe, Settings, Sparkles, TrendingUp, Check } from 'lucide-react';
 import { IMAGES } from '../data';
 import { useLang } from '../i18n';
 import ParticleField from '../components/ParticleField';
+import ScrollConnection from '../components/ScrollConnection';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -45,20 +46,30 @@ function ServiceCard({ icon: Icon, title, lines, discover, align = 'left' }) {
 export default function Home() {
   const { t } = useLang();
   const h = t.home;
+  const { scrollYProgress } = useScroll();
+  const robotY = useTransform(scrollYProgress, [0, 0.3], [0, -120]);
+  const robotRotate = useTransform(scrollYProgress, [0, 0.3], [0, 8]);
+  const robotOpacity = useTransform(scrollYProgress, [0, 0.22], [1, 0]);
+  const diamondRotate = useTransform(scrollYProgress, [0.6, 1], [-20, 20]);
+  const diamondScale = useTransform(scrollYProgress, [0.6, 0.9], [0.85, 1.05]);
 
   return (
     <div className="page-enter">
+      <ScrollConnection />
       {/* HERO */}
       <section className="relative min-h-screen overflow-hidden section-bg pt-28">
         <ParticleField count={45} />
-        <div className="pointer-events-none absolute right-0 top-16 z-0 w-[62%] max-w-[900px] md:top-8">
+        <motion.div
+          style={{ y: robotY, rotate: robotRotate, opacity: robotOpacity }}
+          className="pointer-events-none absolute right-0 top-16 z-0 w-[62%] max-w-[900px] md:top-8"
+        >
           <img
             src={IMAGES.robot}
             alt="AI robot"
             className="w-full object-contain opacity-90 animate-floaty"
             style={{ maskImage: 'linear-gradient(to left, black 60%, transparent 98%)', WebkitMaskImage: 'linear-gradient(to left, black 60%, transparent 98%)' }}
           />
-        </div>
+        </motion.div>
 
         <div className="relative z-10 mx-auto max-w-[1600px] px-6 md:px-10">
           <motion.div initial="hidden" animate="show" variants={fadeUp} className="max-w-2xl">
@@ -186,7 +197,12 @@ export default function Home() {
 
       {/* DESIGN UNIQUE */}
       <section className="relative overflow-hidden bg-ink py-28">
-        <div className="absolute right-0 top-0 h-full w-[65%] bg-contain bg-right bg-no-repeat opacity-80" style={{ backgroundImage: `url(${IMAGES.diamond})` }} />
+        <motion.div
+          style={{ rotate: diamondRotate, scale: diamondScale }}
+          className="absolute right-0 top-0 h-full w-[65%] bg-contain bg-right bg-no-repeat opacity-80"
+        >
+          <img src={IMAGES.diamond} alt="diamond" className="h-full w-full object-contain object-right animate-floaty" />
+        </motion.div>
         <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/50 to-transparent" />
         <div className="relative z-10 mx-auto max-w-[1600px] px-6 md:px-10">
           <motion.div variants={fadeUp} initial="hidden" whileInView="show" viewport={{ once: true }} className="max-w-xl">

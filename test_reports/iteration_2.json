@@ -1,0 +1,31 @@
+{
+  "summary": "Tested LUMYO i18n (PT default + EN toggle), all 5 nav routes, contact form end-to-end (UI POST -> backend -> Mongo -> GET), and /api/leads validation. All acceptance criteria PASS except one API contract mismatch: response serializes the Mongo id as '_id' instead of 'id'.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/leads & GET /api/leads", "issue": "Response returns field '_id' instead of 'id'. Review request explicitly requires 'id' field. Frontend does not consume the id today, so contact flow still works, but the API contract is broken. Root cause: Pydantic v2 Lead model has field id with alias='_id' and populate_by_name=True. FastAPI is serializing by alias. Fix: dump/serialize by field name — e.g. return jsonable_encoder(lead, by_alias=False), or add `response_model_by_alias=False` on the route, or set `serialization_alias='id'`, or simply pop '_id' from doc and set doc['id']=str(result.inserted_id) before returning."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/backend/tests/test_leads.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "Fix Lead response schema to expose 'id' (not '_id') per API contract in POST /api/leads and GET /api/leads."
+  ],
+  "critical_code_review_comments": [
+    "server.py: Lead.id alias='_id' with FastAPI response_model is serializing as '_id'. Use by_alias=False or explicit id conversion.",
+    "server.py: _send_notification runs BEFORE Mongo insert; if Resend is slow/errors, insert still occurs which is good, but consider inserting first and firing email post-insert to keep lead capture resilient.",
+    "server.py: No rate-limiting / captcha on public /api/leads — susceptible to spam. Acceptable for MVP but worth noting.",
+    "Contact.jsx: On backend error the form stays populated but no retry guidance beyond error text — acceptable."
+  ],
+  "updated_files": ["/app/backend/tests/test_leads.py"],
+  "success_rate": {"backend": "75% (3/4 pytest passing; the failing one is the id-vs-_id contract)", "frontend": "100%"},
+  "seed_data_creation": "Created two TEST_ leads in db.leads via API and UI submission.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "i18n toggle + persistence, all 5 routes translated, contact->backend->Mongo end-to-end all verified working on public URL. Only remaining fix is the '_id' -> 'id' serialization in server.py Lead model. RESEND_API_KEY is intentionally empty; notified:false is expected and confirmed.",
+  "rca of the issue": "Pydantic v2 model Lead defines id: Optional[PyObjectId] = Field(default=None, alias='_id'). FastAPI's default response serialization with response_model uses by_alias=True for aliased fields in some configurations; combined with populate_by_name=True the field is populated from '_id' correctly but dumped back as '_id'. Fix options: (1) set the route decorator with response_model_by_alias=False; (2) use serialization_alias='id'; (3) build the dict manually with doc['id']=str(result.inserted_id) and drop _id before returning."
+}
