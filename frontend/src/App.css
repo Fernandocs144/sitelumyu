@@ -1,0 +1,31 @@
+.App {
+  text-align: left;
+}
+
+/* Page entrance */
+.page-enter {
+  animation: pageIn 0.5s ease both;
+}
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Solution portal columns */
+.portal {
+  position: relative;
+  transition: transform 0.4s ease;
+}
+.portal:hover {
+  transform: translateY(-10px);
+}
+.portal-beam {
+  background: linear-gradient(180deg, transparent, rgba(255,45,120,0.0) 10%, rgba(255,45,120,0.35) 50%, rgba(75,107,255,0.35) 100%);
+  filter: blur(0.5px);
+}
+
+.hero-card-strip {
+  background: rgba(20, 8, 34, 0.4);
+  border: 1px solid rgba(255, 61, 154, 0.14);
+  backdrop-filter: blur(10px);
+}

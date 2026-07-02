@@ -1,0 +1,122 @@
+@import url('https://fonts.googleapis.com/css2?family=Michroma&family=Chakra+Petch:wght@300;400;500;600;700&family=Rajdhani:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --magenta: #ff2d78;
+  --violet: #a020f0;
+  --electric: #4b6bff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background-color: #0a0616;
+  color: #f3e9ff;
+  font-family: 'Rajdhani', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: rgba(255, 45, 120, 0.35);
+  color: #ffffff;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0616;
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(#ff2d78, #a020f0);
+  border-radius: 10px;
+}
+
+.font-display { font-family: 'Michroma', sans-serif; }
+.font-head { font-family: 'Chakra Petch', sans-serif; }
+.font-body { font-family: 'Rajdhani', sans-serif; }
+
+/* Glass card */
+.glass {
+  background: rgba(30, 12, 45, 0.35);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 61, 154, 0.18);
+}
+
+/* Neon glow text */
+.glow-pink {
+  text-shadow: 0 0 12px rgba(255, 45, 120, 0.7), 0 0 30px rgba(255, 45, 120, 0.35);
+}
+.glow-soft {
+  text-shadow: 0 0 18px rgba(160, 32, 240, 0.5);
+}
+
+/* Grain overlay */
+.grain::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 60;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.section-bg {
+  background:
+    radial-gradient(1200px 600px at 0% 0%, rgba(255, 45, 120, 0.22), transparent 55%),
+    radial-gradient(1000px 700px at 100% 30%, rgba(75, 107, 255, 0.20), transparent 55%),
+    radial-gradient(800px 800px at 50% 120%, rgba(160, 32, 240, 0.18), transparent 60%),
+    #0a0616;
+}
+
+.pill-btn {
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+}
+.pill-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 24px rgba(255, 45, 120, 0.55);
+}
+
+.ring-play {
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+.ring-play:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 30px rgba(255, 45, 120, 0.6);
+}
+
+.link-underline {
+  position: relative;
+}
+.link-underline::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -6px;
+  height: 2px;
+  width: 0;
+  background: linear-gradient(90deg, #ff2d78, #a020f0);
+  transition: width 0.3s ease;
+}
+.link-underline:hover::after,
+.link-underline.active::after {
+  width: 100%;
+}
+
+.tracking-mega {
+  letter-spacing: 0.35em;
+}
