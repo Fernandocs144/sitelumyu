@@ -113,7 +113,7 @@ async def root():
     return {"status": "ok", "service": "LUMYO API"}
 
 
-@api.post("/leads", response_model=Lead, status_code=201)
+@api.post("/leads", response_model=Lead, response_model_by_alias=False, status_code=201)
 async def create_lead(payload: LeadCreate):
     notified = await _send_notification(payload)
     doc = payload.model_dump()
@@ -124,7 +124,7 @@ async def create_lead(payload: LeadCreate):
     return Lead.from_mongo(doc)
 
 
-@api.get("/leads", response_model=List[Lead])
+@api.get("/leads", response_model=List[Lead], response_model_by_alias=False)
 async def list_leads():
     docs = await db.leads.find().sort("created_at", -1).to_list(500)
     return [Lead.from_mongo(d) for d in docs]
