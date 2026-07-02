@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Play, ArrowRight } from 'lucide-react';
 import { CONTACT_EMAIL } from '../data';
+import { useLang } from '../i18n';
 import ParticleField from './ParticleField';
 
 export default function Footer() {
+  const { t } = useLang();
   return (
     <footer data-testid="footer" className="relative overflow-hidden border-t border-magenta/10 section-bg py-20">
       <ParticleField count={30} />
@@ -17,7 +19,7 @@ export default function Footer() {
           transition={{ duration: 0.6 }}
           className="font-head text-3xl font-semibold text-white glow-soft md:text-5xl"
         >
-          Let's build something unique.
+          {t.footer.heading}
         </motion.h2>
 
         <Link
@@ -28,7 +30,7 @@ export default function Footer() {
           <span className="flex h-12 w-12 items-center justify-center rounded-full border border-magenta text-magenta">
             <Play className="h-4 w-4 fill-magenta" />
           </span>
-          <span className="font-head text-sm tracking-[0.3em] text-white">START YOUR PROJECT</span>
+          <span className="font-head text-sm tracking-[0.3em] text-white">{t.common.startProject}</span>
           <ArrowRight className="h-4 w-4 text-magenta" />
         </Link>
 
@@ -43,7 +45,7 @@ export default function Footer() {
         <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-white/5 pt-8 md:flex-row">
           <span className="font-display text-sm tracking-[0.35em] text-white">LUMYO</span>
           <p className="font-head text-xs tracking-[0.2em] text-white/40">
-            © {new Date().getFullYear()} LUMYO — BUILD DIGITAL SYSTEMS THAT SCALE
+            © {new Date().getFullYear()} LUMYO — {t.footer.copyright}
           </p>
           <div className="flex gap-6 font-head text-xs tracking-[0.25em] text-white/50">
             <a href="#li" className="hover:text-magenta">LI</a>
