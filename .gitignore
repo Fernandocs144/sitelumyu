@@ -1,7 +1,62 @@
+# ===========================
+# Node.js
+# ===========================
+
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ===========================
+# Build
+# ===========================
+
+build/
+dist/
+coverage/
+
+# ===========================
+# Environment
+# ===========================
+
 .env
 .env.*
-*.env
-credentials.json
-*.pem
-*.key
-.credentials
+!.env.example
+
+# ===========================
+# IDE
+# ===========================
+
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+.idea/
+
+# ===========================
+# Operating System
+# ===========================
+
+.DS_Store
+Thumbs.db
+
+# ===========================
+# Logs
+# ===========================
+
+*.log
+
+# ===========================
+# Cache
+# ===========================
+
+.cache/
+.eslintcache
+
+# ===========================
+# Temporary
+# ===========================
+
+tmp/
+temp/

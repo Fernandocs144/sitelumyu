@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import './App.css';
 import { LanguageProvider } from './i18n';
+import { ExperienceProvider } from './experience';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -22,20 +23,22 @@ function App() {
   return (
     <div className="grain min-h-screen bg-ink font-body text-white">
       <LanguageProvider>
-        <BrowserRouter>
-          <ScrollToTop />
-          <Navbar />
-          <main>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/solutions" element={<Solutions />} />
-              <Route path="/case-studies" element={<CaseStudies />} />
-              <Route path="/studio" element={<Studio />} />
-              <Route path="/contact" element={<Contact />} />
-            </Routes>
-          </main>
-          <Footer />
-        </BrowserRouter>
+        <ExperienceProvider>
+          <BrowserRouter>
+            <ScrollToTop />
+            <Navbar />
+            <main>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/solutions" element={<Solutions />} />
+                <Route path="/case-studies" element={<CaseStudies />} />
+                <Route path="/studio" element={<Studio />} />
+                <Route path="/contact" element={<Contact />} />
+              </Routes>
+            </main>
+            <Footer />
+          </BrowserRouter>
+        </ExperienceProvider>
       </LanguageProvider>
     </div>
   );

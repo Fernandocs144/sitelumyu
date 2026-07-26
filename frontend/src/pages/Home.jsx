@@ -6,6 +6,7 @@ import { IMAGES } from '../data';
 import { useLang } from '../i18n';
 import ParticleField from '../components/ParticleField';
 import ScrollConnection from '../components/ScrollConnection';
+import { ExperienceCanvas } from '../experience';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -55,6 +56,7 @@ export default function Home() {
 
   return (
     <div className="page-enter">
+      <ExperienceCanvas />
       <ScrollConnection />
       {/* HERO */}
       <section className="relative min-h-screen overflow-hidden section-bg pt-28">

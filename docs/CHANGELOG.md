@@ -1,0 +1,13 @@
+# Changelog
+
+## 0.0.1
+
+### Documentação
+
+- Criado PROJECT_VISION
+- Criado EXPERIENCE_ENGINE
+- Criado STORYBOARD
+- Criado ASSET_PIPELINE
+- Criado GLB_PIPELINE
+- Criado TECHNICAL_ARCHITECTURE
+- Criado SCROLL_TIMELINE

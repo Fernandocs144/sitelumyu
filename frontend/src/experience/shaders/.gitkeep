@@ -1,0 +1,4 @@
+/**
+ * Placeholder for custom GLSL shaders.
+ * Shaders will be consumed by systems — never embedded inside them.
+ */
