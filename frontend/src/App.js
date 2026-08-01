@@ -21,7 +21,7 @@ function ScrollToTop() {
 
 function App() {
   return (
-    <div className="grain min-h-screen bg-ink font-body text-white">
+    <div className="min-h-screen bg-ink font-body text-white">
       <LanguageProvider>
         <ExperienceProvider>
           <BrowserRouter>

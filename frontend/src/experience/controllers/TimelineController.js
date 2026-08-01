@@ -1,4 +1,5 @@
-import { computeStateProgress, resolveTimelineSegment } from '../utils/timeline';
+
+import StoryModel from '../story/StoryModel';
 
 /**
  * Converts normalized scroll progress into timeline values.
@@ -26,10 +27,12 @@ export class TimelineController {
   update(globalProgress) {
     this._globalProgress = globalProgress;
 
-    const segment = resolveTimelineSegment(globalProgress);
-    this._currentStateId = segment.id;
-    this._stateProgress = computeStateProgress(globalProgress, segment);
-  }
+    const chapter = StoryModel.getChapter(globalProgress);
+
+    this._currentStateId = chapter.id;
+
+    this._stateProgress = StoryModel.getChapterProgress(globalProgress);
+}
 
   dispose() {
     this._globalProgress = 0;

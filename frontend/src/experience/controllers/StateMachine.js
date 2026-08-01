@@ -8,7 +8,7 @@ export { EXPERIENCE_STATES } from './StateMachine.constants';
  */
 export class StateMachine {
   constructor() {
-    this._currentState = EXPERIENCE_STATES.ROBOT;
+    this._currentState = EXPERIENCE_STATES.ARRIVAL;
   }
 
   get currentState() {
@@ -16,11 +16,11 @@ export class StateMachine {
   }
 
   update(timeline) {
-    const nextState = timeline.currentStateId ?? EXPERIENCE_STATES.ROBOT;
+    const nextState = timeline.currentStateId ?? EXPERIENCE_STATES.ARRIVAL;
     this._currentState = nextState;
   }
 
   dispose() {
-    this._currentState = EXPERIENCE_STATES.ROBOT;
+    this._currentState = EXPERIENCE_STATES.ARRIVAL;
   }
 }

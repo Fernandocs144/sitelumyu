@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import { useExperience } from '../hooks/useExperience';
+import PointCloudScene from './PointCloudScene';
 
 function SceneBootstrap() {
   const { engine } = useExperience();
@@ -16,7 +17,7 @@ function SceneBootstrap() {
 
 /**
  * Single R3F Canvas for the homepage experience.
- * Transparent and non-interactive — no visual content in Sprint 1.
+ * Cleanly mounts scene components.
  */
 export default function ExperienceCanvas() {
   return (
@@ -32,6 +33,7 @@ export default function ExperienceCanvas() {
         frameloop="demand"
       >
         <SceneBootstrap />
+        <PointCloudScene />
       </Canvas>
     </div>
   );
