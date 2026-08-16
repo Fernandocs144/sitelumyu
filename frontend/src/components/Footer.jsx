@@ -1,35 +1,714 @@
-import React from 'react';
+import React, { useLayoutEffect, useRef } from 'react';
+import { createHomeFooterExperience } from './FooterTimeline';
+import { Link } from 'react-router-dom';
+import { ArrowUp } from 'lucide-react';
+
 import { useLang } from '../i18n';
 
-export default function Footer() {
+
+export default function Footer({ variant = 'default' }) {
   const { t } = useLang();
+  const f = t.footer;
+
+  if (variant === 'home') {
+    return <HomeFooter f={f} />;
+  }
+
+  return <DefaultFooter f={f} />;
+}
+
+
+/* ===================================================== */
+/* HOME FOOTER                                           */
+/*                                                       */
+/* Transparente.                                         */
+/* O background deve vir da própria experiência da Home. */
+/* ===================================================== */
+
+function HomeFooter({ f }) {
+  const footerRef = useRef(null);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  };
+
+  useLayoutEffect(() => {
+    const footerElement = footerRef.current;
+
+    if (!footerElement) {
+      return undefined;
+    }
+
+
+    const timeline =
+      createHomeFooterExperience(footerElement);
+
+
+    return () => {
+      if (timeline) {
+        timeline.scrollTrigger?.kill();
+        timeline.kill();
+      }
+    };
+  }, []);
+
+  return (
+    <footer
+      ref={footerRef}
+      data-home-footer
+      data-testid="footer"
+      className="
+        relative
+        overflow-hidden
+        bg-transparent
+        text-white
+      "
+    >
+      {/* ================================================= */}
+      {/* TRANSIÇÃO ENTRE CONTACT E FOOTER                   */}
+      {/* ================================================= */}
+
+      <div className="relative h-[4vh] md:h-[6vh]" />
+
+
+      {/* ================================================= */}
+      {/* GLASS PANEL                                       */}
+      {/* ================================================= */}
+
+      <div
+      data-home-footer-panel
+        className="
+          relative
+          z-10
+          mx-auto
+          w-[92%]
+          
+          max-w-[1700px]
+          overflow-hidden
+          rounded-[1.5rem]
+          border
+          border-white/[0.08]
+          bg-black/[0.10]
+          shadow-[0_25px_80px_rgba(0,0,0,0.12)]
+          backdrop-blur-[3px]
+          md:w-[88%]
+        "
+      >
+        {/* brilho interno muito subtil */}
+        <div
+          aria-hidden="true"
+          className="
+            pointer-events-none
+            absolute
+            inset-x-0
+            top-0
+            h-px
+            bg-gradient-to-r
+            from-transparent
+            via-white/15
+            to-transparent
+          "
+        />
+
+
+        <div
+          className="
+            relative
+            px-6
+            pb-7
+            pt-10
+            md:px-10
+            md:pb-8
+            md:pt-12
+            lg:px-14
+            lg:pb-9
+            lg:pt-14
+          "
+        >
+          {/* ================================================= */}
+          {/* MAIN GRID                                         */}
+          {/* ================================================= */}
+
+          <div
+            className="
+              grid
+              gap-12
+              md:grid-cols-2
+              lg:grid-cols-[1.35fr_0.8fr_1fr_1fr]
+              lg:gap-10
+            "
+          >
+            {/* ================================================= */}
+            {/* BRAND                                             */}
+            {/* ================================================= */}
+
+            <div className="max-w-[330px]">
+              <Link
+                to="/"
+                className="
+                  inline-block
+                  font-display
+                  text-[1.8rem]
+                  tracking-[0.08em]
+                  text-white/85
+                "
+              >
+                LUMYO
+              </Link>
+
+              <p
+                className="
+                  mt-6
+                  max-w-[290px]
+                  font-body
+                  text-[13px]
+                  leading-[1.8]
+                  text-white/85
+                "
+              >
+                {f.copyright}
+              </p>
+
+              <div
+                className="
+                  mt-8
+                  flex
+                  items-center
+                  gap-3
+                "
+              >
+                <span className="h-px w-8 bg-magenta/70" />
+
+                <span
+                  className="
+                    font-head
+                    text-[8px]
+                    tracking-[0.28em]
+                    text-white/85
+                  "
+                >
+                  {f.eyebrow}
+                </span>
+              </div>
+            </div>
+
+
+            {/* ================================================= */}
+            {/* NAVIGATION                                        */}
+            {/* ================================================= */}
+
+            <FooterColumn title={f.navigation}>
+              <FooterLink to="/">
+                {f.home}
+              </FooterLink>
+
+              <FooterLink to="/solutions">
+                {f.solutions}
+              </FooterLink>
+
+              <FooterLink to="/case-studies">
+                {f.cases}
+              </FooterLink>
+
+              <FooterLink to="/studio">
+                {f.studio}
+              </FooterLink>
+
+              <FooterLink to="/contact">
+                {f.contact}
+              </FooterLink>
+            </FooterColumn>
+
+
+            {/* ================================================= */}
+            {/* EXPERTISE                                         */}
+            {/* ================================================= */}
+
+            <FooterColumn title={f.expertise}>
+              {f.services?.map((service) => (
+                <span
+                  key={service}
+                  className="
+                    block
+                    font-body
+                    text-[13px]
+                    leading-[1.6]
+                    text-white/85
+                  "
+                >
+                  {service}
+                </span>
+              ))}
+            </FooterColumn>
+
+
+            {/* ================================================= */}
+            {/* SOCIAL / DIRECT                                   */}
+            {/* ================================================= */}
+
+            <div>
+              <span
+                className="
+                  mb-6
+                  block
+                  font-head
+                  font-bold
+                  text-[9px]
+                  tracking-[0.28em]
+                  text-magenta/90
+                "
+              >
+                {f.social}
+              </span>
+
+              <div className="flex flex-col items-start gap-3">
+                {/*
+                  Mantemos como texto enquanto não existirem
+                  URLs reais para as redes sociais.
+                */}
+
+                <SocialLabel>
+                  LINKEDIN
+                </SocialLabel>
+
+                <SocialLabel>
+                  INSTAGRAM
+                </SocialLabel>
+
+                <SocialLabel>
+                  Facebook
+                </SocialLabel>
+              </div>
+
+
+              {/* DIRECT */}
+
+              <div className="mt-10">
+                <span
+                  className="
+                    mb-5
+                    block
+                    font-head
+                    text-[9px]
+                    tracking-[0.28em]
+                    text-magenta/90
+                  "
+                >
+                  DIRECT
+                </span>
+
+                <Link
+                  to="/contact"
+                  className="
+                    group
+                    inline-flex
+                    items-center
+                    gap-3
+                    font-body
+                    text-[13px]
+                    text-white/60
+                    transition-colors
+                    duration-300
+                    hover:text-white
+                  "
+                >
+                  {f.startProject}
+
+                  <span
+                    className="
+                      h-px
+                      w-6
+                      bg-white/30
+                      transition-all
+                      duration-300
+                      group-hover:w-10
+                      group-hover:bg-magenta
+                    "
+                  />
+                </Link>
+              </div>
+            </div>
+          </div>
+
+
+          {/* ================================================= */}
+          {/* BOTTOM BAR                                        */}
+          {/* ================================================= */}
+
+          <div
+            className="
+              mt-12
+              flex
+              flex-col
+              gap-5
+              border-t
+              border-white/[0.08]
+              pt-6
+              md:mt-14
+              md:flex-row
+              md:items-center
+              md:justify-between
+            "
+          >
+            <p
+              className="
+                font-head
+                text-[8px]
+                tracking-[0.22em]
+                text-white/25
+              "
+            >
+              © {new Date().getFullYear()} LUMYO. ALL RIGHTS RESERVED.
+            </p>
+
+            <button
+              type="button"
+              onClick={scrollToTop}
+              className="
+                group
+                flex
+                items-center
+                gap-3
+                self-start
+                font-head
+                text-[8px]
+                tracking-[0.22em]
+                text-white/65
+                transition-colors
+                duration-300
+                hover:text-white
+                md:self-auto
+              "
+            >
+              BACK TO TOP
+
+              <ArrowUp
+                size={12}
+                className="
+                  transition-transform
+                  duration-300
+                  group-hover:-translate-y-1
+                "
+              />
+            </button>
+          </div>
+        </div>
+      </div>
+
+
+      {/* ================================================= */}
+      {/* ESPAÇO FINAL                                      */}
+      {/* ================================================= */}
+
+      <div className="relative h-[5vh] md:h-[7vh]" />
+    </footer>
+  );
+}
+
+
+/* ===================================================== */
+/* DEFAULT FOOTER                                        */
+/*                                                       */
+/* Também transparente.                                  */
+/* Continua visualmente o background da página.          */
+/* ===================================================== */
+
+function DefaultFooter({ f }) {
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  };
 
   return (
     <footer
       data-testid="footer"
-      className="relative"
-      style={{
-        borderTop: '1px solid rgba(255, 255, 255, 0.05)',
-        padding: '1.5rem 0',
-        background: 'rgba(8, 4, 20, 0.8)',
-      }}
+      className="
+        relative
+        overflow-hidden
+        border-t
+        border-white/[0.08]
+        bg-transparent
+        text-white/65
+      "
     >
       <div
-        className="mx-auto flex flex-col items-center justify-between gap-3 px-6 md:flex-row md:px-12"
-        style={{ maxWidth: '1600px' }}
+        className="
+          mx-auto
+          max-w-[1700px]
+          px-6
+          py-14
+          md:px-12
+          md:py-16
+          lg:px-[6vw]
+        "
       >
-        <span className="font-display text-sm tracking-[0.35em] text-white/70">LUMYO</span>
+        <div
+          className="
+            grid
+            gap-12
+            md:grid-cols-3
+            lg:grid-cols-[1.3fr_1fr_1fr]
+          "
+        >
+          {/* ================================================= */}
+          {/* BRAND                                             */}
+          {/* ================================================= */}
 
-        <p className="font-head text-xs tracking-[0.2em] text-white/30">
-          © {new Date().getFullYear()} LUMYO — {t.footer.copyright}
-        </p>
+          <div className="max-w-[330px]">
+            <Link
+              to="/"
+              className="
+                inline-block
+                font-display
+                text-2xl
+                tracking-[0.1em]
+                text-white/65
+              "
+            >
+              LUMYO
+            </Link>
 
-        <div className="flex gap-6 font-head text-xs tracking-[0.25em] text-white/35">
-          <a href="#li" className="transition-colors hover:text-magenta">LI</a>
-          <a href="#gh" className="transition-colors hover:text-magenta">GH</a>
-          <a href="#ig" className="transition-colors hover:text-magenta">IG</a>
+            <p
+              className="
+                mt-5
+                font-body
+                text-sm
+                leading-relaxed
+                text-white/65
+              "
+            >
+              {f.copyright}
+            </p>
+
+            <div
+              className="
+                mt-7
+                flex
+                items-center
+                gap-3
+              "
+            >
+              <span className="h-px w-7 bg-magenta/60" />
+
+              <span
+                className="
+                  font-head
+                  text-[8px]
+                  tracking-[0.25em]
+                  text-white/65
+                "
+              >
+                {f.eyebrow}
+              </span>
+            </div>
+          </div>
+
+
+          {/* ================================================= */}
+          {/* NAVIGATION                                        */}
+          {/* ================================================= */}
+
+          <FooterColumn title={f.navigation}>
+            <FooterLink to="/">
+              {f.home}
+            </FooterLink>
+
+            <FooterLink to="/solutions">
+              {f.solutions}
+            </FooterLink>
+
+            <FooterLink to="/case-studies">
+              {f.cases}
+            </FooterLink>
+
+            <FooterLink to="/studio">
+              {f.studio}
+            </FooterLink>
+
+            <FooterLink to="/contact">
+              {f.contact}
+            </FooterLink>
+          </FooterColumn>
+
+
+          {/* ================================================= */}
+          {/* EXPERTISE                                         */}
+          {/* ================================================= */}
+
+          <FooterColumn title={f.expertise}>
+            {f.services?.map((service) => (
+              <span
+                key={service}
+                className="
+                  block
+                  font-body
+                  font-bold
+                  text-[13px]
+                  leading-[1.6]
+                  text-white/65
+                "
+              >
+                {service}
+              </span>
+            ))}
+          </FooterColumn>
+        </div>
+
+
+        {/* ================================================= */}
+        {/* BOTTOM                                            */}
+        {/* ================================================= */}
+
+        <div
+          className="
+            mt-12
+            flex
+            flex-col
+            gap-5
+            border-t
+            border-white/[0.08]
+            pt-6
+            md:flex-row
+            md:items-center
+            md:justify-between
+          "
+        >
+          <span
+            className="
+              font-head
+              text-[8px]
+              tracking-[0.22em]
+              text-white/65
+            "
+          >
+            © {new Date().getFullYear()} LUMYO
+          </span>
+
+          <button
+            type="button"
+            onClick={scrollToTop}
+            className="
+              group
+              flex
+              items-center
+              gap-3
+              self-start
+              font-head
+              text-[8px]
+              tracking-[0.22em]
+              text-white/65
+              transition-colors
+              duration-300
+              hover:text-white
+              md:self-auto
+            "
+          >
+            BACK TO TOP
+
+            <ArrowUp
+              size={12}
+              className="
+                transition-transform
+                duration-300
+                group-hover:-translate-y-1
+              "
+            />
+          </button>
         </div>
       </div>
     </footer>
+  );
+}
+
+
+/* ===================================================== */
+/* FOOTER COLUMN                                         */
+/* ===================================================== */
+
+function FooterColumn({ title, children }) {
+  return (
+    <div>
+      <span
+        className="
+          mb-6
+          block
+          font-head
+          font-bold
+          text-[9px]
+          tracking-[0.28em]
+          text-magenta/90
+        "
+      >
+        {title}
+      </span>
+
+      <div className="flex flex-col items-start gap-3">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+
+/* ===================================================== */
+/* FOOTER LINK                                           */
+/* ===================================================== */
+
+function FooterLink({ to, children }) {
+  return (
+    <Link
+      to={to}
+      className="
+        group
+        relative
+        font-body
+        text-[13px]
+        text-white/85
+        transition-colors
+        duration-300
+        hover:text-white
+      "
+    >
+      {children}
+
+      <span
+        className="
+          absolute
+          bottom-[-3px]
+          left-0
+          h-px
+          w-0
+          bg-magenta
+          transition-all
+          duration-300
+          group-hover:w-full
+        "
+      />
+    </Link>
+  );
+}
+
+
+/* ===================================================== */
+/* SOCIAL LABEL                                          */
+/* ===================================================== */
+
+function SocialLabel({ children }) {
+  return (
+    <span
+      className="
+        font-body
+        font-bold
+        text-[13px]
+        text-white/65
+      "
+    >
+      {children}
+    </span>
   );
 }

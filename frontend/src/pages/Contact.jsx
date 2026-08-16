@@ -6,12 +6,18 @@ import { useLang } from '../i18n';
 import ParticleField from '../components/ParticleField';
 
 const serviceIcons = [Globe, Settings, Sparkles, TrendingUp];
-const API = process.env.REACT_APP_BACKEND_URL;
+
 
 export default function Contact() {
-  const { t, lang } = useLang();
+ const { t } = useLang();
   const c = t.contact;
-  const [form, setForm] = useState({ name: '', email: '', service: c.services[0], message: '' });
+  const [form, setForm] = useState({
+  name: '',
+  email: '',
+  service: c.services[0],
+  message: '',
+  website: ''
+});
   const [status, setStatus] = useState('idle'); // idle | sending | sent | error
 
   const update = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -20,11 +26,19 @@ export default function Contact() {
     e.preventDefault();
     setStatus('sending');
     try {
-      const res = await fetch(`${API}/api/leads`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, language: lang }),
-      });
+      const res = await fetch('/api/contact', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+  name: form.name,
+  email: form.email,
+  service: form.service,
+  message: form.message,
+  website: form.website,
+}),
+});
       if (!res.ok) throw new Error('Request failed');
       setStatus('sent');
     } catch (err) {
@@ -33,7 +47,13 @@ export default function Contact() {
   };
 
   const reset = () => {
-    setForm({ name: '', email: '', service: c.services[0], message: '' });
+    setForm({
+  name: '',
+  email: '',
+  service: c.services[0],
+  message: '',
+  website: ''
+});
     setStatus('idle');
   };
 
@@ -80,6 +100,16 @@ export default function Contact() {
             className="glass rounded-3xl p-8 md:p-10"
             data-testid="contact-form"
           >
+            <input
+  type="text"
+  name="website"
+  value={form.website}
+  onChange={update('website')}
+  tabIndex={-1}
+  autoComplete="off"
+  aria-hidden="true"
+  className="hidden"
+/>
             {status === 'sent' ? (
               <div className="flex flex-col items-center py-16 text-center" data-testid="contact-success">
                 <span className="flex h-16 w-16 items-center justify-center rounded-full border border-magenta text-magenta">

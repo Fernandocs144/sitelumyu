@@ -1,0 +1,1344 @@
+/* =========================================================
+   LUMYO — INTERACTIVE SERVICE CARD
+   Glass + illuminated edge + cursor lighting
+   ========================================================= */
+
+.service-card-interactive-shell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+
+  perspective: 1200px;
+  transform-style: preserve-3d;
+
+  --accent-primary: 255, 20, 95;
+  --accent-secondary: 98, 82, 255;
+}
+
+/* =========================================================
+   GLASS FRAME (ULTRA-TRANSPARENTE)
+   ========================================================= */
+
+.service-card-interactive-frame {
+  --card-rotate-x: 0deg;
+  --card-rotate-y: 0deg;
+  --pointer-x: 50%;
+  --pointer-y: 50%;
+  --content-x: 0px;
+  --content-y: 0px;
+  --icon-x: 0px;
+  --icon-y: 0px;
+
+  position: relative;
+  width: 100%;
+  min-height: inherit;
+
+  overflow: hidden;
+  isolation: isolate;
+
+  border-radius: 22px;
+
+  /* Fundo quase 100% invisível para ver o fundo real */
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.005) 100%
+  );
+
+  /* Blur mais suave permite ver os pontos luminosos do fundo */
+  backdrop-filter: blur(8px) saturate(130%);
+  -webkit-backdrop-filter: blur(8px) saturate(130%);
+
+  /* Borda fina contínua estilo néon */
+  border: 1px solid rgba(255, 255, 255, 0.25);
+
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.3),
+    0 12px 32px rgba(0, 0, 0, 0.2);
+
+  transform:
+    rotateX(var(--card-rotate-x))
+    rotateY(var(--card-rotate-y))
+    scale3d(1, 1, 1);
+
+  transform-style: preserve-3d;
+  transform-origin: center center;
+
+  will-change: transform;
+
+  transition:
+    transform 650ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 450ms ease,
+    box-shadow 500ms ease;
+}
+
+/* =========================================================
+   REDUÇÃO DE CAMADAS INTERNAS QUE OFUSCAM O VIDRO
+   ========================================================= */
+
+.service-card-interactive-ambient {
+  display: none; /* Desativa a mancha escura de fundo interna */
+}
+
+.service-card-interactive-hologram {
+  opacity: 0 !important; /* Desativa o preenchimento de cor extra no hover */
+}
+
+.service-card-interactive-inner-light {
+  position: absolute;
+  inset: 1px;
+  z-index: 2;
+
+  border-radius: 21px;
+  pointer-events: none;
+
+  background: transparent;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+
+  opacity: 0.3;
+}
+
+/* =========================================================
+   HOVER / INTERAÇÃO (MANTÉM APENAS O GLOW NA BORDA E CURSOR)
+   ========================================================= */
+
+.service-card-interactive-frame.is-interacting {
+  transform:
+    rotateX(var(--card-rotate-x))
+    rotateY(var(--card-rotate-y))
+    scale3d(1.01, 1.01, 1.01);
+
+  border-color: rgba(255, 20, 95, 0.7);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 0 25px rgba(255, 20, 95, 0.3),
+    0 20px 50px rgba(0, 0, 0, 0.3);
+}
+
+/* =========================================================
+   REDUÇÃO DE CAMADAS INTERNAS QUE OFUSCAM O VIDRO
+   ========================================================= */
+
+.service-card-interactive-ambient {
+  display: none; /* Desativa a mancha escura de fundo interna */
+}
+
+.service-card-interactive-hologram {
+  opacity: 0 !important; /* Desativa o preenchimento de cor extra no hover */
+}
+
+.service-card-interactive-inner-light {
+  position: absolute;
+  inset: 1px;
+  z-index: 2;
+
+  border-radius: 21px;
+  pointer-events: none;
+
+  background: transparent;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+
+  opacity: 0.3;
+}
+
+/* =========================================================
+   HOVER / INTERAÇÃO (MANTÉM APENAS O GLOW NA BORDA E CURSOR)
+   ========================================================= */
+
+.service-card-interactive-frame.is-interacting {
+  transform:
+    rotateX(var(--card-rotate-x))
+    rotateY(var(--card-rotate-y))
+    scale3d(1.01, 1.01, 1.01);
+
+  border-color: rgba(255, 20, 95, 0.7);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 0 25px rgba(255, 20, 95, 0.3),
+    0 20px 50px rgba(0, 0, 0, 0.3);
+}
+
+/* =========================================================
+   ILLUMINATED BORDER
+   ========================================================= */
+
+.service-card-interactive-frame::before {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+
+  padding: 1px;
+  border-radius: inherit;
+
+  pointer-events: none;
+
+  background:
+    radial-gradient(
+      circle 185px at var(--pointer-x) var(--pointer-y),
+      rgba(255, 255, 255, 0.98) 0%,
+      rgba(255, 95, 171, 0.92) 10%,
+      rgba(255, 20, 95, 0.82) 24%,
+      rgba(176, 65, 255, 0.58) 44%,
+      rgba(63, 111, 255, 0.20) 64%,
+      transparent 75%
+    ),
+    linear-gradient(
+      112deg,
+      rgba(255, 20, 95, 1) 0%,
+      rgba(255, 58, 139, 0.88) 14%,
+      rgba(255, 166, 215, 0.54) 28%,
+      rgba(255, 255, 255, 0.34) 40%,
+      rgba(255, 255, 255, 0.12) 53%,
+      rgba(153, 82, 255, 0.62) 75%,
+      rgba(48, 113, 255, 0.94) 100%
+    );
+
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+
+  opacity: 0.20;
+  filter: saturate(45%);
+
+  transition:
+    opacity 350ms ease,
+    filter 350ms ease;
+}
+
+/* =========================================================
+   EXTERNAL BORDER GLOW
+   ========================================================= */
+
+.service-card-interactive-frame::after {
+  content: "";
+
+  position: absolute;
+  inset: -5px;
+  z-index: -1;
+
+  border-radius: 27px;
+  pointer-events: none;
+
+  background:
+    radial-gradient(
+      circle 235px at var(--pointer-x) var(--pointer-y),
+      rgba(255, 255, 255, 0.54) 0%,
+      rgba(255, 20, 95, 0.42) 17%,
+      rgba(230, 38, 255, 0.28) 36%,
+      rgba(98, 82, 255, 0.16) 53%,
+      transparent 74%
+    ),
+    linear-gradient(
+      108deg,
+      rgba(255, 20, 95, 0.57) 0%,
+      rgba(255, 20, 95, 0.18) 25%,
+      transparent 42%,
+      transparent 58%,
+      rgba(98, 82, 255, 0.22) 79%,
+      rgba(0, 132, 255, 0.50) 100%
+    );
+
+  filter: blur(17px) saturate(145%);
+  opacity: 0.20;
+
+  transition:
+    opacity 450ms ease,
+    filter 450ms ease;
+}
+
+/* =========================================================
+   AMBIENT LIGHT
+   ========================================================= */
+
+.service-card-interactive-ambient {
+  position: absolute;
+  inset: -38%;
+  z-index: 0;
+
+  pointer-events: none;
+
+  background:
+    radial-gradient(
+      ellipse at 0% 45%,
+      rgba(255, 20, 95, 0.13) 0%,
+      rgba(255, 20, 95, 0.045) 28%,
+      transparent 57%
+    ),
+    radial-gradient(
+      ellipse at 100% 55%,
+      rgba(98, 82, 255, 0.10) 0%,
+      rgba(0, 132, 255, 0.025) 30%,
+      transparent 60%
+    );
+
+  filter: blur(26px);
+  opacity: 0.34;
+
+  transition:
+    opacity 450ms ease,
+    transform 700ms ease;
+}
+
+/* =========================================================
+   INNER LIGHT
+   ========================================================= */
+
+.service-card-interactive-inner-light {
+  position: absolute;
+  inset: 1px;
+  z-index: 2;
+
+  border-radius: 21px;
+  pointer-events: none;
+
+  background: transparent;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+
+  opacity: 0.4;
+}
+
+/* =========================================================
+   CURSOR HOTSPOT
+   ========================================================= */
+
+.service-card-interactive-glow {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+
+  border-radius: inherit;
+  pointer-events: none;
+
+  background:
+    radial-gradient(
+      circle 245px at var(--pointer-x) var(--pointer-y),
+      rgba(255, 255, 255, 0.32) 0%,
+      rgba(255, 20, 95, 0.24) 14%,
+      rgba(230, 38, 255, 0.16) 31%,
+      rgba(98, 82, 255, 0.08) 49%,
+      transparent 73%
+    );
+
+  opacity: 0;
+  mix-blend-mode: screen;
+
+  transition:
+    opacity 260ms ease;
+}
+
+/* =========================================================
+   HOLOGRAPHIC COLOUR
+   ========================================================= */
+
+.service-card-interactive-hologram {
+  position: absolute;
+  inset: -20%;
+  z-index: 4;
+
+  border-radius: inherit;
+  pointer-events: none;
+
+  background:
+    radial-gradient(
+      ellipse at var(--pointer-x) var(--pointer-y),
+      rgba(255, 35, 126, 0.20) 0%,
+      rgba(230, 38, 255, 0.13) 20%,
+      rgba(98, 82, 255, 0.09) 39%,
+      transparent 66%
+    );
+
+  opacity: 0;
+  filter: saturate(150%);
+  mix-blend-mode: screen;
+
+  transition:
+    opacity 340ms ease;
+}
+
+/* =========================================================
+   DIAGONAL GLARE
+   ========================================================= */
+
+.service-card-interactive-glare {
+  position: absolute;
+  inset: -52%;
+  z-index: 5;
+
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      116deg,
+      transparent 27%,
+      rgba(255, 255, 255, 0.025) 35%,
+      rgba(255, 255, 255, 0.18) 45%,
+      rgba(255, 225, 247, 0.11) 50%,
+      rgba(132, 111, 255, 0.07) 55%,
+      transparent 67%
+    );
+
+  transform:
+    translate3d(
+      calc((var(--pointer-x) - 50%) * 0.20),
+      calc((var(--pointer-y) - 50%) * 0.14),
+      0
+    )
+    rotate(2deg);
+
+  opacity: 0;
+  mix-blend-mode: screen;
+
+  transition:
+    opacity 320ms ease;
+}
+
+/* =========================================================
+   CONTENT DEPTH
+   ========================================================= */
+
+.service-card-interactive-content {
+  position: relative;
+  z-index: 10;
+
+  width: 100%;
+
+  transform:
+    translate3d(
+      var(--content-x),
+      var(--content-y),
+      18px
+    );
+
+  transform-style: preserve-3d;
+  will-change: transform;
+
+  transition:
+    transform 650ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* =========================================================
+   ICON — SEM CAIXA
+   ========================================================= */
+
+.service-card-interactive-content .service-card-icon {
+  position: relative;
+  z-index: 12;
+
+  color: #ff145f;
+
+  transform:
+    translate3d(
+      var(--icon-x),
+      var(--icon-y),
+      30px
+    );
+
+  transform-style: preserve-3d;
+  will-change: transform;
+
+  transition:
+    transform 650ms cubic-bezier(0.16, 1, 0.3, 1),
+    color 350ms ease,
+    filter 350ms ease;
+}
+
+.service-card-interactive-content .service-card-icon svg {
+  color: #ff145f;
+  stroke-width: 2;
+
+  filter:
+    drop-shadow(0 0 4px rgba(255, 20, 95, 0.85))
+    drop-shadow(0 0 10px rgba(255, 20, 95, 0.55));
+
+  transition:
+    color 350ms ease,
+    filter 350ms ease,
+    transform 350ms ease;
+}
+/* =========================================================
+   ACTIVE INTERACTION
+   ========================================================= */
+
+.service-card-interactive-frame.is-interacting {
+  transform:
+    rotateX(var(--card-rotate-x))
+    rotateY(var(--card-rotate-y))
+    scale3d(1.012, 1.012, 1.012);
+
+  /* Destaque da borda neon tipo magenta/púrpura da referência */
+  border-color: rgba(255, 20, 95, 0.6);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 0 30px rgba(255, 20, 95, 0.25),
+    0 30px 60px rgba(0, 0, 0, 0.35);
+}
+.service-card-interactive-frame.is-interacting::before {
+  opacity: 1;
+  filter:
+    saturate(175%)
+    brightness(1.25);
+}
+
+.service-card-interactive-frame.is-interacting::after {
+  opacity: 0.92;
+  filter:
+    blur(21px)
+    saturate(160%);
+}
+
+.service-card-interactive-frame.is-interacting
+.service-card-interactive-ambient {
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+.service-card-interactive-frame.is-interacting
+.service-card-interactive-glow {
+  opacity: 1;
+}
+
+.service-card-interactive-frame.is-interacting
+.service-card-interactive-hologram {
+  opacity: 1;
+}
+
+.service-card-interactive-frame.is-interacting
+.service-card-interactive-glare {
+  opacity: 1;
+}
+
+.service-card-interactive-frame.is-interacting
+.service-card-interactive-content .service-card-icon {
+  color: rgba(255, 255, 255, 1);
+}
+
+.service-card-interactive-frame.is-interacting
+.service-card-interactive-content .service-card-icon svg {
+  color: rgb(255, 240, 248);
+
+  filter:
+    drop-shadow(0 0 5px rgba(255, 255, 255, 0.65))
+    drop-shadow(0 0 12px rgba(255, 20, 95, 0.72))
+    drop-shadow(0 0 20px rgba(230, 38, 255, 0.32));
+
+  transform: scale(1.08);
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .service-card-interactive-frame {
+    border-radius: 18px;
+
+    backdrop-filter:
+      blur(14px)
+      saturate(140%);
+
+    -webkit-backdrop-filter:
+      blur(14px)
+      saturate(140%);
+  }
+
+  .service-card-interactive-frame::before {
+    opacity: 0.72;
+  }
+
+  .service-card-interactive-glare {
+    inset: -62%;
+  }
+}
+/* =========================================================
+   CARD 02 — AI AUTOMATION
+   ========================================================= */
+
+.service-card-automation {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 420ms ease;
+}
+
+.service-card-interactive-frame.is-interacting
+.service-card-automation {
+  opacity: 1;
+}
+
+
+/* PATHS */
+
+.automation-path {
+  position: absolute;
+  right: -8%;
+  height: 1px;
+  border-radius: 999px;
+
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(var(--accent-primary), 0.08) 8%,
+    rgba(var(--accent-primary), 0.38) 42%,
+    rgba(var(--accent-secondary), 0.58) 72%,
+    transparent
+  );
+
+  box-shadow:
+    0 0 6px rgba(var(--accent-primary), 0.18),
+    0 0 12px rgba(var(--accent-secondary), 0.10);
+
+  opacity: 0;
+  transform-origin: right center;
+}
+
+.automation-path-1 {
+  width: 46%;
+  top: 28%;
+  transform: rotate(-7deg);
+}
+
+.automation-path-2 {
+  width: 39%;
+  top: 50%;
+  transform: rotate(3deg);
+}
+
+.automation-path-3 {
+  width: 43%;
+  top: 70%;
+  transform: rotate(-3deg);
+}
+
+.is-interacting .automation-path-1 {
+  animation: automationPathIn 700ms 80ms forwards;
+}
+
+.is-interacting .automation-path-2 {
+  animation: automationPathIn 700ms 180ms forwards;
+}
+
+.is-interacting .automation-path-3 {
+  animation: automationPathIn 700ms 280ms forwards;
+}
+
+
+/* NODES */
+
+.automation-node {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+
+  border: 1px solid rgba(255,255,255,0.7);
+  border-radius: 50%;
+
+  background: rgba(var(--accent-secondary), 0.35);
+
+  box-shadow:
+    0 0 5px rgba(255,255,255,0.4),
+    0 0 10px rgba(var(--accent-primary),0.55);
+
+  opacity: 0;
+
+  transition:
+    opacity 400ms ease,
+    transform 400ms ease;
+}
+
+.automation-node-1 {
+  top: 26%;
+  right: 30%;
+}
+
+.automation-node-2 {
+  top: 48%;
+  right: 18%;
+}
+
+.automation-node-3 {
+  top: 69%;
+  right: 33%;
+}
+
+.automation-node-4 {
+  top: 49%;
+  right: 39%;
+}
+
+.is-interacting .automation-node {
+  opacity: 0.75;
+  animation: automationNode 2.8s ease-in-out infinite;
+}
+
+.is-interacting .automation-node-2 {
+  animation-delay: 0.45s;
+}
+
+.is-interacting .automation-node-3 {
+  animation-delay: 0.9s;
+}
+
+.is-interacting .automation-node-4 {
+  animation-delay: 1.35s;
+}
+
+
+/* MOVING DATA PULSES */
+
+.automation-pulse {
+  position: absolute;
+
+  width: 4px;
+  height: 4px;
+
+  border-radius: 50%;
+
+  background: rgba(255,255,255,0.95);
+
+  box-shadow:
+    0 0 5px rgba(255,255,255,0.8),
+    0 0 10px rgba(var(--accent-primary),0.9),
+    0 0 18px rgba(var(--accent-secondary),0.55);
+
+  opacity: 0;
+}
+
+.automation-pulse-1 {
+  top: 28%;
+  right: 4%;
+}
+
+.automation-pulse-2 {
+  top: 50%;
+  right: 7%;
+}
+
+.automation-pulse-3 {
+  top: 70%;
+  right: 3%;
+}
+
+.is-interacting .automation-pulse-1 {
+  animation: automationPulse1 3.2s linear infinite;
+}
+
+.is-interacting .automation-pulse-2 {
+  animation: automationPulse2 3.8s 0.8s linear infinite;
+}
+
+.is-interacting .automation-pulse-3 {
+  animation: automationPulse3 4.2s 1.5s linear infinite;
+}
+
+
+/* ANIMATIONS */
+
+@keyframes automationPathIn {
+  from {
+    opacity: 0;
+    filter: blur(3px);
+  }
+
+  to {
+    opacity: 0.65;
+    filter: blur(0);
+  }
+}
+
+@keyframes automationNode {
+  0%,
+  100% {
+    transform: scale(0.8);
+    opacity: 0.35;
+  }
+
+  50% {
+    transform: scale(1.35);
+    opacity: 0.95;
+  }
+}
+
+@keyframes automationPulse1 {
+  0% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  85% {
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: translateX(-190px) translateY(24px);
+    opacity: 0;
+  }
+}
+
+@keyframes automationPulse2 {
+  0% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  85% {
+    opacity: 0.75;
+  }
+
+  100% {
+    transform: translateX(-165px) translateY(-9px);
+    opacity: 0;
+  }
+}
+
+@keyframes automationPulse3 {
+  0% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+
+  12% {
+    opacity: 0.9;
+  }
+
+  85% {
+    opacity: 0.65;
+  }
+
+  100% {
+    transform: translateX(-180px) translateY(10px);
+    opacity: 0;
+  }
+}
+/* =========================================================
+   CARD 03 — AI INTELLIGENCE FIELD
+   ========================================================= */
+
+.service-card-ai {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+
+  overflow: hidden;
+  border-radius: inherit;
+
+  pointer-events: none;
+
+  opacity: 0;
+
+  transition:
+    opacity 500ms ease;
+}
+
+.service-card-interactive-frame.is-interacting
+.service-card-ai {
+  opacity: 1;
+}
+
+
+/* =========================================================
+   AI CORE
+   ========================================================= */
+
+.ai-core {
+  position: absolute;
+
+  left: var(--pointer-x);
+  top: var(--pointer-y);
+
+  width: 54px;
+  height: 54px;
+
+  border-radius: 50%;
+
+  transform:
+    translate(-50%, -50%)
+    scale(0.45);
+
+  border: 1px solid
+    rgba(var(--accent-secondary), 0.18);
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(255, 255, 255, 0.10) 0%,
+      rgba(var(--accent-primary), 0.08) 25%,
+      rgba(var(--accent-secondary), 0.035) 50%,
+      transparent 72%
+    );
+
+  box-shadow:
+    0 0 20px rgba(var(--accent-primary), 0.08),
+    0 0 40px rgba(var(--accent-secondary), 0.05);
+
+  opacity: 0;
+
+  transition:
+    opacity 350ms ease,
+    transform 650ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  will-change:
+    left,
+    top,
+    transform;
+}
+
+
+.service-card-interactive-frame.is-interacting
+.ai-core {
+  opacity: 0.8;
+
+  transform:
+    translate(-50%, -50%)
+    scale(1);
+}
+
+
+/* núcleo interior */
+
+.ai-core-inner {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 5px;
+  height: 5px;
+
+  border-radius: 50%;
+
+  transform:
+    translate(-50%, -50%);
+
+  background:
+    rgba(255, 255, 255, 0.95);
+
+  box-shadow:
+    0 0 6px rgba(255, 255, 255, 0.85),
+    0 0 14px rgba(var(--accent-primary), 0.8),
+    0 0 26px rgba(var(--accent-secondary), 0.5);
+
+  animation:
+    aiCorePulse 2.4s ease-in-out infinite;
+}
+
+
+/* =========================================================
+   ORBITS
+   ========================================================= */
+
+.ai-orbit {
+  position: absolute;
+
+  left: var(--pointer-x);
+  top: var(--pointer-y);
+
+  border-radius: 50%;
+
+  border:
+    1px solid rgba(var(--accent-primary), 0.10);
+
+  opacity: 0;
+
+  transform:
+    translate(-50%, -50%)
+    scale(0.45);
+
+  transition:
+    opacity 500ms ease,
+    transform 800ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  will-change:
+    left,
+    top,
+    transform;
+}
+
+
+.ai-orbit-1 {
+  width: 105px;
+  height: 105px;
+}
+
+
+.ai-orbit-2 {
+  width: 165px;
+  height: 165px;
+
+  border-color:
+    rgba(var(--accent-secondary), 0.07);
+}
+
+
+.service-card-interactive-frame.is-interacting
+.ai-orbit {
+  opacity: 1;
+
+  transform:
+    translate(-50%, -50%)
+    scale(1);
+}
+
+
+.service-card-interactive-frame.is-interacting
+.ai-orbit-1 {
+  animation:
+    aiOrbitRotate 12s linear infinite;
+}
+
+
+.service-card-interactive-frame.is-interacting
+.ai-orbit-2 {
+  animation:
+    aiOrbitRotateReverse 17s linear infinite;
+}
+
+
+/* =========================================================
+   PARTICLES
+   ========================================================= */
+
+.ai-particle {
+  position: absolute;
+
+  width: 3px;
+  height: 3px;
+
+  border-radius: 50%;
+
+  background:
+    rgba(255, 255, 255, 0.9);
+
+  box-shadow:
+    0 0 5px rgba(255, 255, 255, 0.65),
+    0 0 11px rgba(var(--accent-primary), 0.55),
+    0 0 20px rgba(var(--accent-secondary), 0.25);
+
+  opacity: 0;
+
+  transition:
+    opacity 400ms ease;
+
+  will-change: transform;
+}
+
+
+.ai-particle-1 {
+  left: 66%;
+  top: 20%;
+}
+
+.ai-particle-2 {
+  left: 78%;
+  top: 34%;
+}
+
+.ai-particle-3 {
+  left: 70%;
+  top: 55%;
+}
+
+.ai-particle-4 {
+  left: 82%;
+  top: 72%;
+}
+
+.ai-particle-5 {
+  left: 58%;
+  top: 77%;
+}
+
+.ai-particle-6 {
+  left: 50%;
+  top: 28%;
+}
+
+.ai-particle-7 {
+  left: 88%;
+  top: 48%;
+}
+
+.ai-particle-8 {
+  left: 62%;
+  top: 44%;
+}
+
+.ai-particle-9 {
+  left: 74%;
+  top: 84%;
+}
+
+
+/* activar partículas */
+
+.service-card-interactive-frame.is-interacting
+.ai-particle {
+  opacity: 0.75;
+}
+
+
+.is-interacting .ai-particle-1 {
+  animation:
+    aiParticleFloat1 4.5s ease-in-out infinite;
+}
+
+.is-interacting .ai-particle-2 {
+  animation:
+    aiParticleFloat2 5.2s ease-in-out infinite;
+}
+
+.is-interacting .ai-particle-3 {
+  animation:
+    aiParticleFloat3 4.8s ease-in-out infinite;
+}
+
+.is-interacting .ai-particle-4 {
+  animation:
+    aiParticleFloat1 5.6s 0.7s ease-in-out infinite;
+}
+
+.is-interacting .ai-particle-5 {
+  animation:
+    aiParticleFloat2 4.9s 1.1s ease-in-out infinite;
+}
+
+.is-interacting .ai-particle-6 {
+  animation:
+    aiParticleFloat3 5.4s 0.4s ease-in-out infinite;
+}
+
+.is-interacting .ai-particle-7 {
+  animation:
+    aiParticleFloat1 4.7s 1.4s ease-in-out infinite;
+}
+
+.is-interacting .ai-particle-8 {
+  animation:
+    aiParticleFloat2 5.8s 0.9s ease-in-out infinite;
+}
+
+.is-interacting .ai-particle-9 {
+  animation:
+    aiParticleFloat3 5.1s 1.7s ease-in-out infinite;
+}
+
+
+/* =========================================================
+   ANIMATIONS
+   ========================================================= */
+
+@keyframes aiCorePulse {
+
+  0%,
+  100% {
+    transform:
+      translate(-50%, -50%)
+      scale(0.85);
+
+    opacity: 0.65;
+  }
+
+  50% {
+    transform:
+      translate(-50%, -50%)
+      scale(1.25);
+
+    opacity: 1;
+  }
+}
+
+
+@keyframes aiOrbitRotate {
+
+  from {
+    rotate: 0deg;
+  }
+
+  to {
+    rotate: 360deg;
+  }
+}
+
+
+@keyframes aiOrbitRotateReverse {
+
+  from {
+    rotate: 360deg;
+  }
+
+  to {
+    rotate: 0deg;
+  }
+}
+
+
+@keyframes aiParticleFloat1 {
+
+  0%,
+  100% {
+    transform:
+      translate3d(0, 0, 0)
+      scale(0.8);
+
+    opacity: 0.25;
+  }
+
+  50% {
+    transform:
+      translate3d(-16px, 10px, 0)
+      scale(1.35);
+
+    opacity: 0.95;
+  }
+}
+
+
+@keyframes aiParticleFloat2 {
+
+  0%,
+  100% {
+    transform:
+      translate3d(0, 0, 0)
+      scale(0.7);
+
+    opacity: 0.3;
+  }
+
+  50% {
+    transform:
+      translate3d(13px, -14px, 0)
+      scale(1.2);
+
+    opacity: 0.85;
+  }
+}
+
+
+@keyframes aiParticleFloat3 {
+
+  0%,
+  100% {
+    transform:
+      translate3d(0, 0, 0)
+      scale(0.9);
+
+    opacity: 0.2;
+  }
+
+  50% {
+    transform:
+      translate3d(-9px, -18px, 0)
+      scale(1.4);
+
+    opacity: 1;
+  }
+}
+
+/* =========================================================
+   REDUCED MOTION
+   Mantém a interacção do cartão, mas elimina animações
+   contínuas/repetitivas.
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  /*
+   * Mantemos o tilt/parallax controlado pelo rato.
+   * Apenas tornamos a resposta mais imediata.
+   */
+  .service-card-interactive-frame {
+    transition:
+      transform 180ms ease-out,
+      border-color 180ms ease,
+      box-shadow 180ms ease;
+  }
+
+  .service-card-interactive-content {
+    transition:
+      transform 180ms ease-out;
+  }
+
+  .service-card-interactive-content .service-card-icon {
+    transition:
+      transform 180ms ease-out,
+      color 180ms ease,
+      filter 180ms ease;
+  }
+
+  .service-card-interactive-content .service-card-icon svg {
+    transition:
+      color 180ms ease,
+      filter 180ms ease,
+      transform 180ms ease;
+  }
+
+
+  /*
+   * Mantemos iluminação que responde directamente ao rato.
+   */
+  .service-card-interactive-glow,
+  .service-card-interactive-hologram,
+  .service-card-interactive-glare {
+    display: block;
+  }
+
+
+  /*
+   * Desactivamos apenas animações automáticas e infinitas.
+   * Estas são as que realmente podem causar desconforto.
+   */
+
+  .automation-node,
+  .automation-pulse,
+  .ai-core-inner,
+  .ai-orbit,
+  .ai-particle {
+    animation: none !important;
+  }
+
+
+  /*
+   * Os elementos continuam visíveis durante a interacção,
+   * apenas deixam de pulsar/orbitar continuamente.
+   */
+
+  .service-card-interactive-frame.is-interacting
+  .automation-node {
+    opacity: 0.75;
+  }
+
+  .service-card-interactive-frame.is-interacting
+  .ai-particle {
+    opacity: 0.65;
+  }
+
+  .service-card-interactive-frame.is-interacting
+  .ai-orbit {
+    opacity: 0.65;
+  }
+
+  .service-card-interactive-frame.is-interacting
+  .ai-core-inner {
+    opacity: 0.85;
+  }
+}

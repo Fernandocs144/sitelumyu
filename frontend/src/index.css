@@ -100,41 +100,77 @@ body {
    HOMEPAGE CINEMATIC DESIGN SYSTEM (Strictly Scoped under .lumyo-homepage)
    ═══════════════════════════════════════════════════════════════ */
 .lumyo-homepage {
-  --home-bg-deep: #030617;
-  --home-bg-navy: #071530;
-  --home-bg-violet: #241044;
-  --home-accent-magenta: #e40063;
-  --home-accent-pink: #ff2d78;
-  --home-accent-blue: #3154f5;
+  --home-bg-deep: #080417;
   --home-text-primary: #f7f8ff;
   --home-text-muted: rgba(247, 248, 255, 0.62);
 
   position: relative;
+  isolation: isolate;
   min-height: 100vh;
   overflow-x: clip;
   color: var(--home-text-primary);
   background-color: var(--home-bg-deep);
 }
 
-/* Scoped Homepage Background */
-.lumyo-homepage .home-section-bg {
+/* ═══════════════════════════════════════════════════════════════
+   UNIFIED FIXED HOMEPAGE ENVIRONMENT SYSTEM (100% Matching Reference Image)
+   Z-INDEX LAYERING:
+   - Level 0: Fixed Atmospheric Color Field (.lumyo-homepage::before)
+   - Level 1: Fixed Diffuse Glows (.lumyo-homepage::after)
+   - Level 2: Section Media (Hero & Cylinders Hybrid Video/Poster)
+   - Level 3+: Content / Cards / Models / Overlays / Interactive Elements
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Level 0: Fixed Atmospheric Color Field matching reference image 1:1 across entire page scroll */
+.lumyo-homepage::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
   background:
-    radial-gradient(1000px 800px at 12% 42%, rgba(49, 84, 245, 0.22), rgba(36, 16, 68, 0.18) 50%, transparent 75%),
-    radial-gradient(1200px 1000px at 72% 82%, rgba(49, 84, 245, 0.28), rgba(36, 16, 68, 0.20) 45%, rgba(228, 0, 99, 0.10) 65%, transparent 80%),
-    radial-gradient(2200px 2200px at 50% 50%, rgba(7, 21, 48, 0.15), transparent 75%),
-    var(--home-bg-deep);
+    /* Top-Left Vibrant Hot Magenta / Pink Glow */
+    radial-gradient(circle at 0% 12%, rgba(240, 0, 95, 0.90) 0%, rgba(200, 0, 90, 0.50) 25%, transparent 55%),
+    /* Mid-Left Soft Magenta Glow */
+    radial-gradient(circle at 0% 65%, rgba(210, 0, 90, 0.45) 0%, transparent 50%),
+    
+    /* Top-Right Deep Electric Blue / Navy Glow */
+    radial-gradient(circle at 100% 10%, rgba(10, 35, 115, 0.85) 0%, rgba(5, 20, 75, 0.55) 35%, transparent 60%),
+    /* Mid-Right Deep Blue Atmospheric Aura */
+    radial-gradient(circle at 98% 70%, rgba(8, 30, 95, 0.55) 0%, transparent 55%),
+
+    /* Center Rich Purple / Deep Plum Glow */
+    radial-gradient(circle at 45% 40%, rgba(75, 12, 95, 0.65) 0%, rgba(35, 6, 50, 0.45) 45%, transparent 70%),
+
+    /* Overall Base Linear Gradient (Hot Magenta Left -> Rich Violet Center -> Deep Navy Blue Right) */
+    linear-gradient(105deg, #78003a 0%, #32053a 28%, #16052a 55%, #050d30 85%, #020820 100%);
+}
+
+/* Level 1: Fixed Soft Ambient Diffusion */
+.lumyo-homepage::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 1200px 800px at 10% 20%, rgba(240, 0, 95, 0.20), transparent 60%),
+    radial-gradient(ellipse 1300px 900px at 90% 40%, rgba(10, 35, 115, 0.25), transparent 65%),
+    radial-gradient(ellipse 1200px 800px at 15% 75%, rgba(150, 15, 100, 0.20), transparent 60%);
+  filter: blur(40px);
 }
 
 /* Scoped Homepage Atmospheric Fog Overlays */
 .lumyo-homepage .fog-layer-cards {
-  background: radial-gradient(ellipse at 22% 48%, rgba(49, 84, 245, 0.12), rgba(36, 16, 68, 0.08) 50%, transparent 75%);
+  background: radial-gradient(ellipse at 22% 48%, rgba(255, 45, 120, 0.14), rgba(155, 36, 230, 0.10) 50%, transparent 75%);
   filter: blur(120px);
 }
 
 .lumyo-homepage .fog-layer-diamond {
-  background: radial-gradient(ellipse at 70% 80%, rgba(49, 84, 245, 0.18), rgba(36, 16, 68, 0.12) 45%, transparent 75%);
+  background: radial-gradient(ellipse at 70% 80%, rgba(49, 84, 245, 0.20), rgba(155, 36, 230, 0.14) 45%, transparent 75%);
   filter: blur(100px);
 }
+
 
 /* Scoped Homepage Glass Material System */
 .lumyo-homepage .glass-neon {

@@ -1,64 +1,169 @@
 import React, { useLayoutEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+import { createHeroContentExperience } from './HeroContentTimeline';
 import HeroBackground from './HeroBackground';
-import HeroOverlay from './HeroOverlay';
 import HeroContent from './HeroContent';
-import { createHeroTimeline } from './HeroTimeline';
+import { createHeroScrollExperience } from './HeroTimeline';
+
+
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(ScrollTrigger);
+}
+
 
 /**
- * Hero — Single Source of Truth Hero Component (Sprint 0A).
+ * Hero
  *
- * Architecture:
- * - Outer Section: relative h-screen w-full (no CSS sticky, no 300vh height override)
- * - Inner Viewport: relative h-screen w-full overflow-hidden (pinned by GSAP ScrollTrigger)
- * - Lifecycle: Safely managed using useLayoutEffect and gsap.context()
+ * Estrutura:
+ * - HeroBackground: poster + vídeo controlado pelo scroll
+ * - HeroContent: toda a experiência editorial
+ * - HeroTimeline: controla vídeo + pin
+ * - HeroContentTimeline: controla textos e cenas
  */
 export default function Hero() {
   const triggerRef = useRef(null);
   const viewportRef = useRef(null);
-  const contentRef = useRef(null);
-  const timelineRef = useRef(null);
+  const videoRef = useRef(null);
+
 
   useLayoutEffect(() => {
-    if (!triggerRef.current || !viewportRef.current) return;
+    const triggerElement = triggerRef.current;
+    const viewportElement = viewportRef.current;
+    const video = videoRef.current;
 
-    // Use gsap.context for clean scope and automatic, leak-free cleanup
-    const ctx = gsap.context(() => {
-      const timeline = createHeroTimeline(
-        triggerRef.current,
-        viewportRef.current
+
+    if (!triggerElement || !viewportElement || !video) {
+      return undefined;
+    }
+
+
+    let heroScrollTrigger = null;
+    let heroContentTimeline = null;
+    let isInitialized = false;
+
+
+    const setupScroll = () => {
+      if (isInitialized) {
+        return;
+      }
+
+
+      const duration = video.duration;
+
+
+      if (!Number.isFinite(duration) || duration <= 0) {
+        return;
+      }
+
+
+      try {
+        video.pause();
+        video.currentTime = 0;
+      } catch {
+        return;
+      }
+
+
+      heroScrollTrigger = createHeroScrollExperience(
+        triggerElement,
+        viewportElement,
+        video
       );
-      timelineRef.current = timeline;
-    }, triggerRef);
 
-    // Refresh ScrollTrigger after initial layout calculation
-    ScrollTrigger.refresh();
+
+      if (!heroScrollTrigger) {
+        return;
+      }
+
+
+      heroContentTimeline =
+        createHeroContentExperience(triggerElement);
+
+
+      isInitialized = true;
+
+      ScrollTrigger.refresh();
+    };
+
+
+    if (
+      video.readyState >= 1 &&
+      Number.isFinite(video.duration) &&
+      video.duration > 0
+    ) {
+      setupScroll();
+    } else {
+      video.addEventListener(
+        'loadedmetadata',
+        setupScroll
+      );
+
+      video.addEventListener(
+        'loadeddata',
+        setupScroll
+      );
+
+      video.addEventListener(
+        'canplay',
+        setupScroll
+      );
+    }
+
 
     return () => {
-      ctx.revert(); // Reverts animations and kills ONLY ScrollTriggers created in this context
+      video.removeEventListener(
+        'loadedmetadata',
+        setupScroll
+      );
+
+      video.removeEventListener(
+        'loadeddata',
+        setupScroll
+      );
+
+      video.removeEventListener(
+        'canplay',
+        setupScroll
+      );
+
+
+      if (heroScrollTrigger) {
+        heroScrollTrigger.kill();
+      }
+
+
+      if (heroContentTimeline) {
+        heroContentTimeline.scrollTrigger?.kill();
+        heroContentTimeline.kill();
+      }
     };
   }, []);
+
 
   return (
     <section
       ref={triggerRef}
       data-testid="hero-scroll-container"
-      className="relative h-screen w-full"
+      className="relative min-h-screen w-full"
     >
       <div
         ref={viewportRef}
         data-testid="hero-pinned-viewport"
-        className="relative h-screen w-full overflow-hidden"
+        className="
+          relative
+          min-h-screen
+          w-full
+          overflow-visible
+          flex
+          flex-col
+          justify-between
+        "
       >
-        {/* Layer 1: Fullscreen Background PNG */}
-        <HeroBackground />
+        <HeroBackground ref={videoRef} />
 
-        {/* Layer 2: Positioned Overlay Layer */}
-        <HeroOverlay />
-
-        {/* Layer 3: Independent Content Layer */}
-        <HeroContent ref={contentRef} />
+        <HeroContent />
       </div>
     </section>
   );
