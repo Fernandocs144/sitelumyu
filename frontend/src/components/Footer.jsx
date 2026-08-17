@@ -5,7 +5,6 @@ import { ArrowUp } from 'lucide-react';
 
 import { useLang } from '../i18n';
 
-
 export default function Footer({ variant = 'default' }) {
   const { t } = useLang();
   const f = t.footer;
@@ -17,12 +16,8 @@ export default function Footer({ variant = 'default' }) {
   return <DefaultFooter f={f} />;
 }
 
-
 /* ===================================================== */
 /* HOME FOOTER                                           */
-/*                                                       */
-/* Transparente.                                         */
-/* O background deve vir da própria experiência da Home. */
 /* ===================================================== */
 
 function HomeFooter({ f }) {
@@ -42,10 +37,7 @@ function HomeFooter({ f }) {
       return undefined;
     }
 
-
-    const timeline =
-      createHomeFooterExperience(footerElement);
-
+    const timeline = createHomeFooterExperience(footerElement);
 
     return () => {
       if (timeline) {
@@ -67,25 +59,17 @@ function HomeFooter({ f }) {
         text-white
       "
     >
-      {/* ================================================= */}
-      {/* TRANSIÇÃO ENTRE CONTACT E FOOTER                   */}
-      {/* ================================================= */}
-
+      {/* TRANSIÇÃO ENTRE CONTACT E FOOTER */}
       <div className="relative h-[4vh] md:h-[6vh]" />
 
-
-      {/* ================================================= */}
-      {/* GLASS PANEL                                       */}
-      {/* ================================================= */}
-
+      {/* GLASS PANEL */}
       <div
-      data-home-footer-panel
+        data-home-footer-panel
         className="
           relative
           z-10
           mx-auto
           w-[92%]
-          
           max-w-[1700px]
           overflow-hidden
           rounded-[1.5rem]
@@ -97,7 +81,7 @@ function HomeFooter({ f }) {
           md:w-[88%]
         "
       >
-        {/* brilho interno muito subtil */}
+        {/* Brilho interno subtil */}
         <div
           aria-hidden="true"
           className="
@@ -113,13 +97,13 @@ function HomeFooter({ f }) {
           "
         />
 
-
         <div
           className="
             relative
             px-6
             pb-7
-            pt-10
+            pt-8
+            sm:pt-10
             md:px-10
             md:pb-8
             md:pt-12
@@ -128,23 +112,19 @@ function HomeFooter({ f }) {
             lg:pt-14
           "
         >
-          {/* ================================================= */}
-          {/* MAIN GRID                                         */}
-          {/* ================================================= */}
-
+          {/* MAIN GRID */}
           <div
             className="
               grid
-              gap-12
+              gap-8
+              sm:gap-10
               md:grid-cols-2
+              md:gap-12
               lg:grid-cols-[1.35fr_0.8fr_1fr_1fr]
               lg:gap-10
             "
           >
-            {/* ================================================= */}
-            {/* BRAND                                             */}
-            {/* ================================================= */}
-
+            {/* BRAND */}
             <div className="max-w-[330px]">
               <Link
                 to="/"
@@ -161,12 +141,13 @@ function HomeFooter({ f }) {
 
               <p
                 className="
-                  mt-6
+                  mt-4
                   max-w-[290px]
                   font-body
                   text-[13px]
                   leading-[1.8]
                   text-white/85
+                  sm:mt-6
                 "
               >
                 {f.copyright}
@@ -174,14 +155,14 @@ function HomeFooter({ f }) {
 
               <div
                 className="
-                  mt-8
+                  mt-6
                   flex
                   items-center
                   gap-3
+                  sm:mt-8
                 "
               >
                 <span className="h-px w-8 bg-magenta/70" />
-
                 <span
                   className="
                     font-head
@@ -195,38 +176,16 @@ function HomeFooter({ f }) {
               </div>
             </div>
 
-
-            {/* ================================================= */}
-            {/* NAVIGATION                                        */}
-            {/* ================================================= */}
-
+            {/* NAVIGATION */}
             <FooterColumn title={f.navigation}>
-              <FooterLink to="/">
-                {f.home}
-              </FooterLink>
-
-              <FooterLink to="/solutions">
-                {f.solutions}
-              </FooterLink>
-
-              <FooterLink to="/case-studies">
-                {f.cases}
-              </FooterLink>
-
-              <FooterLink to="/studio">
-                {f.studio}
-              </FooterLink>
-
-              <FooterLink to="/contact">
-                {f.contact}
-              </FooterLink>
+              <FooterLink to="/">{f.home}</FooterLink>
+              <FooterLink to="/solutions">{f.solutions}</FooterLink>
+              <FooterLink to="/case-studies">{f.cases}</FooterLink>
+              <FooterLink to="/studio">{f.studio}</FooterLink>
+              <FooterLink to="/contact">{f.contact}</FooterLink>
             </FooterColumn>
 
-
-            {/* ================================================= */}
-            {/* EXPERTISE                                         */}
-            {/* ================================================= */}
-
+            {/* EXPERTISE */}
             <FooterColumn title={f.expertise}>
               {f.services?.map((service) => (
                 <span
@@ -244,57 +203,44 @@ function HomeFooter({ f }) {
               ))}
             </FooterColumn>
 
-
-            {/* ================================================= */}
-            {/* SOCIAL / DIRECT                                   */}
-            {/* ================================================= */}
-
+            {/* SOCIAL / DIRECT */}
             <div>
               <span
                 className="
-                  mb-6
+                  mb-4
                   block
                   font-head
                   font-bold
                   text-[9px]
                   tracking-[0.28em]
                   text-magenta/90
+                  sm:mb-6
                 "
               >
                 {f.social}
               </span>
 
               <div className="flex flex-col items-start gap-3">
-                {/*
-                  Mantemos como texto enquanto não existirem
-                  URLs reais para as redes sociais.
-                */}
-
-                <SocialLabel>
-                  LINKEDIN
-                </SocialLabel>
-
-                <SocialLabel>
+                <SocialLabel>LINKEDIN</SocialLabel>
+                <SocialLink href="https://www.instagram.com/lumyopt/">
                   INSTAGRAM
-                </SocialLabel>
-
-                <SocialLabel>
-                  Facebook
-                </SocialLabel>
+                </SocialLink>
+                <SocialLink href="https://www.facebook.com/lumyopt">
+                  FACEBOOK
+                </SocialLink>
               </div>
 
-
               {/* DIRECT */}
-
-              <div className="mt-10">
+              <div className="mt-8 sm:mt-10">
                 <span
                   className="
-                    mb-5
+                    mb-4
                     block
                     font-head
                     text-[9px]
                     tracking-[0.28em]
                     text-magenta/90
+                    sm:mb-5
                   "
                 >
                   DIRECT
@@ -316,7 +262,6 @@ function HomeFooter({ f }) {
                   "
                 >
                   {f.startProject}
-
                   <span
                     className="
                       h-px
@@ -333,20 +278,18 @@ function HomeFooter({ f }) {
             </div>
           </div>
 
-
-          {/* ================================================= */}
-          {/* BOTTOM BAR                                        */}
-          {/* ================================================= */}
-
+          {/* BOTTOM BAR */}
           <div
             className="
-              mt-12
+              mt-10
               flex
               flex-col
-              gap-5
+              gap-4
               border-t
               border-white/[0.08]
               pt-6
+              sm:mt-12
+              sm:gap-5
               md:mt-14
               md:flex-row
               md:items-center
@@ -384,7 +327,6 @@ function HomeFooter({ f }) {
               "
             >
               BACK TO TOP
-
               <ArrowUp
                 size={12}
                 className="
@@ -398,22 +340,14 @@ function HomeFooter({ f }) {
         </div>
       </div>
 
-
-      {/* ================================================= */}
-      {/* ESPAÇO FINAL                                      */}
-      {/* ================================================= */}
-
+      {/* ESPAÇO FINAL */}
       <div className="relative h-[5vh] md:h-[7vh]" />
     </footer>
   );
 }
 
-
 /* ===================================================== */
 /* DEFAULT FOOTER                                        */
-/*                                                       */
-/* Também transparente.                                  */
-/* Continua visualmente o background da página.          */
 /* ===================================================== */
 
 function DefaultFooter({ f }) {
@@ -441,7 +375,7 @@ function DefaultFooter({ f }) {
           mx-auto
           max-w-[1700px]
           px-6
-          py-14
+          py-12
           md:px-12
           md:py-16
           lg:px-[6vw]
@@ -450,15 +384,13 @@ function DefaultFooter({ f }) {
         <div
           className="
             grid
-            gap-12
+            gap-10
             md:grid-cols-3
+            md:gap-12
             lg:grid-cols-[1.3fr_1fr_1fr]
           "
         >
-          {/* ================================================= */}
-          {/* BRAND                                             */}
-          {/* ================================================= */}
-
+          {/* BRAND */}
           <div className="max-w-[330px]">
             <Link
               to="/"
@@ -475,11 +407,12 @@ function DefaultFooter({ f }) {
 
             <p
               className="
-                mt-5
+                mt-4
                 font-body
                 text-sm
                 leading-relaxed
                 text-white/65
+                sm:mt-5
               "
             >
               {f.copyright}
@@ -487,14 +420,14 @@ function DefaultFooter({ f }) {
 
             <div
               className="
-                mt-7
+                mt-6
                 flex
                 items-center
                 gap-3
+                sm:mt-7
               "
             >
               <span className="h-px w-7 bg-magenta/60" />
-
               <span
                 className="
                   font-head
@@ -508,38 +441,16 @@ function DefaultFooter({ f }) {
             </div>
           </div>
 
-
-          {/* ================================================= */}
-          {/* NAVIGATION                                        */}
-          {/* ================================================= */}
-
+          {/* NAVIGATION */}
           <FooterColumn title={f.navigation}>
-            <FooterLink to="/">
-              {f.home}
-            </FooterLink>
-
-            <FooterLink to="/solutions">
-              {f.solutions}
-            </FooterLink>
-
-            <FooterLink to="/case-studies">
-              {f.cases}
-            </FooterLink>
-
-            <FooterLink to="/studio">
-              {f.studio}
-            </FooterLink>
-
-            <FooterLink to="/contact">
-              {f.contact}
-            </FooterLink>
+            <FooterLink to="/">{f.home}</FooterLink>
+            <FooterLink to="/solutions">{f.solutions}</FooterLink>
+            <FooterLink to="/case-studies">{f.cases}</FooterLink>
+            <FooterLink to="/studio">{f.studio}</FooterLink>
+            <FooterLink to="/contact">{f.contact}</FooterLink>
           </FooterColumn>
 
-
-          {/* ================================================= */}
-          {/* EXPERTISE                                         */}
-          {/* ================================================= */}
-
+          {/* EXPERTISE */}
           <FooterColumn title={f.expertise}>
             {f.services?.map((service) => (
               <span
@@ -559,20 +470,18 @@ function DefaultFooter({ f }) {
           </FooterColumn>
         </div>
 
-
-        {/* ================================================= */}
-        {/* BOTTOM                                            */}
-        {/* ================================================= */}
-
+        {/* BOTTOM */}
         <div
           className="
-            mt-12
+            mt-10
             flex
             flex-col
-            gap-5
+            gap-4
             border-t
             border-white/[0.08]
             pt-6
+            sm:mt-12
+            sm:gap-5
             md:flex-row
             md:items-center
             md:justify-between
@@ -609,7 +518,6 @@ function DefaultFooter({ f }) {
             "
           >
             BACK TO TOP
-
             <ArrowUp
               size={12}
               className="
@@ -625,9 +533,8 @@ function DefaultFooter({ f }) {
   );
 }
 
-
 /* ===================================================== */
-/* FOOTER COLUMN                                         */
+/* COMPONENTES AUXILIARES                                */
 /* ===================================================== */
 
 function FooterColumn({ title, children }) {
@@ -635,13 +542,14 @@ function FooterColumn({ title, children }) {
     <div>
       <span
         className="
-          mb-6
+          mb-4
           block
           font-head
           font-bold
           text-[9px]
           tracking-[0.28em]
           text-magenta/90
+          sm:mb-6
         "
       >
         {title}
@@ -653,11 +561,6 @@ function FooterColumn({ title, children }) {
     </div>
   );
 }
-
-
-/* ===================================================== */
-/* FOOTER LINK                                           */
-/* ===================================================== */
 
 function FooterLink({ to, children }) {
   return (
@@ -675,7 +578,6 @@ function FooterLink({ to, children }) {
       "
     >
       {children}
-
       <span
         className="
           absolute
@@ -693,11 +595,6 @@ function FooterLink({ to, children }) {
   );
 }
 
-
-/* ===================================================== */
-/* SOCIAL LABEL                                          */
-/* ===================================================== */
-
 function SocialLabel({ children }) {
   return (
     <span
@@ -710,5 +607,41 @@ function SocialLabel({ children }) {
     >
       {children}
     </span>
+  );
+}
+
+function SocialLink({ href, children }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="
+        group
+        relative
+        font-body
+        font-bold
+        text-[13px]
+        text-white/65
+        transition-colors
+        duration-300
+        hover:text-white
+      "
+    >
+      {children}
+      <span
+        className="
+          absolute
+          bottom-[-3px]
+          left-0
+          h-px
+          w-0
+          bg-magenta
+          transition-all
+          duration-300
+          group-hover:w-full
+        "
+      />
+    </a>
   );
 }

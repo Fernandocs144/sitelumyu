@@ -4,20 +4,20 @@ import { Mail, Send, Check, Globe, Settings, Sparkles, TrendingUp, Loader2 } fro
 import { CONTACT_EMAIL } from '../data';
 import { useLang } from '../i18n';
 import ParticleField from '../components/ParticleField';
+import SEO from '../components/seo/SEO';
 
 const serviceIcons = [Globe, Settings, Sparkles, TrendingUp];
 
-
 export default function Contact() {
- const { t } = useLang();
+  const { t } = useLang();
   const c = t.contact;
   const [form, setForm] = useState({
-  name: '',
-  email: '',
-  service: c.services[0],
-  message: '',
-  website: ''
-});
+    name: '',
+    email: '',
+    service: c.services[0],
+    message: '',
+    website: '',
+  });
   const [status, setStatus] = useState('idle'); // idle | sending | sent | error
 
   const update = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -27,18 +27,18 @@ export default function Contact() {
     setStatus('sending');
     try {
       const res = await fetch('/api/contact', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-  name: form.name,
-  email: form.email,
-  service: form.service,
-  message: form.message,
-  website: form.website,
-}),
-});
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          service: form.service,
+          message: form.message,
+          website: form.website,
+        }),
+      });
       if (!res.ok) throw new Error('Request failed');
       setStatus('sent');
     } catch (err) {
@@ -48,17 +48,25 @@ export default function Contact() {
 
   const reset = () => {
     setForm({
-  name: '',
-  email: '',
-  service: c.services[0],
-  message: '',
-  website: ''
-});
+      name: '',
+      email: '',
+      service: c.services[0],
+      message: '',
+      website: '',
+    });
     setStatus('idle');
   };
 
   return (
     <div className="page-enter section-bg relative min-h-screen overflow-hidden pt-40 pb-28">
+      <SEO
+  title="Contactos"
+  titleEn="Contact"
+  description="Fala com a Lumyo sobre o teu projeto de website, automação, inteligência artificial ou crescimento digital."
+  descriptionEn="Talk to Lumyo about your website, automation, artificial intelligence or digital growth project."
+  path="/contact"
+/>
+
       <ParticleField count={40} />
       <div className="relative z-10 mx-auto max-w-[1600px] px-6 md:px-10">
         <div className="grid grid-cols-1 gap-16 lg:grid-cols-2">
@@ -101,15 +109,15 @@ export default function Contact() {
             data-testid="contact-form"
           >
             <input
-  type="text"
-  name="website"
-  value={form.website}
-  onChange={update('website')}
-  tabIndex={-1}
-  autoComplete="off"
-  aria-hidden="true"
-  className="hidden"
-/>
+              type="text"
+              name="website"
+              value={form.website}
+              onChange={update('website')}
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+              className="hidden"
+            />
             {status === 'sent' ? (
               <div className="flex flex-col items-center py-16 text-center" data-testid="contact-success">
                 <span className="flex h-16 w-16 items-center justify-center rounded-full border border-magenta text-magenta">

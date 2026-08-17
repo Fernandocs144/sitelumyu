@@ -17,6 +17,11 @@ import Solutions from './pages/Solutions';
 import CaseStudies from './pages/CaseStudies';
 import Studio from './pages/Studio';
 import Contact from './pages/Contact';
+import Websites from './pages/solutions/Websites';
+import Automation from './pages/solutions/Automation';
+import ArtificialIntelligence from './pages/solutions/ArtificialIntelligence';
+import DigitalGrowth from './pages/solutions/DigitalGrowth';
+import { HelmetProvider } from 'react-helmet-async';
 
 
 function ScrollToTop() {
@@ -89,12 +94,18 @@ function AppContent() {
 
       <main>
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/solutions" element={<Solutions />} />
-          <Route path="/case-studies" element={<CaseStudies />} />
-          <Route path="/studio" element={<Studio />} />
-          <Route path="/contact" element={<Contact />} />
-        </Routes>
+  <Route path="/" element={<Home />} />
+
+  <Route path="/solutions" element={<Solutions />} />
+  <Route path="/solutions/websites" element={<Websites />} />
+  <Route path="/solutions/automation" element={<Automation />} />
+  <Route path="/solutions/ai" element={<ArtificialIntelligence />} />
+  <Route path="/solutions/growth" element={<DigitalGrowth />} />
+
+  <Route path="/case-studies" element={<CaseStudies />} />
+  <Route path="/studio" element={<Studio />} />
+  <Route path="/contact" element={<Contact />} />
+</Routes>
       </main>
 
       <ConditionalFooter />
@@ -105,11 +116,13 @@ function AppContent() {
 
 function App() {
   return (
+    <HelmetProvider>
     <LanguageProvider>
       <BrowserRouter>
         <AppContent />
       </BrowserRouter>
     </LanguageProvider>
+    </HelmetProvider>
   );
 }
 

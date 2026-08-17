@@ -3,6 +3,7 @@ import React, {
   useContext,
   useState,
   useCallback,
+  useEffect,
 } from 'react';
 
 const translations = {
@@ -120,7 +121,6 @@ const translations = {
         titleLine1: 'CRIAMOS EXPERIÊNCIAS',
         titleLine2: 'QUE TORNAM ',
         titleLine3: 'O COMPLEXO SIMPLES.',
-        
 
         description:
           'Websites, software, automação e inteligência artificial desenvolvidos em torno de problemas reais de negócio.',
@@ -154,34 +154,26 @@ const translations = {
 
         items: [
           {
-  name: 'Anabela Magalhães',
-
-  shortQuote:
-    'A Lumyo adaptou cada solução às nossas necessidades e tornou a nossa operação diária muito mais simples e eficiente.',
-
-  quote:
-    'O serviço prestado pela Lumyo foi excecional desde o primeiro contacto. Demonstraram uma enorme flexibilidade para adaptar cada solução às nossas necessidades e, hoje, a nossa operação diária está incomparavelmente mais simples e eficiente.',
-},
-
+            name: 'Anabela Magalhães',
+            shortQuote:
+              'A Lumyo adaptou cada solução às nossas necessidades e tornou a nossa operação diária muito mais simples e eficiente.',
+            quote:
+              'O serviço prestado pela Lumyo foi excecional desde o primeiro contacto. Demonstraram uma enorme flexibilidade para adaptar cada solução às nossas necessidades e, hoje, a nossa operação diária está incomparavelmente mais simples e eficiente.',
+          },
           {
-  name: 'João Antunes',
-
-  shortQuote:
-    'A aplicação é rápida, intuitiva e tem sido fundamental para aumentar a satisfação dos nossos clientes.',
-
-  quote:
-    'A aplicação desenvolvida pela Lumyo funciona na perfeição. É rápida, intuitiva e tem sido fundamental para elevarmos o nível de satisfação dos nossos clientes.',
-},
-
+            name: 'João Antunes',
+            shortQuote:
+              'A aplicação é rápida, intuitiva e tem sido fundamental para aumentar a satisfação dos nossos clientes.',
+            quote:
+              'A aplicação desenvolvida pela Lumyo funciona na perfeição. É rápida, intuitiva e tem sido fundamental para elevarmos o nível de satisfação dos nossos clientes.',
+          },
           {
-  name: 'Vítor Machado',
-
-  shortQuote:
-    'A Lumyo criou um website moderno, rápido e fácil de gerir, superando as nossas expectativas em design e suporte.',
-
-  quote:
-    'A Lumyo superou todas as nossas expectativas no desenvolvimento do website do nosso stand. Entregaram um design moderno e perfeitamente alinhado com a nossa identidade, acompanhado por uma plataforma rápida, eficiente e muito bem posicionada no Google. A gestão e inserção de viaturas tornou-se extremamente fácil, e o suporte contínuo no dia a dia é impecável.',
-},
+            name: 'Vítor Machado',
+            shortQuote:
+              'A Lumyo criou um website moderno, rápido e fácil de gerir, superando as nossas expectativas em design e suporte.',
+            quote:
+              'A Lumyo superou todas as nossas expectativas no desenvolvimento do website do nosso stand. Entregaram um design moderno e perfeitamente alinhado com a nossa identidade, acompanhado por uma plataforma rápida, eficiente e muito bem posicionada no Google. A gestão e inserção de viaturas tornou-se extremamente fácil, e o suporte contínuo no dia a dia é impecável.',
+          },
         ],
       },
 
@@ -193,14 +185,9 @@ const translations = {
         brand: 'LUMYO',
         eyebrow: 'SISTEMAS DIGITAIS',
 
-        line1:
-          'NÃO CONSTRUÍMOS APENAS PRODUTOS DIGITAIS.',
-
-        line2:
-          'CONSTRUÍMOS O QUE',
-
-        line3:
-          'O TEU NEGÓCIO PRECISA.',
+        line1: 'NÃO CONSTRUÍMOS APENAS PRODUTOS DIGITAIS.',
+        line2: 'CONSTRUÍMOS O QUE',
+        line3: 'O TEU NEGÓCIO PRECISA.',
 
         description:
           'Estratégia, design, desenvolvimento, automação e inteligência artificial combinados para resolver problemas reais de negócio.',
@@ -224,21 +211,18 @@ const translations = {
           'Alto desempenho',
           'Segurança e fiabilidade',
         ],
-
         [
           'Automação de workflows',
           'Automação de tarefas',
           'Integração de sistemas',
           'Optimização de processos',
         ],
-
         [
           'Estratégia e consultoria IA',
           'Machine Learning',
           'Assistentes e chatbots IA',
           'Análise de dados e insights',
         ],
-
         [
           'Optimização SEO',
           'Marketing digital',
@@ -249,8 +233,7 @@ const translations = {
 
       designEyebrow: 'DESIGN ÚNICO',
 
-      designHeading:
-        'Cada negócio merece uma solução única.',
+      designHeading: 'Cada negócio merece uma solução única.',
 
       designList: [
         'Sem templates.',
@@ -261,8 +244,7 @@ const translations = {
       whyLumyo: {
         eyebrow: 'PORQUÊ A LUMYO',
 
-        heading:
-          'Quatro pilares de engenharia e design.',
+        heading: 'Quatro pilares de engenharia e design.',
 
         pillars: [
           {
@@ -271,21 +253,18 @@ const translations = {
             desc:
               'Estratégia clara focada em objetivos de negócio e resultados mensuráveis.',
           },
-
           {
             num: '02',
             title: 'DESIGN',
             desc:
               'Design premium personalizado sem templates, desenhado pixel a pixel.',
           },
-
           {
             num: '03',
             title: 'DESENVOLVIMENTO',
             desc:
               'Engenharia limpa, escalável e de alto desempenho.',
           },
-
           {
             num: '04',
             title: 'INTELIGÊNCIA',
@@ -298,8 +277,7 @@ const translations = {
       selectedWork: {
         eyebrow: 'PROJETOS SELECIONADOS',
 
-        heading:
-          'Sistemas reais com impacto no negócio.',
+        heading: 'Sistemas reais com impacto no negócio.',
       },
 
       contactScene: {
@@ -373,58 +351,46 @@ const translations = {
     // =====================================================
 
     solutions: {
-      heading:
-        'Sistemas digitais inteligentes, feitos para escalar.',
+      heading: 'Sistemas digitais inteligentes, feitos para escalar.',
 
       items: [
         {
           title: 'WEBSITES PREMIUM',
-
           lines: [
             'Feitos para impressionar.',
             'Otimizados para converter.',
             'Criados para crescer.',
           ],
-
           body:
             'Websites de alto desempenho e focados em conversão, criados pixel a pixel — sem templates, apenas experiências digitais à medida que refletem a sua marca.',
         },
-
         {
           title: 'AUTOMAÇÃO',
-
           lines: [
             'Menos trabalho repetitivo.',
             'Mais produtividade.',
             'Mais tempo para crescer.',
           ],
-
           body:
             'Mapeamos os seus processos e automatizamos o repetitivo, para a sua equipa focar no que realmente faz o negócio avançar.',
         },
-
         {
           title: 'SOLUÇÕES IA',
-
           lines: [
             'Assistentes de IA.',
             'Fluxos inteligentes.',
             'Impacto real no negócio.',
           ],
-
           body:
             'Assistentes de IA e sistemas inteligentes à medida, integrados diretamente nas suas operações para resultados reais e mensuráveis.',
         },
-
         {
           title: 'CRESCIMENTO DIGITAL',
-
           lines: [
             'Gere contactos.',
             'Aumente conversões.',
             'Escale com dados.',
           ],
-
           body:
             'Sistemas de crescimento orientados por dados que geram contactos e aumentam conversões — desenhados para escalar com a sua ambição.',
         },
@@ -436,8 +402,7 @@ const translations = {
     // =====================================================
 
     cases: {
-      heading:
-        'Sistemas reais. Impacto real no negócio.',
+      heading: 'Sistemas reais. Impacto real no negócio.',
 
       stats: [
         {
@@ -463,32 +428,26 @@ const translations = {
           tag: 'WEBSITE PREMIUM',
           title: 'SISTEMA WEB 01',
           result: 'SISTEMA DIGITAL',
-
           body:
             'Arquitetura e desenvolvimento web de alto desempenho — desenhado para velocidade, clareza e conversão.',
         },
-
         {
           tag: 'AUTOMAÇÃO IA',
           title: 'SISTEMA IA 02',
           result: 'AUTOMAÇÃO DE PROCESSO',
-
           body:
             'Geração de orçamentos e fluxos operacionais automatizados com assistentes inteligentes à medida.',
         },
-
         {
           tag: 'CRESCIMENTO DIGITAL',
           title: 'SISTEMA CRESCIMENTO 03',
           result: 'AQUISIÇÃO DE DADOS',
-
           body:
             'Sistema de aquisição orientado por dados que liga anúncios, CRM e analítica num só ciclo.',
         },
       ],
 
-      cta:
-        'SEJA O PRÓXIMO CASO DE ESTUDO',
+      cta: 'SEJA O PRÓXIMO CASO DE ESTUDO',
     },
 
     // =====================================================
@@ -496,11 +455,9 @@ const translations = {
     // =====================================================
 
     studio: {
-      eyebrow:
-        'O ESTÚDIO',
+      eyebrow: 'O ESTÚDIO',
 
-      heading:
-        'Um estúdio para empresas ambiciosas.',
+      heading: 'Um estúdio para empresas ambiciosas.',
 
       intro:
         'A LUMYO é um estúdio digital que constrói websites premium, automação com IA e sistemas inteligentes. Trabalhamos com empresas que se recusam a aceitar templates — e construímos sistemas digitais que escalam com elas.',
@@ -512,8 +469,7 @@ const translations = {
         'Impacto acima de métricas de vaidade.',
       ],
 
-      howWeWork:
-        'COMO TRABALHAMOS',
+      howWeWork: 'COMO TRABALHAMOS',
 
       process: [
         {
@@ -521,19 +477,16 @@ const translations = {
           d:
             'Mergulhamos nos seus objetivos, utilizadores e restrições antes de um único pixel.',
         },
-
         {
           t: 'Desenhar',
           d:
             'Interfaces e sistemas à medida, criados em torno da sua marca — nunca templates.',
         },
-
         {
           t: 'Construir',
           d:
             'Engenharia limpa e escalável, com automação e IA no núcleo.',
         },
-
         {
           t: 'Escalar',
           d:
@@ -541,8 +494,7 @@ const translations = {
         },
       ],
 
-      cta:
-        'TRABALHE CONNOSCO',
+      cta: 'TRABALHE CONNOSCO',
     },
 
     // =====================================================
@@ -550,8 +502,7 @@ const translations = {
     // =====================================================
 
     contact: {
-      heading:
-        'Vamos construir algo único.',
+      heading: 'Vamos construir algo único.',
 
       desc:
         'Fala-nos do teu projeto. Respondemos a todos os pedidos sérios em 24 horas.',
@@ -561,14 +512,9 @@ const translations = {
       labelService: 'SERVIÇO',
       labelMessage: 'MENSAGEM',
 
-      phName:
-        'O teu nome',
-
-      phEmail:
-        'email@empresa.com',
-
-      phMessage:
-        'Fala-nos do teu projeto...',
+      phName: 'O teu nome',
+      phEmail: 'email@empresa.com',
+      phMessage: 'Fala-nos do teu projeto...',
 
       services: [
         'Website Premium',
@@ -577,21 +523,12 @@ const translations = {
         'Crescimento Digital',
       ],
 
-      submit:
-        'INICIAR PROJETO',
-
-      sending:
-        'A ENVIAR...',
-
-      successTitle:
-        'Mensagem enviada com sucesso.',
-
+      submit: 'INICIAR PROJETO',
+      sending: 'A ENVIAR...',
+      successTitle: 'Mensagem enviada com sucesso.',
       successMsg:
         'Obrigado! Recebemos o teu pedido e entraremos em contacto muito em breve.',
-
-      sendAnother:
-        'ENVIAR OUTRA',
-
+      sendAnother: 'ENVIAR OUTRA',
       errorMsg:
         'Algo correu mal. Tenta novamente ou escreve-nos diretamente por email.',
     },
@@ -636,7 +573,6 @@ const translations = {
             'Built to convert.',
           ],
         },
-
         {
           t: 'AI AUTOMATION',
           d: [
@@ -644,7 +580,6 @@ const translations = {
             'Automate repetitive work.',
           ],
         },
-
         {
           t: 'DIGITAL GROWTH',
           d: [
@@ -652,7 +587,6 @@ const translations = {
             'Increase conversions.',
           ],
         },
-
         {
           t: 'TAILORED SOLUTIONS',
           d: [
@@ -668,12 +602,8 @@ const translations = {
 
       servicePremium: {
         number: '01',
-
-        titleLine1:
-          'PREMIUM',
-
-        titleLine2:
-          'WEBSITES',
+        titleLine1: 'PREMIUM',
+        titleLine2: 'WEBSITES',
 
         lines: [
           'Designed to impress.',
@@ -688,12 +618,8 @@ const translations = {
 
       serviceAutomation: {
         number: '02',
-
-        titleLine1:
-          'AUTO',
-
-        titleLine2:
-          'MATION',
+        titleLine1: 'AUTO',
+        titleLine2: 'MATION',
 
         lines: [
           'Less repetitive work.',
@@ -708,12 +634,8 @@ const translations = {
 
       serviceAI: {
         number: '03',
-
-        titleLine1:
-          'ARTIFICIAL',
-
-        titleLine2:
-          'INTELLIGENCE',
+        titleLine1: 'ARTIFICIAL',
+        titleLine2: 'INTELLIGENCE',
 
         lines: [
           'AI assistants.',
@@ -727,14 +649,9 @@ const translations = {
       // =====================================================
 
       editorialExperience: {
-        titleLine1:
-          'SHAPING EXPERIENCES',
-
-        titleLine2:
-          'THAT MAKE LIFE',
-
-        titleLine3:
-          'SIMPLER.',
+        titleLine1: 'SHAPING EXPERIENCES',
+        titleLine2: 'THAT MAKE LIFE',
+        titleLine3: 'SIMPLER.',
 
         description:
           'Websites, software, automation and artificial intelligence built around real business challenges.',
@@ -745,17 +662,12 @@ const translations = {
       // =====================================================
 
       aiCreative: {
-        eyebrowTop:
-          'AI VIDEO',
+        eyebrowTop: 'AI VIDEO',
 
-        titleLeft:
-          'AI',
+        titleLeft: 'AI',
+        titleRight: 'CREATIVE',
 
-        titleRight:
-          'CREATIVE',
-
-        eyebrowBottom:
-          'DIGITAL INFLUENCERS',
+        eyebrowBottom: 'DIGITAL INFLUENCERS',
 
         description:
           'Video, visual content and digital identities created with artificial intelligence for brands that want to communicate differently.',
@@ -766,37 +678,31 @@ const translations = {
       // =====================================================
 
       testimonials: {
-        eyebrow:
-          'LUMYO',
+        eyebrow: 'LUMYO',
 
-        titleLine1:
-          'WHAT OUR',
-
-        titleLine2:
-          'CLIENTS SAY.',
+        titleLine1: 'WHAT OUR',
+        titleLine2: 'CLIENTS SAY.',
 
         items: [
           {
-    name: 'Anabela Magalhães',
-    shortQuote:
-      'Lumyo adapted every solution to our needs, making our daily operation much simpler and more efficient.',
-    quote:
+            name: 'Anabela Magalhães',
+            shortQuote:
+              'Lumyo adapted every solution to our needs, making our daily operation much simpler and more efficient.',
+            quote:
               'The service provided by Lumyo was exceptional from the very first contact. They showed great flexibility in adapting each solution to our needs and, today, our daily operation is incomparably simpler and more efficient.',
           },
-
-         {
-    name: 'João Antunes',
-    shortQuote:
-      'The application is fast, intuitive and has been essential in increasing our clients’ satisfaction.',
-    quote:
+          {
+            name: 'João Antunes',
+            shortQuote:
+              'The application is fast, intuitive and has been essential in increasing our clients’ satisfaction.',
+            quote:
               'The application developed by Lumyo works perfectly. It is fast, intuitive and has been fundamental in helping us raise the level of satisfaction of our clients.',
           },
-
           {
-    name: 'Vítor Machado',
-    shortQuote:
-      'Lumyo created a modern, fast and easy-to-manage website, exceeding our expectations in design and support.',
-    quote:
+            name: 'Vítor Machado',
+            shortQuote:
+              'Lumyo created a modern, fast and easy-to-manage website, exceeding our expectations in design and support.',
+            quote:
               'Lumyo exceeded all our expectations in the development of our dealership website. They delivered a modern design perfectly aligned with our identity, together with a fast, efficient platform with excellent Google positioning. Managing and adding vehicles has become extremely easy, and their ongoing support is impeccable.',
           },
         ],
@@ -807,20 +713,12 @@ const translations = {
       // =====================================================
 
       positioning: {
-        brand:
-          'LUMYO',
+        brand: 'LUMYO',
+        eyebrow: 'DIGITAL SYSTEMS',
 
-        eyebrow:
-          'DIGITAL SYSTEMS',
-
-        line1:
-          'WE DO NOT JUST BUILD DIGITAL PRODUCTS.',
-
-        line2:
-          'WE BUILD WHAT',
-
-        line3:
-          'YOUR BUSINESS NEEDS.',
+        line1: 'WE DO NOT JUST BUILD DIGITAL PRODUCTS.',
+        line2: 'WE BUILD WHAT',
+        line3: 'YOUR BUSINESS NEEDS.',
 
         description:
           'Strategy, design, development, automation and artificial intelligence combined to solve real business problems.',
@@ -844,21 +742,18 @@ const translations = {
           'High performance',
           'Secure and reliable',
         ],
-
         [
           'Workflow automation',
           'Task automation',
           'System integration',
           'Process optimization',
         ],
-
         [
           'AI strategy & consulting',
           'Machine Learning',
           'AI chatbots & assistants',
           'Data analysis & insights',
         ],
-
         [
           'SEO optimization',
           'Digital marketing',
@@ -867,11 +762,9 @@ const translations = {
         ],
       ],
 
-      designEyebrow:
-        'UNIQUE DESIGN',
+      designEyebrow: 'UNIQUE DESIGN',
 
-      designHeading:
-        'Every business deserves a unique solution.',
+      designHeading: 'Every business deserves a unique solution.',
 
       designList: [
         'No templates.',
@@ -880,11 +773,9 @@ const translations = {
       ],
 
       whyLumyo: {
-        eyebrow:
-          'WHY LUMYO',
+        eyebrow: 'WHY LUMYO',
 
-        heading:
-          'Four pillars of engineering and design.',
+        heading: 'Four pillars of engineering and design.',
 
         pillars: [
           {
@@ -893,21 +784,18 @@ const translations = {
             desc:
               'Clear strategy focused on business goals and measurable results.',
           },
-
           {
             num: '02',
             title: 'DESIGN',
             desc:
               'Bespoke premium design with zero templates, crafted pixel by pixel.',
           },
-
           {
             num: '03',
             title: 'DEVELOPMENT',
             desc:
               'Clean, scalable, high-performance engineering.',
           },
-
           {
             num: '04',
             title: 'INTELLIGENCE',
@@ -918,11 +806,9 @@ const translations = {
       },
 
       selectedWork: {
-        eyebrow:
-          'SELECTED WORK',
+        eyebrow: 'SELECTED WORK',
 
-        heading:
-          'Real cases of business impact.',
+        heading: 'Real cases of business impact.',
       },
 
       contactScene: {
@@ -988,62 +874,46 @@ const translations = {
     },
 
     solutions: {
-      heading:
-        'Intelligent digital systems, built to scale.',
+      heading: 'Intelligent digital systems, built to scale.',
 
       items: [
         {
-          title:
-            'PREMIUM WEBSITES',
-
+          title: 'PREMIUM WEBSITES',
           lines: [
             'Designed to impress.',
             'Engineered to convert.',
             'Built to grow.',
           ],
-
           body:
             'High-performance, conversion-focused websites crafted pixel by pixel — no templates, only bespoke digital experiences that reflect your brand.',
         },
-
         {
-          title:
-            'AUTOMATION',
-
+          title: 'AUTOMATION',
           lines: [
             'Less repetitive work.',
             'More productivity.',
             'More time to grow.',
           ],
-
           body:
             'We map your workflows and automate the repetitive, so your team focuses on what actually moves the business forward.',
         },
-
         {
-          title:
-            'AI SOLUTIONS',
-
+          title: 'AI SOLUTIONS',
           lines: [
             'AI assistants.',
             'Intelligent workflows.',
             'Real business impact.',
           ],
-
           body:
             'Custom AI assistants and intelligent systems integrated directly into your operations for measurable, real-world results.',
         },
-
         {
-          title:
-            'DIGITAL GROWTH',
-
+          title: 'DIGITAL GROWTH',
           lines: [
             'Generate leads.',
             'Increase conversions.',
             'Scale with data.',
           ],
-
           body:
             'Data-driven growth systems that generate leads and increase conversions — engineered to scale alongside your ambition.',
         },
@@ -1051,25 +921,21 @@ const translations = {
     },
 
     cases: {
-      heading:
-        'Real systems. Real business impact.',
+      heading: 'Real systems. Real business impact.',
 
       stats: [
         {
           k: '60+',
           l: 'Projects shipped',
         },
-
         {
           k: '12',
           l: 'Industries served',
         },
-
         {
           k: '98%',
           l: 'Client retention',
         },
-
         {
           k: '4.9',
           l: 'Average rating',
@@ -1078,58 +944,35 @@ const translations = {
 
       items: [
         {
-          tag:
-            'PREMIUM WEBSITE',
-
-          title:
-            'WEB SYSTEM 01',
-
-          result:
-            'DIGITAL SYSTEM',
-
+          tag: 'PREMIUM WEBSITE',
+          title: 'WEB SYSTEM 01',
+          result: 'DIGITAL SYSTEM',
           body:
             'High-performance web architecture and engineering — built for speed, clarity and conversion.',
         },
-
         {
-          tag:
-            'AI AUTOMATION',
-
-          title:
-            'AI SYSTEM 02',
-
-          result:
-            'PROCESS AUTOMATION',
-
+          tag: 'AI AUTOMATION',
+          title: 'AI SYSTEM 02',
+          result: 'PROCESS AUTOMATION',
           body:
             'Automated workflows and operations powered by tailored intelligent assistants.',
         },
-
         {
-          tag:
-            'DIGITAL GROWTH',
-
-          title:
-            'GROWTH SYSTEM 03',
-
-          result:
-            'DATA ACQUISITION',
-
+          tag: 'DIGITAL GROWTH',
+          title: 'GROWTH SYSTEM 03',
+          result: 'DATA ACQUISITION',
           body:
             'Data-driven acquisition system connecting marketing, CRM and analytics into one loop.',
         },
       ],
 
-      cta:
-        'BECOME THE NEXT CASE STUDY',
+      cta: 'BECOME THE NEXT CASE STUDY',
     },
 
     studio: {
-      eyebrow:
-        'THE STUDIO',
+      eyebrow: 'THE STUDIO',
 
-      heading:
-        'A studio for ambitious businesses.',
+      heading: 'A studio for ambitious businesses.',
 
       intro:
         'LUMYO is a digital studio building premium websites, AI automation and intelligent systems. We partner with businesses that refuse to settle for templates — and we build digital systems that scale with them.',
@@ -1141,8 +984,7 @@ const translations = {
         'Impact over vanity metrics.',
       ],
 
-      howWeWork:
-        'HOW WE WORK',
+      howWeWork: 'HOW WE WORK',
 
       process: [
         {
@@ -1150,19 +992,16 @@ const translations = {
           d:
             'We dig into your goals, users and constraints before a single pixel is drawn.',
         },
-
         {
           t: 'Design',
           d:
             'Bespoke interfaces and systems crafted around your brand — never templated.',
         },
-
         {
           t: 'Build',
           d:
             'Clean, scalable engineering with automation and AI baked into the core.',
         },
-
         {
           t: 'Scale',
           d:
@@ -1170,37 +1009,23 @@ const translations = {
         },
       ],
 
-      cta:
-        'WORK WITH US',
+      cta: 'WORK WITH US',
     },
 
     contact: {
-      heading:
-        "Let's build something unique.",
+      heading: "Let's build something unique.",
 
       desc:
         'Tell us about your project. We reply to every serious enquiry within 24 hours.',
 
-      labelName:
-        'NAME',
+      labelName: 'NAME',
+      labelEmail: 'EMAIL',
+      labelService: 'SERVICE',
+      labelMessage: 'MESSAGE',
 
-      labelEmail:
-        'EMAIL',
-
-      labelService:
-        'SERVICE',
-
-      labelMessage:
-        'MESSAGE',
-
-      phName:
-        'Your name',
-
-      phEmail:
-        'you@company.com',
-
-      phMessage:
-        'Tell us about your project...',
+      phName: 'Your name',
+      phEmail: 'you@company.com',
+      phMessage: 'Tell us about your project...',
 
       services: [
         'Premium Website',
@@ -1209,33 +1034,31 @@ const translations = {
         'Digital Growth',
       ],
 
-      submit:
-        'START YOUR PROJECT',
-
-      sending:
-        'SENDING...',
-
-      successTitle:
-        'Message sent successfully.',
-
+      submit: 'START YOUR PROJECT',
+      sending: 'SENDING...',
+      successTitle: 'Message sent successfully.',
       successMsg:
         "Thank you! We've received your request and will be in touch very soon.",
-
-      sendAnother:
-        'SEND ANOTHER',
-
+      sendAnother: 'SEND ANOTHER',
       errorMsg:
         'Something went wrong. Please try again or email us directly.',
     },
   },
 };
 
+// 1. Instanciação do Contexto (Resolve o ReferenceError)
 const LanguageContext = createContext(null);
 
+// 2. Provedor de Idioma
 export function LanguageProvider({ children }) {
   const [lang, setLang] = useState(
     () => localStorage.getItem('lumyo_lang') || 'pt'
   );
+
+  useEffect(() => {
+    document.documentElement.lang =
+      lang === 'pt' ? 'pt-PT' : 'en';
+  }, [lang]);
 
   const toggle = useCallback(() => {
     setLang((prev) => {
@@ -1265,6 +1088,7 @@ export function LanguageProvider({ children }) {
   );
 }
 
+// 3. Hook Personalizado
 export function useLang() {
   const ctx = useContext(LanguageContext);
 

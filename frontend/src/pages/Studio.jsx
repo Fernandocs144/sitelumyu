@@ -5,6 +5,8 @@ import { Link } from 'react-router-dom';
 import { IMAGES } from '../data';
 import { useLang } from '../i18n';
 import ParticleField from '../components/ParticleField';
+import SEO from '../components/seo/SEO';
+
 
 const icons = [Compass, PenTool, Code2, Rocket];
 
@@ -13,6 +15,14 @@ export default function Studio() {
   const s = t.studio;
   return (
     <div className="page-enter section-bg relative min-h-screen overflow-hidden pt-40 pb-28">
+      <SEO
+  title="Sobre a Lumyo"
+  titleEn="About Lumyo"
+  description="Conhece a Lumyo, um estúdio digital que combina estratégia, design e tecnologia para construir websites, automações, soluções de IA e sistemas de crescimento."
+  descriptionEn="Meet Lumyo, a digital studio combining strategy, design and technology to build websites, automation, AI solutions and digital growth systems."
+  path="/studio"
+/>
+
       <ParticleField count={40} />
       <div className="relative z-10 mx-auto max-w-[1600px] px-6 md:px-10">
         <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">

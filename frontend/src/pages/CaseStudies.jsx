@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { IMAGES } from '../data';
 import { useLang } from '../i18n';
 import ParticleField from '../components/ParticleField';
+import SEO from '../components/seo/SEO';
 
 const imgs = [IMAGES.streams, IMAGES.network, IMAGES.diamond];
 
@@ -12,6 +13,14 @@ export default function CaseStudies() {
   const { t } = useLang();
   return (
     <div className="page-enter section-bg relative min-h-screen overflow-hidden pt-40 pb-28">
+      <SEO
+  title="Casos de Estudo"
+  titleEn="Case Studies"
+  description="Conhece projetos e soluções digitais desenvolvidos pela Lumyo e descobre como combinamos estratégia, design, tecnologia, automação e inteligência artificial."
+  descriptionEn="Explore digital projects and solutions developed by Lumyo and discover how we combine strategy, design, technology, automation and artificial intelligence."
+  path="/case-studies"
+/>
+
       <ParticleField count={40} />
       <div className="relative z-10 mx-auto max-w-[1600px] px-6 md:px-10">
         <p className="font-head text-sm tracking-mega text-magenta">{t.nav.cases}</p>
