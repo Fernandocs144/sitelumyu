@@ -6,6 +6,7 @@ import { useLang } from '../i18n';
 import ParticleField from '../components/ParticleField';
 import SolutionCard from '../components/solutions/SolutionCard/SolutionCard';
 import SEO from '../components/seo/SEO';
+
 const icons = [Globe, Settings, Sparkles, TrendingUp];
 const solutionRoutes = [
   '/solutions/websites',
@@ -21,12 +22,12 @@ export default function Solutions() {
   return (
     <div className="page-enter section-bg relative min-h-screen overflow-hidden pt-40 pb-28">
       <SEO
-  title="Soluções Digitais para Empresas"
-  titleEn="Digital Solutions for Businesses"
-  description="Websites premium, automação, inteligência artificial e crescimento digital integrados num sistema pensado para ajudar empresas a operar melhor e crescer."
-  descriptionEn="Premium websites, automation, artificial intelligence and digital growth integrated into systems designed to help businesses operate better and grow."
-  path="/solutions"
-/>
+        title="Soluções Digitais para Empresas"
+        titleEn="Digital Solutions for Businesses"
+        description="Websites premium, automação, inteligência artificial e crescimento digital integrados num sistema pensado para ajudar empresas a operar melhor e crescer."
+        descriptionEn="Premium websites, automation, artificial intelligence and digital growth integrated into systems designed to help businesses operate better and grow."
+        path="/solutions"
+      />
       <ParticleField count={40} />
       <div className="relative z-10 mx-auto max-w-[1600px] px-6 md:px-10">
         <p className="font-head text-sm tracking-mega text-magenta">
@@ -171,9 +172,9 @@ export default function Solutions() {
           <Link
             to="/contact"
             data-testid="solutions-cta"
-            className="pill-btn inline-flex items-center gap-4 rounded-full border border-magenta px-8 py-4 font-head text-sm tracking-[0.3em] text-white"
+            className="inline-flex items-center gap-4 rounded-full bg-gradient-to-r from-magenta to-violet px-8 py-4 pill-btn font-head text-sm tracking-[0.3em] text-white"
           >
-            {t.common.startProject} <ArrowRight className="h-4 w-4 text-magenta" />
+            {t.common.startProject} <ArrowRight className="h-4 w-4 text-white" />
           </Link>
         </div>
       </div>

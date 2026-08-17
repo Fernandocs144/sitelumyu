@@ -14,12 +14,12 @@ export default function CaseStudies() {
   return (
     <div className="page-enter section-bg relative min-h-screen overflow-hidden pt-40 pb-28">
       <SEO
-  title="Casos de Estudo"
-  titleEn="Case Studies"
-  description="Conhece projetos e soluções digitais desenvolvidos pela Lumyo e descobre como combinamos estratégia, design, tecnologia, automação e inteligência artificial."
-  descriptionEn="Explore digital projects and solutions developed by Lumyo and discover how we combine strategy, design, technology, automation and artificial intelligence."
-  path="/case-studies"
-/>
+        title="Casos de Estudo"
+        titleEn="Case Studies"
+        description="Conhece projetos e soluções digitais desenvolvidos pela Lumyo e descobre como combinamos estratégia, design, tecnologia, automação e inteligência artificial."
+        descriptionEn="Explore digital projects and solutions developed by Lumyo and discover how we combine strategy, design, technology, automation and artificial intelligence."
+        path="/case-studies"
+      />
 
       <ParticleField count={40} />
       <div className="relative z-10 mx-auto max-w-[1600px] px-6 md:px-10">
@@ -70,7 +70,11 @@ export default function CaseStudies() {
         </div>
 
         <div className="mt-20 text-center">
-          <Link to="/contact" data-testid="cases-cta" className="inline-flex items-center gap-4 rounded-full border border-magenta px-8 py-4 pill-btn font-head text-sm tracking-[0.3em] text-white">
+          <Link
+            to="/contact"
+            data-testid="cases-cta"
+            className="inline-flex items-center gap-4 rounded-full bg-gradient-to-r from-magenta to-violet px-8 py-4 pill-btn font-head text-sm tracking-[0.3em] text-white"
+          >
             {t.cases.cta}
           </Link>
         </div>

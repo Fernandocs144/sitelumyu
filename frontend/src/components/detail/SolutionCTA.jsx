@@ -26,7 +26,10 @@ export default function SolutionCTA({
             <p>{description}</p>
           </div>
 
-          <Link to={buttonTo} className="solution-detail-cta__link">
+          <Link
+            to={buttonTo}
+            className="inline-flex items-center gap-4 rounded-full bg-gradient-to-r from-magenta to-violet px-8 py-4 pill-btn font-head text-sm tracking-[0.3em] text-white"
+          >
             {buttonText}
             <ArrowRight size={16} />
           </Link>

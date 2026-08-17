@@ -1,87 +1,168 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Compass, PenTool, Code2, Rocket } from 'lucide-react';
+import {
+  Compass,
+  PenTool,
+  Code2,
+  Rocket,
+  ArrowUpRight,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { IMAGES } from '../data';
 import { useLang } from '../i18n';
 import ParticleField from '../components/ParticleField';
 import SEO from '../components/seo/SEO';
-
+import StudioDiamondIntro from '../components/studio/StudioDiamondIntro/StudioDiamondIntro';
 
 const icons = [Compass, PenTool, Code2, Rocket];
 
 export default function Studio() {
   const { t } = useLang();
   const s = t.studio;
-  return (
-    <div className="page-enter section-bg relative min-h-screen overflow-hidden pt-40 pb-28">
-      <SEO
-  title="Sobre a Lumyo"
-  titleEn="About Lumyo"
-  description="Conhece a Lumyo, um estúdio digital que combina estratégia, design e tecnologia para construir websites, automações, soluções de IA e sistemas de crescimento."
-  descriptionEn="Meet Lumyo, a digital studio combining strategy, design and technology to build websites, automation, AI solutions and digital growth systems."
-  path="/studio"
-/>
 
-      <ParticleField count={40} />
-      <div className="relative z-10 mx-auto max-w-[1600px] px-6 md:px-10">
-        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
-          <div>
-            <p className="font-head text-sm tracking-mega text-magenta">{s.eyebrow}</p>
-            <h1 className="mt-6 font-head text-4xl font-bold leading-tight text-white md:text-6xl">
-              {s.heading}
-            </h1>
-            <p className="mt-6 max-w-lg font-body text-lg leading-relaxed text-white/60">{s.intro}</p>
-            <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {s.values.map((v, i) => (
-                <div key={i} className="glass rounded-xl px-5 py-4 font-body text-white/70" data-testid={`value-${i}`}>
-                  {v}
-                </div>
+  return (
+    <div className="page-enter section-bg relative min-h-screen overflow-hidden">
+      <SEO
+        title="Sobre a Lumyo"
+        titleEn="About Lumyo"
+        description="Conhece a Lumyo, um estúdio digital que combina estratégia, design e tecnologia para construir websites, automações, soluções de IA e sistemas de crescimento."
+        descriptionEn="Meet Lumyo, a digital studio combining strategy, design and technology to build websites, automation, AI solutions and digital growth systems."
+        path="/studio"
+      />
+
+      <StudioDiamondIntro />
+
+      <div
+        id="studio-content"
+        className="studio-content-reveal relative pt-40 pb-28"
+      >
+        <ParticleField count={40} />
+
+        <div className="relative z-10 mx-auto max-w-[1600px] px-6 md:px-10">
+          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
+            <div>
+              <p className="font-head text-sm tracking-mega text-magenta">{s.eyebrow}</p>
+              <h1 className="mt-6 font-head text-4xl font-bold leading-tight text-white md:text-6xl">
+                {s.heading}
+              </h1>
+              <p className="mt-6 max-w-lg font-body text-lg leading-relaxed text-white/60">{s.intro}</p>
+              <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {s.values.map((v, i) => (
+                  <div key={i} className="glass rounded-xl px-5 py-4 font-body text-white/70" data-testid={`value-${i}`}>
+                    {v}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.7 }}
+              className="relative overflow-hidden rounded-3xl"
+            >
+              <img src={IMAGES.diamond} alt="LUMYO studio" className="w-full object-cover animate-floaty" />
+              <div className="absolute inset-0 bg-gradient-to-t from-ink/70 to-transparent" />
+            </motion.div>
+          </div>
+
+          {/* GEO / Entity clarity — definição explícita da Lumyo */}
+          <section
+            className="mt-28"
+            aria-labelledby="studio-what-we-do"
+          >
+            <div className="mx-auto max-w-4xl text-center">
+              <p className="font-head text-sm tracking-mega text-magenta">
+                {s.whatWeDoEyebrow}
+              </p>
+
+              <h2
+                id="studio-what-we-do"
+                className="mt-5 font-head text-3xl font-bold leading-tight text-white md:text-5xl"
+              >
+                {s.whatWeDoTitle}
+              </h2>
+
+              <p className="mx-auto mt-6 max-w-3xl font-body text-lg leading-relaxed text-white/60">
+                {s.whatWeDoIntro}
+              </p>
+            </div>
+
+            <div className="mt-12 grid grid-cols-1 gap-5 md:grid-cols-2">
+              {s.services && s.services.map((service) => (
+                <Link
+                  key={service.number}
+                  to={service.path}
+                  className="group glass rounded-2xl p-6 transition-transform duration-300 hover:-translate-y-1 md:p-8"
+                >
+                  <div className="flex items-start justify-between gap-6">
+                    <span className="font-display text-xl text-magenta/70">
+                      {service.number}
+                    </span>
+
+                    <ArrowUpRight
+                      className="h-5 w-5 text-white/35 transition-all duration-300 group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-magenta"
+                      strokeWidth={1.5}
+                    />
+                  </div>
+
+                  <h3 className="mt-8 font-head text-2xl font-semibold text-white">
+                    {service.title}
+                  </h3>
+
+                  <p className="mt-4 font-body text-base leading-relaxed text-white/55">
+                    {service.description}
+                  </p>
+                </Link>
               ))}
             </div>
-          </div>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.7 }}
-            className="relative overflow-hidden rounded-3xl"
-          >
-            <img src={IMAGES.diamond} alt="LUMYO studio" className="w-full object-cover animate-floaty" />
-            <div className="absolute inset-0 bg-gradient-to-t from-ink/70 to-transparent" />
-          </motion.div>
-        </div>
 
-        <div className="mt-28">
-          <p className="text-center font-head text-sm tracking-mega text-magenta">{s.howWeWork}</p>
-          <div className="mt-14 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {s.process.map((p, i) => {
-              const Icon = icons[i];
-              return (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: i * 0.1 }}
-                  className="glass rounded-2xl p-8 transition-transform hover:-translate-y-2"
-                  data-testid={`process-${String(i + 1).padStart(2, '0')}`}
-                >
-                  <Icon className="h-9 w-9 text-magenta" strokeWidth={1.4} />
-                  <span className="mt-6 block font-display text-2xl text-magenta/70">
-                    {String(i + 1).padStart(2, '0')}
-                  </span>
-                  <h3 className="mt-2 font-head text-2xl font-semibold text-white">{p.t}</h3>
-                  <p className="mt-3 font-body text-white/55">{p.d}</p>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
+            <div className="mx-auto mt-16 max-w-4xl text-center">
+              <h2 className="font-head text-2xl font-semibold leading-tight text-white md:text-4xl">
+                {s.systemTitle}
+              </h2>
 
-        <div className="mt-24 text-center">
-          <Link to="/contact" data-testid="studio-cta" className="inline-flex items-center gap-4 rounded-full border border-magenta px-8 py-4 pill-btn font-head text-sm tracking-[0.3em] text-white">
-            {s.cta}
-          </Link>
+              <p className="mx-auto mt-5 max-w-3xl font-body text-lg leading-relaxed text-white/60">
+                {s.systemDescription}
+              </p>
+            </div>
+          </section>
+
+          <div className="mt-28">
+            <p className="text-center font-head text-sm tracking-mega text-magenta">{s.howWeWork}</p>
+            <div className="mt-14 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+              {s.process.map((p, i) => {
+                const Icon = icons[i];
+                return (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: i * 0.1 }}
+                    className="glass rounded-2xl p-8 transition-transform hover:-translate-y-2"
+                    data-testid={`process-${String(i + 1).padStart(2, '0')}`}
+                  >
+                    <Icon className="h-9 w-9 text-magenta" strokeWidth={1.4} />
+                    <span className="mt-6 block font-display text-2xl text-magenta/70">
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                    <h3 className="mt-2 font-head text-2xl font-semibold text-white">{p.t}</h3>
+                    <p className="mt-3 font-body text-white/55">{p.d}</p>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="mt-24 text-center">
+            <Link
+              to="/contact"
+              data-testid="studio-cta"
+              className="inline-flex items-center gap-4 rounded-full bg-gradient-to-r from-magenta to-violet px-8 py-4 pill-btn font-head text-sm tracking-[0.3em] text-white"
+            >
+              {s.cta}
+            </Link>
+          </div>
         </div>
       </div>
     </div>
