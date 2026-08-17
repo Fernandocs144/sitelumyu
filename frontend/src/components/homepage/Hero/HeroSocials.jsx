@@ -26,19 +26,7 @@ export default function HeroSocials() {
   return (
     <div
       data-hero-socials
-      className="
-        hidden
-        xl:flex
-        pointer-events-auto
-        absolute
-        right-8
-        top-1/2
-        -translate-y-1/2
-        z-30
-        flex-col
-        items-center
-        gap-5
-      "
+      className="hidden lg:flex pointer-events-auto absolute right-6 xl:right-8 top-1/2 -translate-y-1/2 z-30 flex-col items-center gap-5"
     >
       {/* Top subtle vertical line */}
       <span className="h-14 w-px bg-gradient-to-b from-transparent via-white/20 to-magenta/60" />
