@@ -1,0 +1,223 @@
+# Lumyo
+
+> Lumyo is a Portuguese digital studio specialising in premium website development, process automation, artificial intelligence solutions and digital growth strategies for businesses.
+
+Official website: https://www.lumyo.pt
+Primary market: Portugal
+Languages: Portuguese (pt-PT) and English
+
+## About Lumyo
+
+Lumyo designs and develops digital systems for businesses.
+
+Its work combines strategy, design, software development, automation, artificial intelligence and digital growth.
+
+The studio focuses on four main areas:
+
+- Premium Websites
+- Business Automation
+- Artificial Intelligence Solutions
+- Digital Growth
+
+## Premium Websites
+
+URL: https://www.lumyo.pt/solutions/websites
+
+Lumyo develops bespoke websites and digital platforms designed around the identity, goals and operational requirements of each business.
+
+Capabilities include:
+
+- Bespoke corporate websites
+- Landing pages
+- E-commerce
+- Custom Shopify experiences
+- Web applications
+- Administration areas
+- Databases
+- API and third-party integrations
+- Technical SEO
+- Structured data
+- Performance optimisation
+- Analytics and tracking
+
+Websites can integrate with CRM systems, payments, automation platforms and other business software.
+
+## Business Automation
+
+URL: https://www.lumyo.pt/solutions/automation
+
+Lumyo develops automation systems designed to reduce repetitive manual work and connect business processes and software.
+
+Capabilities include:
+
+- Lead capture
+- Lead qualification
+- CRM automation
+- Appointment automation
+- Automated follow-ups
+- Notifications
+- Data synchronisation
+- System integrations
+- Workflow automation
+
+Automation is used for predictable and repetitive processes while keeping human intervention where decisions or customer relationships require it.
+
+## Artificial Intelligence
+
+URL: https://www.lumyo.pt/solutions/ai
+
+Lumyo integrates artificial intelligence into business processes and digital products.
+
+Capabilities include:
+
+- AI assistants
+- Intelligent chatbots
+- AI-powered automation
+- Information search and analysis
+- Document processing
+- Data extraction
+- Classification
+- AI integration with CRM systems, databases, websites and internal software
+
+AI is used where processes require language understanding, information interpretation, classification, summarisation or other tasks that cannot be handled effectively through fixed rules alone.
+
+## Digital Growth
+
+URL: https://www.lumyo.pt/solutions/growth
+
+Lumyo develops data-driven digital growth strategies designed to increase visibility, qualified traffic, leads and business opportunities.
+
+Capabilities include:
+
+- SEO
+- Generative Engine Optimization (GEO)
+- Google Ads
+- Meta Ads
+- Social media management
+- Landing pages
+- Analytics
+- Tracking
+- Google Business Profile optimisation
+- Conversion analysis
+
+SEO focuses on visibility in traditional search engines.
+
+GEO focuses on making brand and business information clear, structured and useful for AI-powered search and answer experiences.
+
+SEO and GEO are complementary disciplines.
+
+## Selected Work
+
+URL: https://www.lumyo.pt/case-studies
+
+Lumyo presents examples of digital systems and strategies applied to real business problems.
+
+### Auto Silcar
+
+Area: Premium Websites
+
+Auto Silcar is an automotive digital platform with a database and administration area that allows vehicles to be added and removed without manually modifying the website.
+
+The system includes lead capture forms, email notifications through Resend and centralised contact records in the administration area.
+
+Capabilities include:
+
+- Vehicle management
+- Administration area
+- Database
+- Lead capture
+- Forms
+- Email notifications
+- Lead management
+
+### Clinic Conversion and Automation System
+
+Area: Automation and Artificial Intelligence
+
+A qualification, conversion and retention system designed for an aesthetics clinic.
+
+The system connects lead capture, qualification, appointments and follow-ups.
+
+A 24/7 assistant can operate across the website, WhatsApp and Instagram to:
+
+- Explain services and initial pricing
+- Provide information about professionals and specialties
+- Show available appointment times
+- Book, reschedule and cancel appointments
+- Provide location and instructions
+- Answer frequently asked questions
+- Transfer the conversation to a human when required
+
+The objective is not simply to generate more contacts, but to identify people with genuine intent and move them efficiently towards an appointment.
+
+### Olá
+
+Area: SaaS, Fitness and Nutrition
+
+Olá is a digital platform for personal trainers, nutritionists, gyms and studios.
+
+It centralises professional client management, training, nutrition, communication and progress tracking.
+
+Capabilities include:
+
+- Workout Builder
+- Nutrition Builder
+- Client management
+- Check-ins
+- Chat
+- Progress tracking
+- Automation
+
+### Digital Growth
+
+Area: Digital Growth
+
+Lumyo has experience developing digital growth strategies using analysis of business presence, social media, advertising channels and performance data.
+
+Work can combine:
+
+- Social media management
+- Meta Ads
+- Google Ads
+- SEO
+- GEO
+- Analytics
+- Google Business Profile
+- Performance analysis
+
+## Studio
+
+URL: https://www.lumyo.pt/studio
+
+Lumyo is a Portuguese digital studio.
+
+The studio combines strategy, design, technology, automation, artificial intelligence and digital growth rather than treating these areas as isolated services.
+
+## Contact
+
+URL: https://www.lumyo.pt/contact
+
+Businesses can contact Lumyo to discuss:
+
+- A new website or digital platform
+- Business process automation
+- Artificial intelligence integration
+- Digital growth
+- Custom digital systems
+
+## Important URLs
+
+- Home: https://www.lumyo.pt/
+- Solutions: https://www.lumyo.pt/solutions
+- Premium Websites: https://www.lumyo.pt/solutions/websites
+- Automation: https://www.lumyo.pt/solutions/automation
+- Artificial Intelligence: https://www.lumyo.pt/solutions/ai
+- Digital Growth: https://www.lumyo.pt/solutions/growth
+- Case Studies: https://www.lumyo.pt/case-studies
+- Studio: https://www.lumyo.pt/studio
+- Contact: https://www.lumyo.pt/contact
+
+## Official Profiles
+
+- Instagram: https://www.instagram.com/lumyopt/
+- Facebook: https://www.facebook.com/lumyopt

@@ -11,12 +11,14 @@ import {
 import SolutionHero from '../../components/detail/SolutionHero';
 import SolutionCapabilities from '../../components/detail/SolutionCapabilities';
 import SolutionProcess from '../../components/detail/SolutionProcess';
+import SolutionFAQ from '../../components/detail/SolutionFAQ';
 import SolutionCTA from '../../components/detail/SolutionCTA';
 import SEO from '../../components/seo/SEO';
 import StructuredData from '../../components/seo/StructuredData';
 import {
   createServiceSchema,
   createBreadcrumbSchema,
+  createFAQSchema,
 } from '../../seo/schema';
 import { useLang } from '../../i18n';
 
@@ -93,7 +95,9 @@ const process = [
 ];
 
 export default function ArtificialIntelligence() {
-  const { lang } = useLang();
+  const { lang, t } = useLang();
+
+  const faq = t.solutions?.ai?.faq || t.ai?.faq;
 
   const serviceSchema = createServiceSchema({
     name:
@@ -107,27 +111,50 @@ export default function ArtificialIntelligence() {
         : 'Soluções de inteligência artificial para empresas, incluindo assistentes de IA, classificação inteligente, processamento de documentos, geração de conteúdo e agentes de IA.',
 
     path: '/solutions/ai',
+    offers:
+      lang === 'en'
+        ? [
+            'AI assistants',
+            'Intelligent chatbots',
+            'AI automation',
+            'Information search and analysis',
+            'AI integration into business processes',
+          ]
+        : [
+            'Assistentes de inteligência artificial',
+            'Chatbots inteligentes',
+            'Automação com inteligência artificial',
+            'Pesquisa e análise de informação',
+            'Integração de IA em processos empresariais',
+          ],
     lang,
   });
+
   const breadcrumbSchema = createBreadcrumbSchema({
-  items: [
-    {
-      name: lang === 'en' ? 'Home' : 'Início',
-      path: '/',
-    },
-    {
-      name: lang === 'en' ? 'Solutions' : 'Soluções',
-      path: '/solutions',
-    },
-    {
-      name:
-        lang === 'en'
-          ? 'Artificial Intelligence'
-          : 'Inteligência Artificial',
-      path: '/solutions/ai',
-    },
-  ],
-});
+    items: [
+      {
+        name: lang === 'en' ? 'Home' : 'Início',
+        path: '/',
+      },
+      {
+        name: lang === 'en' ? 'Solutions' : 'Soluções',
+        path: '/solutions',
+      },
+      {
+        name:
+          lang === 'en'
+            ? 'Artificial Intelligence'
+            : 'Inteligência Artificial',
+        path: '/solutions/ai',
+      },
+    ],
+  });
+
+  const faqSchema = createFAQSchema({
+    items: faq?.items || [],
+    path: '/solutions/ai',
+    lang,
+  });
 
   return (
     <main>
@@ -141,6 +168,7 @@ export default function ArtificialIntelligence() {
 
       <StructuredData data={serviceSchema} />
       <StructuredData data={breadcrumbSchema} />
+      {faqSchema && <StructuredData data={faqSchema} />}
 
       <SolutionHero
         number="03"
@@ -162,6 +190,14 @@ export default function ArtificialIntelligence() {
         title="O problema primeiro. A inteligência artificial depois."
         items={process}
       />
+
+      {faq && (
+        <SolutionFAQ
+          eyebrow={faq.eyebrow}
+          title={faq.title}
+          items={faq.items}
+        />
+      )}
 
       <SolutionCTA
         eyebrow="IA COM PROPÓSITO"

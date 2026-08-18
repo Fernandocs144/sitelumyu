@@ -11,12 +11,14 @@ import {
 import SolutionHero from '../../components/detail/SolutionHero';
 import SolutionCapabilities from '../../components/detail/SolutionCapabilities';
 import SolutionProcess from '../../components/detail/SolutionProcess';
+import SolutionFAQ from '../../components/detail/SolutionFAQ';
 import SolutionCTA from '../../components/detail/SolutionCTA';
 import SEO from '../../components/seo/SEO';
 import StructuredData from '../../components/seo/StructuredData';
 import {
   createServiceSchema,
   createBreadcrumbSchema,
+  createFAQSchema,
 } from '../../seo/schema';
 import { useLang } from '../../i18n';
 
@@ -93,7 +95,9 @@ const process = [
 ];
 
 export default function DigitalGrowth() {
-  const { lang } = useLang();
+  const { lang, t } = useLang();
+
+  const faq = t.solutions?.growth?.faq || t.growth?.faq;
 
   const serviceSchema = createServiceSchema({
     name:
@@ -107,27 +111,54 @@ export default function DigitalGrowth() {
         : 'Serviços de crescimento digital que combinam gestão de redes sociais, conteúdo, campanhas, SEO, otimização de conversão e analytics.',
 
     path: '/solutions/growth',
+    offers:
+      lang === 'en'
+        ? [
+            'SEO',
+            'Generative Engine Optimization',
+            'Google Ads',
+            'Meta Ads',
+            'Social media management',
+            'Analytics',
+            'Google Business Profile',
+          ]
+        : [
+            'SEO',
+            'Generative Engine Optimization',
+            'Google Ads',
+            'Meta Ads',
+            'Gestão de redes sociais',
+            'Analytics',
+            'Google Business Profile',
+          ],
     lang,
   });
+
   const breadcrumbSchema = createBreadcrumbSchema({
-  items: [
-    {
-      name: lang === 'en' ? 'Home' : 'Início',
-      path: '/',
-    },
-    {
-      name: lang === 'en' ? 'Solutions' : 'Soluções',
-      path: '/solutions',
-    },
-    {
-      name:
-        lang === 'en'
-          ? 'Digital Growth'
-          : 'Crescimento Digital',
-      path: '/solutions/growth',
-    },
-  ],
-});
+    items: [
+      {
+        name: lang === 'en' ? 'Home' : 'Início',
+        path: '/',
+      },
+      {
+        name: lang === 'en' ? 'Solutions' : 'Soluções',
+        path: '/solutions',
+      },
+      {
+        name:
+          lang === 'en'
+            ? 'Digital Growth'
+            : 'Crescimento Digital',
+        path: '/solutions/growth',
+      },
+    ],
+  });
+
+  const faqSchema = createFAQSchema({
+    items: faq?.items || [],
+    path: '/solutions/growth',
+    lang,
+  });
 
   return (
     <main>
@@ -141,6 +172,7 @@ export default function DigitalGrowth() {
 
       <StructuredData data={serviceSchema} />
       <StructuredData data={breadcrumbSchema} />
+      {faqSchema && <StructuredData data={faqSchema} />}
 
       <SolutionHero
         number="04"
@@ -162,6 +194,14 @@ export default function DigitalGrowth() {
         title="Crescimento baseado em dados, não em suposições."
         items={process}
       />
+
+      {faq && (
+        <SolutionFAQ
+          eyebrow={faq.eyebrow}
+          title={faq.title}
+          items={faq.items}
+        />
+      )}
 
       <SolutionCTA
         eyebrow="CRESCER COM DIREÇÃO"

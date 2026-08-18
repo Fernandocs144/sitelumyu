@@ -8,6 +8,7 @@ import {
 
 import './App.css';
 import { LanguageProvider } from './i18n';
+import NotFound from './pages/NotFound';
 
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -21,6 +22,9 @@ import Websites from './pages/solutions/Websites';
 import Automation from './pages/solutions/Automation';
 import ArtificialIntelligence from './pages/solutions/ArtificialIntelligence';
 import DigitalGrowth from './pages/solutions/DigitalGrowth';
+import Privacy from './pages/Privacy';
+import Cookies from './pages/Cookies';
+import Terms from './pages/Terms';
 import { HelmetProvider } from 'react-helmet-async';
 
 
@@ -94,18 +98,25 @@ function AppContent() {
 
       <main>
         <Routes>
-  <Route path="/" element={<Home />} />
+          <Route path="/" element={<Home />} />
 
-  <Route path="/solutions" element={<Solutions />} />
-  <Route path="/solutions/websites" element={<Websites />} />
-  <Route path="/solutions/automation" element={<Automation />} />
-  <Route path="/solutions/ai" element={<ArtificialIntelligence />} />
-  <Route path="/solutions/growth" element={<DigitalGrowth />} />
+          <Route path="/solutions" element={<Solutions />} />
+          <Route path="/solutions/websites" element={<Websites />} />
+          <Route path="/solutions/automation" element={<Automation />} />
+          <Route path="/solutions/ai" element={<ArtificialIntelligence />} />
+          <Route path="/solutions/growth" element={<DigitalGrowth />} />
 
-  <Route path="/case-studies" element={<CaseStudies />} />
-  <Route path="/studio" element={<Studio />} />
-  <Route path="/contact" element={<Contact />} />
-</Routes>
+          <Route path="/case-studies" element={<CaseStudies />} />
+          <Route path="/studio" element={<Studio />} />
+
+          <Route path="/contact" element={<Contact />} />
+
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/cookies" element={<Cookies />} />
+          <Route path="/terms" element={<Terms />} />
+
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </main>
 
       <ConditionalFooter />
@@ -117,11 +128,11 @@ function AppContent() {
 function App() {
   return (
     <HelmetProvider>
-    <LanguageProvider>
-      <BrowserRouter>
-        <AppContent />
-      </BrowserRouter>
-    </LanguageProvider>
+      <LanguageProvider>
+        <BrowserRouter>
+          <AppContent />
+        </BrowserRouter>
+      </LanguageProvider>
     </HelmetProvider>
   );
 }

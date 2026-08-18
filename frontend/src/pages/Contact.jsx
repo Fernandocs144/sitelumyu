@@ -1,16 +1,18 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Send, Check, Globe, Settings, Sparkles, TrendingUp, Loader2 } from 'lucide-react';
 import { CONTACT_EMAIL } from '../data';
 import { useLang } from '../i18n';
 import ParticleField from '../components/ParticleField';
 import SEO from '../components/seo/SEO';
+import { useSearchParams } from 'react-router-dom';
 
 const serviceIcons = [Globe, Settings, Sparkles, TrendingUp];
 
 export default function Contact() {
   const { t } = useLang();
   const c = t.contact;
+  const [searchParams] = useSearchParams();
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -18,6 +20,42 @@ export default function Contact() {
     message: '',
     website: '',
   });
+  useEffect(() => {
+  const requestedService = searchParams.get('service');
+
+  if (!requestedService) return;
+
+  const normalizedRequested = requestedService
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+  const serviceAliases = {
+    'website premium': 0,
+    'premium website': 0,
+
+    'automacao': 1,
+    'automation': 1,
+
+    'solucoes ia': 2,
+    'ai solutions': 2,
+
+    'crescimento digital': 3,
+    'digital growth': 3,
+  };
+
+  const serviceIndex = serviceAliases[normalizedRequested];
+
+  if (
+    serviceIndex !== undefined &&
+    c.services[serviceIndex]
+  ) {
+    setForm((current) => ({
+      ...current,
+      service: c.services[serviceIndex],
+    }));
+  }
+}, [searchParams, c.services]);
   const [status, setStatus] = useState('idle'); // idle | sending | sent | error
 
   const update = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));

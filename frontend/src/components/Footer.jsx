@@ -296,16 +296,39 @@ function HomeFooter({ f }) {
               md:justify-between
             "
           >
-            <p
-              className="
-                font-head
-                text-[8px]
-                tracking-[0.22em]
-                text-white/25
-              "
-            >
-              © {new Date().getFullYear()} LUMYO. ALL RIGHTS RESERVED.
-            </p>
+            <div className="flex flex-wrap items-center gap-6">
+              <p
+                className="
+                  font-head
+                  text-[8px]
+                  tracking-[0.22em]
+                  text-white/25
+                "
+              >
+                © {new Date().getFullYear()} LUMYO. ALL RIGHTS RESERVED.
+              </p>
+
+              <div className="flex items-center gap-4">
+                <Link
+                  to="/privacy"
+                  className="font-head text-[8px] tracking-[0.22em] text-white/50 transition-colors duration-300 hover:text-magenta"
+                >
+                  Privacidade
+                </Link>
+                <Link
+                  to="/cookies"
+                  className="font-head text-[8px] tracking-[0.22em] text-white/50 transition-colors duration-300 hover:text-magenta"
+                >
+                  Cookies
+                </Link>
+                <Link
+                  to="/terms"
+                  className="font-head text-[8px] tracking-[0.22em] text-white/50 transition-colors duration-300 hover:text-magenta"
+                >
+                  Termos
+                </Link>
+              </div>
+            </div>
 
             <button
               type="button"
@@ -487,16 +510,39 @@ function DefaultFooter({ f }) {
             md:justify-between
           "
         >
-          <span
-            className="
-              font-head
-              text-[8px]
-              tracking-[0.22em]
-              text-white/65
-            "
-          >
-            © {new Date().getFullYear()} LUMYO
-          </span>
+          <div className="flex flex-wrap items-center gap-6">
+            <span
+              className="
+                font-head
+                text-[8px]
+                tracking-[0.22em]
+                text-white/65
+              "
+            >
+              © {new Date().getFullYear()} LUMYO
+            </span>
+
+            <div className="flex items-center gap-4">
+              <Link
+                to="/privacy"
+                className="font-head text-[8px] tracking-[0.22em] text-white/50 transition-colors duration-300 hover:text-magenta"
+              >
+                Privacidade
+              </Link>
+              <Link
+                to="/cookies"
+                className="font-head text-[8px] tracking-[0.22em] text-white/50 transition-colors duration-300 hover:text-magenta"
+              >
+                Cookies
+              </Link>
+              <Link
+                to="/terms"
+                className="font-head text-[8px] tracking-[0.22em] text-white/50 transition-colors duration-300 hover:text-magenta"
+              >
+                Termos
+              </Link>
+            </div>
+          </div>
 
           <button
             type="button"

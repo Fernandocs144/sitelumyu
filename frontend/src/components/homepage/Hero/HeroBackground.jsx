@@ -1,23 +1,70 @@
 import React, {
   useEffect,
   useRef,
+  useState,
   forwardRef,
 } from 'react';
-
 
 const HeroBackground = forwardRef(
   function HeroBackground(props, ref) {
     const posterRef = useRef(null);
 
+    const [isMobile, setIsMobile] = useState(() => {
+      if (typeof window === 'undefined') {
+        return false;
+      }
+
+      return window.matchMedia(
+        '(max-width: 767px)'
+      ).matches;
+    });
+
     const posterPath =
       '/images/hero/hero-poster.webp';
 
-    const webmPath =
+    const desktopWebmPath =
       '/videos/hero/hero.webm';
 
-    const mp4Path =
+    const desktopMp4Path =
       '/videos/hero/hero.mp4';
 
+    const mobileWebmPath =
+      '/videos/hero/hero-mobile.webm';
+
+    const mobileMp4Path =
+      '/videos/hero/hero-mobile.mp4';
+
+    const webmPath = isMobile
+      ? mobileWebmPath
+      : desktopWebmPath;
+
+    const mp4Path = isMobile
+      ? mobileMp4Path
+      : desktopMp4Path;
+
+    useEffect(() => {
+      const mediaQuery = window.matchMedia(
+        '(max-width: 767px)'
+      );
+
+      const handleChange = (event) => {
+        setIsMobile(event.matches);
+      };
+
+      setIsMobile(mediaQuery.matches);
+
+      mediaQuery.addEventListener(
+        'change',
+        handleChange
+      );
+
+      return () => {
+        mediaQuery.removeEventListener(
+          'change',
+          handleChange
+        );
+      };
+    }, []);
 
     useEffect(() => {
       const video = ref?.current;
@@ -27,9 +74,7 @@ const HeroBackground = forwardRef(
         return undefined;
       }
 
-
       let isPosterRemoved = false;
-
 
       const removePoster = () => {
         if (isPosterRemoved) {
@@ -44,14 +89,12 @@ const HeroBackground = forwardRef(
         poster.style.opacity = '0';
         poster.style.pointerEvents = 'none';
 
-
         setTimeout(() => {
           if (poster) {
             poster.style.display = 'none';
           }
         }, 750);
       };
-
 
       if (video.readyState >= 2) {
         removePoster();
@@ -81,7 +124,6 @@ const HeroBackground = forwardRef(
         );
       }
 
-
       return () => {
         video.removeEventListener(
           'loadeddata',
@@ -103,8 +145,7 @@ const HeroBackground = forwardRef(
           removePoster
         );
       };
-    }, [ref]);
-
+    }, [ref, isMobile]);
 
     return (
       <div
@@ -139,8 +180,8 @@ const HeroBackground = forwardRef(
           "
         />
 
-
         <video
+          key={isMobile ? 'mobile' : 'desktop'}
           ref={ref}
           data-hero-video
           muted
@@ -171,6 +212,5 @@ const HeroBackground = forwardRef(
     );
   }
 );
-
 
 export default HeroBackground;

@@ -1,4 +1,51 @@
+# ============================================================
+# Lumyo — robots.txt
+# https://www.lumyo.pt
+# ============================================================
+
+
+# ------------------------------------------------------------
+# General search engines
+# ------------------------------------------------------------
+
 User-agent: *
 Allow: /
+
+
+# ------------------------------------------------------------
+# OpenAI
+#
+# OAI-SearchBot:
+# Allows Lumyo content to be discovered and cited in ChatGPT.
+#
+# GPTBot:
+# Blocked because access for model training is not required
+# for search visibility.
+# ------------------------------------------------------------
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: GPTBot
+Disallow: /
+
+
+# ------------------------------------------------------------
+# Google AI
+#
+# Google-Extended controls use of content for certain Gemini
+# training and grounding systems independently of Google Search.
+#
+# We currently allow it because GEO visibility is a priority.
+# This can be changed later without affecting Google Search.
+# ------------------------------------------------------------
+
+User-agent: Google-Extended
+Allow: /
+
+
+# ------------------------------------------------------------
+# Sitemap
+# ------------------------------------------------------------
 
 Sitemap: https://www.lumyo.pt/sitemap.xml

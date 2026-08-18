@@ -11,12 +11,14 @@ import {
 import SolutionHero from '../../components/detail/SolutionHero';
 import SolutionCapabilities from '../../components/detail/SolutionCapabilities';
 import SolutionProcess from '../../components/detail/SolutionProcess';
+import SolutionFAQ from '../../components/detail/SolutionFAQ';
 import SolutionCTA from '../../components/detail/SolutionCTA';
 import SEO from '../../components/seo/SEO';
 import StructuredData from '../../components/seo/StructuredData';
 import {
   createServiceSchema,
   createBreadcrumbSchema,
+  createFAQSchema,
 } from '../../seo/schema';
 import { useLang } from '../../i18n';
 
@@ -93,7 +95,9 @@ const process = [
 ];
 
 export default function Automation() {
-  const { lang } = useLang();
+  const { lang, t } = useLang();
+
+  const faq = t.solutions?.automation?.faq || t.automation?.faq;
 
   const serviceSchema = createServiceSchema({
     name:
@@ -107,27 +111,52 @@ export default function Automation() {
         : 'Automação de processos, integrações CRM, gestão de leads, follow-ups e workflows operacionais para reduzir trabalho repetitivo e aumentar a eficiência.',
 
     path: '/solutions/automation',
+    offers:
+      lang === 'en'
+        ? [
+            'Process automation',
+            'Lead qualification',
+            'Appointment automation',
+            'Automated follow-ups',
+            'System integrations',
+            'CRM automation',
+          ]
+        : [
+            'Automação de processos',
+            'Qualificação de leads',
+            'Automação de marcações',
+            'Follow-ups automáticos',
+            'Integração de sistemas',
+            'Automação de CRM',
+          ],
     lang,
   });
+
   const breadcrumbSchema = createBreadcrumbSchema({
-  items: [
-    {
-      name: lang === 'en' ? 'Home' : 'Início',
-      path: '/',
-    },
-    {
-      name: lang === 'en' ? 'Solutions' : 'Soluções',
-      path: '/solutions',
-    },
-    {
-      name:
-        lang === 'en'
-          ? 'Automation'
-          : 'Automação',
-      path: '/solutions/automation',
-    },
-  ],
-});
+    items: [
+      {
+        name: lang === 'en' ? 'Home' : 'Início',
+        path: '/',
+      },
+      {
+        name: lang === 'en' ? 'Solutions' : 'Soluções',
+        path: '/solutions',
+      },
+      {
+        name:
+          lang === 'en'
+            ? 'Automation'
+            : 'Automação',
+        path: '/solutions/automation',
+      },
+    ],
+  });
+
+  const faqSchema = createFAQSchema({
+    items: faq?.items || [],
+    path: '/solutions/automation',
+    lang,
+  });
 
   return (
     <main>
@@ -141,6 +170,7 @@ export default function Automation() {
 
       <StructuredData data={serviceSchema} />
       <StructuredData data={breadcrumbSchema} />
+      {faqSchema && <StructuredData data={faqSchema} />}
 
       <SolutionHero
         number="02"
@@ -162,6 +192,14 @@ export default function Automation() {
         title="Primeiro percebemos o processo. Depois automatizamos."
         items={process}
       />
+
+      {faq && (
+        <SolutionFAQ
+          eyebrow={faq.eyebrow}
+          title={faq.title}
+          items={faq.items}
+        />
+      )}
 
       <SolutionCTA
         eyebrow="MENOS TRABALHO MANUAL"

@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { NavLink, Link } from 'react-router-dom';
+import { NavLink, Link, useLocation } from 'react-router-dom';
 import { ChevronDown, Menu, X } from 'lucide-react';
 
 import { useLang } from '../i18n';
 
 export default function Navbar() {
   const { t, lang, toggle } = useLang();
-  const [open, setOpen] = useState(false);
+const [open, setOpen] = useState(false);
+
+const location = useLocation();
+const isHome = location.pathname === '/';
 
   const links = [
     { to: '/solutions', label: t.nav.solutions, id: 'solutions' },
@@ -17,9 +20,17 @@ export default function Navbar() {
 
   return (
     <header
-      data-testid="navbar"
-      className="fixed top-0 left-0 right-0 z-50 bg-transparent"
-    >
+  data-testid="navbar"
+  className={`
+    fixed top-0 left-0 right-0 z-50
+    transition-all duration-300
+    ${
+      isHome
+        ? 'bg-transparent'
+        : 'border-b border-white/[0.06] bg-[#070513]/80 backdrop-blur-xl'
+    }
+  `}
+>
       <div className="mx-auto flex max-w-[1600px] items-center justify-between px-5 py-4 sm:px-6 md:px-12">
 
         {/* LOGO */}

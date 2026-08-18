@@ -12,11 +12,13 @@ import SolutionHero from '../../components/detail/SolutionHero';
 import SolutionCapabilities from '../../components/detail/SolutionCapabilities';
 import SolutionProcess from '../../components/detail/SolutionProcess';
 import SolutionCTA from '../../components/detail/SolutionCTA';
+import SolutionFAQ from '../../components/detail/SolutionFAQ';
 import SEO from '../../components/seo/SEO';
 import StructuredData from '../../components/seo/StructuredData';
 import {
   createServiceSchema,
   createBreadcrumbSchema,
+  createFAQSchema,
 } from '../../seo/schema';
 import { useLang } from '../../i18n';
 
@@ -93,13 +95,35 @@ const process = [
 ];
 
 export default function Websites() {
-  const { lang } = useLang();
+  const { lang, t } = useLang();
+
+  const faq = t.solutions?.websites?.faq || t.websites?.faq;
 
   const serviceSchema = createServiceSchema({
     name:
       lang === 'en'
         ? 'Bespoke Premium Websites'
         : 'Websites Premium à Medida',
+    offers:
+      lang === 'en'
+        ? [
+            'Corporate websites',
+            'Landing pages',
+            'E-commerce',
+            'Web applications',
+            'Administration areas',
+            'API integrations',
+            'Technical SEO',
+          ]
+        : [
+            'Websites institucionais',
+            'Landing pages',
+            'E-commerce',
+            'Aplicações web',
+            'Áreas administrativas',
+            'Integração com APIs',
+            'SEO técnico',
+          ],
 
     description:
       lang === 'en'
@@ -109,25 +133,32 @@ export default function Websites() {
     path: '/solutions/websites',
     lang,
   });
+
   const breadcrumbSchema = createBreadcrumbSchema({
-  items: [
-    {
-      name: lang === 'en' ? 'Home' : 'Início',
-      path: '/',
-    },
-    {
-      name: lang === 'en' ? 'Solutions' : 'Soluções',
-      path: '/solutions',
-    },
-    {
-      name:
-        lang === 'en'
-          ? 'Premium Websites'
-          : 'Websites Premium',
-      path: '/solutions/websites',
-    },
-  ],
-});
+    items: [
+      {
+        name: lang === 'en' ? 'Home' : 'Início',
+        path: '/',
+      },
+      {
+        name: lang === 'en' ? 'Solutions' : 'Soluções',
+        path: '/solutions',
+      },
+      {
+        name:
+          lang === 'en'
+            ? 'Premium Websites'
+            : 'Websites Premium',
+        path: '/solutions/websites',
+      },
+    ],
+  });
+
+  const faqSchema = createFAQSchema({
+    items: faq?.items || [],
+    path: '/solutions/websites',
+    lang,
+  });
 
   return (
     <main>
@@ -141,6 +172,7 @@ export default function Websites() {
 
       <StructuredData data={serviceSchema} />
       <StructuredData data={breadcrumbSchema} />
+      {faqSchema && <StructuredData data={faqSchema} />}
 
       <SolutionHero
         number="01"
@@ -162,6 +194,14 @@ export default function Websites() {
         title="Da estratégia ao lançamento."
         items={process}
       />
+
+      {faq && (
+        <SolutionFAQ
+          eyebrow={faq.eyebrow}
+          title={faq.title}
+          items={faq.items}
+        />
+      )}
 
       <SolutionCTA
         eyebrow="A BASE DO SISTEMA"
