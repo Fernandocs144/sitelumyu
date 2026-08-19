@@ -100,7 +100,7 @@ function AppContent() {
       <Navbar />
 
       <main>
-        <Suspense fallback={null}>
+        <Suspense fallback={<div className="min-h-screen" aria-hidden="true" />}>
           <Routes>
             <Route path="/" element={<Home />} />
 
