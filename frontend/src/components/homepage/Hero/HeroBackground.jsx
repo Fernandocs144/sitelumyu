@@ -168,6 +168,7 @@ const HeroBackground = forwardRef(
           src={posterPath}
           alt="Lumyo Hero Poster"
           loading="eager"
+          fetchPriority="high"
           className="
             absolute
             inset-0
