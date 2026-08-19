@@ -42,10 +42,6 @@ function createFlowTimeline({
   );
 
   if (!flow || !path || !pulse) {
-    console.warn(
-      `[SERVICES FLOW] Elementos em falta no flow ${flowId}.`
-    );
-
     return null;
   }
 
@@ -334,10 +330,6 @@ export function createServicesFlowExperience(sectionElement) {
 
 
   if (!card01) {
-    console.warn(
-      '[SERVICES FLOW] Card 01 não encontrado.'
-    );
-
     return null;
   }
 

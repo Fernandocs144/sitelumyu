@@ -51,28 +51,29 @@ export default function HeroSocials() {
 
           if (!item.href) {
             return (
-              <span
-                key={item.name}
-                role="img"
-                aria-label={`${item.name} — em breve`}
-                title={`${item.name} — em breve`}
-                className="
-                  flex
-                  h-9
-                  w-9
-                  cursor-default
-                  items-center
-                  justify-center
-                  rounded-full
-                  border
-                  border-white/10
-                  bg-black/20
-                  opacity-30
-                  backdrop-blur-md
-                "
-              >
-                {iconContent}
-              </span>
+              <div key={item.name} className="flex min-h-[44px] min-w-[44px] items-center justify-center">
+                <span
+                  role="img"
+                  aria-label={`${item.name} — em breve`}
+                  title={`${item.name} — em breve`}
+                  className="
+                    flex
+                    h-9
+                    w-9
+                    cursor-default
+                    items-center
+                    justify-center
+                    rounded-full
+                    border
+                    border-white/10
+                    bg-black/20
+                    opacity-30
+                    backdrop-blur-md
+                  "
+                >
+                  {iconContent}
+                </span>
+              </div>
             );
           }
 
@@ -86,25 +87,35 @@ export default function HeroSocials() {
               className="
                 group
                 flex
-                h-9
-                w-9
+                min-h-[44px]
+                min-w-[44px]
                 items-center
                 justify-center
-                rounded-full
-                border
-                border-white/15
-                bg-black/30
-                opacity-60
-                backdrop-blur-md
-                transition-all
-                duration-300
-                hover:border-magenta/60
-                hover:bg-magenta/10
-                hover:opacity-100
-                hover:shadow-[0_0_15px_rgba(255,45,120,0.45)]
               "
             >
-              {iconContent}
+              <span
+                className="
+                  flex
+                  h-9
+                  w-9
+                  items-center
+                  justify-center
+                  rounded-full
+                  border
+                  border-white/15
+                  bg-black/30
+                  opacity-60
+                  backdrop-blur-md
+                  transition-all
+                  duration-300
+                  group-hover:border-magenta/60
+                  group-hover:bg-magenta/10
+                  group-hover:opacity-100
+                  group-hover:shadow-[0_0_15px_rgba(255,45,120,0.45)]
+                "
+              >
+                {iconContent}
+              </span>
             </a>
           );
         })}

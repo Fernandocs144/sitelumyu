@@ -311,19 +311,19 @@ function HomeFooter({ f }) {
               <div className="flex items-center gap-4">
                 <Link
                   to="/privacy"
-                  className="font-head text-[8px] tracking-[0.22em] text-white/50 transition-colors duration-300 hover:text-magenta"
+                  className="inline-flex min-h-[44px] items-center font-head text-[8px] tracking-[0.22em] text-white/50 transition-colors duration-300 hover:text-magenta"
                 >
                   Privacidade
                 </Link>
                 <Link
                   to="/cookies"
-                  className="font-head text-[8px] tracking-[0.22em] text-white/50 transition-colors duration-300 hover:text-magenta"
+                  className="inline-flex min-h-[44px] items-center font-head text-[8px] tracking-[0.22em] text-white/50 transition-colors duration-300 hover:text-magenta"
                 >
                   Cookies
                 </Link>
                 <Link
                   to="/terms"
-                  className="font-head text-[8px] tracking-[0.22em] text-white/50 transition-colors duration-300 hover:text-magenta"
+                  className="inline-flex min-h-[44px] items-center font-head text-[8px] tracking-[0.22em] text-white/50 transition-colors duration-300 hover:text-magenta"
                 >
                   Termos
                 </Link>
@@ -333,9 +333,11 @@ function HomeFooter({ f }) {
             <button
               type="button"
               onClick={scrollToTop}
+              aria-label="Voltar ao topo"
               className="
                 group
                 flex
+                min-h-[44px]
                 items-center
                 gap-3
                 self-start
@@ -525,19 +527,19 @@ function DefaultFooter({ f }) {
             <div className="flex items-center gap-4">
               <Link
                 to="/privacy"
-                className="font-head text-[8px] tracking-[0.22em] text-white/50 transition-colors duration-300 hover:text-magenta"
+                className="inline-flex min-h-[44px] items-center font-head text-[8px] tracking-[0.22em] text-white/50 transition-colors duration-300 hover:text-magenta"
               >
                 Privacidade
               </Link>
               <Link
                 to="/cookies"
-                className="font-head text-[8px] tracking-[0.22em] text-white/50 transition-colors duration-300 hover:text-magenta"
+                className="inline-flex min-h-[44px] items-center font-head text-[8px] tracking-[0.22em] text-white/50 transition-colors duration-300 hover:text-magenta"
               >
                 Cookies
               </Link>
               <Link
                 to="/terms"
-                className="font-head text-[8px] tracking-[0.22em] text-white/50 transition-colors duration-300 hover:text-magenta"
+                className="inline-flex min-h-[44px] items-center font-head text-[8px] tracking-[0.22em] text-white/50 transition-colors duration-300 hover:text-magenta"
               >
                 Termos
               </Link>
@@ -547,9 +549,11 @@ function DefaultFooter({ f }) {
           <button
             type="button"
             onClick={scrollToTop}
+            aria-label="Voltar ao topo"
             className="
               group
               flex
+              min-h-[44px]
               items-center
               gap-3
               self-start

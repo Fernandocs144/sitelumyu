@@ -78,10 +78,13 @@ const isHome = location.pathname === '/';
           <button
             data-testid="lang-switch"
             onClick={toggle}
+            aria-label={lang === 'pt' ? 'Mudar idioma para Inglês' : 'Switch language to Portuguese'}
             className="
               hidden
+              min-h-[44px]
               items-center
               gap-1
+              px-2
               font-head
               text-xs
               tracking-[0.2em]
@@ -157,8 +160,11 @@ const isHome = location.pathname === '/';
                 toggle();
                 setOpen(false);
               }}
+              aria-label={lang === 'pt' ? 'Mudar idioma para Inglês' : 'Switch language to Portuguese'}
               className="
                 mt-4
+                min-h-[44px]
+                w-full
                 text-left
                 font-head
                 text-sm
