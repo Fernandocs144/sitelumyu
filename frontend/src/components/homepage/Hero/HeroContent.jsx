@@ -408,8 +408,31 @@ export default function HeroContent() {
         {/* CLIENT TESTIMONIALS                                   */}
         {/* ===================================================== */}
 
-        <div data-home-testimonials className="absolute inset-0 opacity-0 overflow-hidden md:overflow-visible">
-          <div className="absolute inset-x-0 top-[10vh] px-4 sm:px-6 md:top-[15vh] md:px-[7vw]">
+        <div
+  data-home-testimonials
+  className="
+    absolute inset-0 opacity-0
+    overflow-y-auto overflow-x-hidden
+    md:overflow-visible
+  "
+>
+          <div
+  className="
+    relative
+    w-full
+    px-4
+    pt-[10vh]
+    pb-24
+
+    sm:px-6
+
+    md:absolute
+    md:inset-x-0
+    md:top-[15vh]
+    md:p-0
+    md:px-[7vw]
+  "
+>
             <div data-testimonials-heading className="mb-4 md:mb-[8vh]">
               <div className="mb-3 flex items-center gap-3 md:mb-5 md:gap-3">
                 <span className="font-head text-[9px] tracking-[0.25em] text-magenta md:text-[10px] md:tracking-[0.3em]">

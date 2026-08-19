@@ -22,82 +22,23 @@ import {
 } from '../../seo/schema';
 import { useLang } from '../../i18n';
 
-const capabilities = [
-  {
-    icon: Share2,
-    number: '01',
-    title: 'Redes sociais',
-    description:
-      'Planeamos e gerimos a presença da tua marca nas redes sociais, da estratégia editorial à criação e publicação de conteúdo alinhado com os objetivos do negócio.',
-  },
-  {
-    icon: PenTool,
-    number: '02',
-    title: 'Conteúdo',
-    description:
-      'Criamos conteúdo pensado para diferentes momentos da jornada do cliente, transformando conhecimento, produtos e serviços em comunicação capaz de atrair e gerar interesse.',
-  },
-  {
-    icon: Megaphone,
-    number: '03',
-    title: 'Campanhas digitais',
-    description:
-      'Planeamos, lançamos e otimizamos campanhas pagas orientadas para objetivos concretos, ligando tráfego, landing pages e conversões num único sistema.',
-  },
-  {
-    icon: Search,
-    number: '04',
-    title: 'SEO contínuo',
-    description:
-      'Trabalhamos conteúdo, estrutura, autoridade e desempenho técnico para aumentar progressivamente a visibilidade orgânica e captar procura relevante para o negócio.',
-  },
-  {
-    icon: MousePointerClick,
-    number: '05',
-    title: 'Conversão e CRO',
-    description:
-      'Analisamos páginas, jornadas e pontos de abandono para melhorar a experiência e transformar uma maior percentagem do tráfego existente em contactos, oportunidades ou vendas.',
-  },
-  {
-    icon: BarChart3,
-    number: '06',
-    title: 'Analytics e performance',
-    description:
-      'Medimos o percurso entre aquisição e resultado para perceber quais os canais, conteúdos e campanhas que realmente contribuem para o crescimento do negócio.',
-  },
-];
-
-const process = [
-  {
-    number: '01',
-    title: 'Medir',
-    description:
-      'Percebemos o ponto de partida, os canais existentes, o público, a procura e os dados disponíveis antes de definir onde investir.',
-  },
-  {
-    number: '02',
-    title: 'Planear',
-    description:
-      'Construímos uma estratégia que combina os canais adequados, conteúdo, aquisição e conversão em torno dos objetivos do negócio.',
-  },
-  {
-    number: '03',
-    title: 'Executar',
-    description:
-      'Produzimos conteúdo, gerimos canais, lançamos campanhas e implementamos as páginas e mecanismos necessários para transformar atenção em oportunidades.',
-  },
-  {
-    number: '04',
-    title: 'Otimizar',
-    description:
-      'Analisamos resultados e ajustamos continuamente campanhas, conteúdo, canais e experiência digital com base nos dados recolhidos.',
-  },
+const icons = [
+  Share2,
+  PenTool,
+  Megaphone,
+  Search,
+  MousePointerClick,
+  BarChart3,
 ];
 
 export default function DigitalGrowth() {
   const { lang, t } = useLang();
+  const s = t.solutions?.growth;
 
-  const faq = t.solutions?.growth?.faq || t.growth?.faq;
+  const capabilities = (s?.capabilities || []).map((item, index) => ({
+    ...item,
+    icon: icons[index] || Share2,
+  }));
 
   const serviceSchema = createServiceSchema({
     name:
@@ -155,7 +96,7 @@ export default function DigitalGrowth() {
   });
 
   const faqSchema = createFAQSchema({
-    items: faq?.items || [],
+    items: s?.faq?.items || [],
     path: '/solutions/growth',
     lang,
   });
@@ -174,42 +115,46 @@ export default function DigitalGrowth() {
       <StructuredData data={breadcrumbSchema} />
       {faqSchema && <StructuredData data={faqSchema} />}
 
-      <SolutionHero
-        number="04"
-        eyebrow="CRESCIMENTO DIGITAL"
-        title="Atrair é apenas"
-        highlight="o início."
-        description="Criamos sistemas de crescimento que ligam redes sociais, conteúdo, campanhas, SEO, conversão e dados para transformar atenção em oportunidades reais de negócio."
-      />
+      {s && (
+        <>
+          <SolutionHero
+            number={s.hero.number}
+            eyebrow={s.hero.eyebrow}
+            title={s.hero.title}
+            highlight={s.hero.highlight}
+            description={s.hero.description}
+          />
 
-      <SolutionCapabilities
-        eyebrow="COMO FAZEMOS CRESCER"
-        title="Da visibilidade à conversão."
-        description="Não tratamos marketing como um conjunto de canais isolados. Ligamos conteúdo, aquisição, website e dados para que cada elemento contribua para o mesmo objetivo."
-        items={capabilities}
-      />
+          <SolutionCapabilities
+            eyebrow={s.capabilitiesEyebrow}
+            title={s.capabilitiesTitle}
+            description={s.capabilitiesDesc}
+            items={capabilities}
+          />
 
-      <SolutionProcess
-        eyebrow="COMO TRABALHAMOS"
-        title="Crescimento baseado em dados, não em suposições."
-        items={process}
-      />
+          <SolutionProcess
+            eyebrow={s.processEyebrow}
+            title={s.processTitle}
+            items={s.process}
+          />
 
-      {faq && (
-        <SolutionFAQ
-          eyebrow={faq.eyebrow}
-          title={faq.title}
-          items={faq.items}
-        />
+          {s.faq && (
+            <SolutionFAQ
+              eyebrow={s.faq.eyebrow}
+              title={s.faq.title}
+              items={s.faq.items}
+            />
+          )}
+
+          <SolutionCTA
+  eyebrow={s.cta.eyebrow}
+  title={s.cta.title}
+  description={s.cta.description}
+  buttonText={s.cta.buttonText}
+  buttonTo="/contact?service=crescimento-digital"
+/>
+        </>
       )}
-
-      <SolutionCTA
-        eyebrow="CRESCER COM DIREÇÃO"
-        title="Mais tráfego só interessa se contribuir para o negócio."
-        description="Analisamos onde estás, onde queres chegar e construímos uma estratégia digital que liga aquisição, conteúdo e conversão a resultados mensuráveis."
-        buttonText="FAZER CRESCER O MEU NEGÓCIO"
-        buttonTo="/contact"
-      />
     </main>
   );
 }

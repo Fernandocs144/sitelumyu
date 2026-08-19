@@ -9,10 +9,37 @@ import { useSearchParams } from 'react-router-dom';
 
 const serviceIcons = [Globe, Settings, Sparkles, TrendingUp];
 
+const serviceAliases = {
+  // Websites (Index 0)
+  'websites': 0,
+  'website': 0,
+  'website premium': 0,
+  'premium website': 0,
+
+  // Automação (Index 1)
+  'automacao': 1,
+  'automation': 1,
+
+  // Inteligência Artificial (Index 2)
+  'solucoes-ia': 2,
+  'solucoes ia': 2,
+  'ai solutions': 2,
+  'ai': 2,
+  'ia': 2,
+  'artificial intelligence': 2,
+
+  // Crescimento Digital (Index 3)
+  'crescimento-digital': 3,
+  'crescimento digital': 3,
+  'digital growth': 3,
+  'growth': 3,
+};
+
 export default function Contact() {
   const { t } = useLang();
   const c = t.contact;
   const [searchParams] = useSearchParams();
+
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -20,43 +47,40 @@ export default function Contact() {
     message: '',
     website: '',
   });
-  useEffect(() => {
-  const requestedService = searchParams.get('service');
 
-  if (!requestedService) return;
-
-  const normalizedRequested = requestedService
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
-
-  const serviceAliases = {
-    'website premium': 0,
-    'premium website': 0,
-
-    'automacao': 1,
-    'automation': 1,
-
-    'solucoes ia': 2,
-    'ai solutions': 2,
-
-    'crescimento digital': 3,
-    'digital growth': 3,
-  };
-
-  const serviceIndex = serviceAliases[normalizedRequested];
-
-  if (
-    serviceIndex !== undefined &&
-    c.services[serviceIndex]
-  ) {
-    setForm((current) => ({
-      ...current,
-      service: c.services[serviceIndex],
-    }));
-  }
-}, [searchParams, c.services]);
   const [status, setStatus] = useState('idle'); // idle | sending | sent | error
+
+  useEffect(() => {
+    const requestedService = searchParams.get('service');
+
+    if (requestedService) {
+      const normalizedRequested = requestedService
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+
+      const serviceIndex = serviceAliases[normalizedRequested];
+
+      if (serviceIndex !== undefined && c.services[serviceIndex]) {
+        setForm((current) => ({
+          ...current,
+          service: c.services[serviceIndex],
+        }));
+        return;
+      }
+    }
+
+    // Se mudar de idioma sem parâmetro na URL, sincroniza com o idioma atual
+    setForm((current) => {
+      const currentIndex = serviceAliases[
+        current.service?.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      ] ?? 0;
+      return {
+        ...current,
+        service: c.services[currentIndex] || c.services[0],
+      };
+    });
+  }, [searchParams, c.services]);
 
   const update = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
@@ -98,12 +122,12 @@ export default function Contact() {
   return (
     <div className="page-enter section-bg relative min-h-screen overflow-hidden pt-40 pb-28">
       <SEO
-  title="Contactos"
-  titleEn="Contact"
-  description="Fala com a Lumyo sobre o teu projeto de website, automação, inteligência artificial ou crescimento digital."
-  descriptionEn="Talk to Lumyo about your website, automation, artificial intelligence or digital growth project."
-  path="/contact"
-/>
+        title="Contactos"
+        titleEn="Contact"
+        description="Fala com a Lumyo sobre o teu projeto de website, automação, inteligência artificial ou crescimento digital."
+        descriptionEn="Talk to Lumyo about your website, automation, artificial intelligence or digital growth project."
+        path="/contact"
+      />
 
       <ParticleField count={40} />
       <div className="relative z-10 mx-auto max-w-[1600px] px-6 md:px-10">
@@ -207,7 +231,9 @@ export default function Contact() {
                       className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-body text-white outline-none transition-colors focus:border-magenta"
                     >
                       {c.services.map((label) => (
-                        <option key={label} className="bg-night">{label}</option>
+                        <option key={label} value={label} className="bg-night">
+                          {label}
+                        </option>
                       ))}
                     </select>
                   </div>

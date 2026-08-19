@@ -2,7 +2,7 @@
 
 > Lumyo is a Portuguese digital studio specialising in premium website development, process automation, artificial intelligence solutions and digital growth strategies for businesses.
 
-Official website: https://www.lumyo.pt
+Official website: [Lumyo](https://www.lumyo.pt)
 Primary market: Portugal
 Languages: Portuguese (pt-PT) and English
 
@@ -21,7 +21,7 @@ The studio focuses on four main areas:
 
 ## Premium Websites
 
-URL: https://www.lumyo.pt/solutions/websites
+[Premium Websites](https://www.lumyo.pt/solutions/websites)
 
 Lumyo develops bespoke websites and digital platforms designed around the identity, goals and operational requirements of each business.
 
@@ -44,7 +44,7 @@ Websites can integrate with CRM systems, payments, automation platforms and othe
 
 ## Business Automation
 
-URL: https://www.lumyo.pt/solutions/automation
+[Business Automation](https://www.lumyo.pt/solutions/automation)
 
 Lumyo develops automation systems designed to reduce repetitive manual work and connect business processes and software.
 
@@ -64,7 +64,7 @@ Automation is used for predictable and repetitive processes while keeping human 
 
 ## Artificial Intelligence
 
-URL: https://www.lumyo.pt/solutions/ai
+[Artificial Intelligence](https://www.lumyo.pt/solutions/ai)
 
 Lumyo integrates artificial intelligence into business processes and digital products.
 
@@ -83,7 +83,7 @@ AI is used where processes require language understanding, information interpret
 
 ## Digital Growth
 
-URL: https://www.lumyo.pt/solutions/growth
+[Digital Growth](https://www.lumyo.pt/solutions/growth)
 
 Lumyo develops data-driven digital growth strategies designed to increase visibility, qualified traffic, leads and business opportunities.
 
@@ -108,7 +108,7 @@ SEO and GEO are complementary disciplines.
 
 ## Selected Work
 
-URL: https://www.lumyo.pt/case-studies
+[Case Studies](https://www.lumyo.pt/case-studies)
 
 Lumyo presents examples of digital systems and strategies applied to real business problems.
 
@@ -187,7 +187,7 @@ Work can combine:
 
 ## Studio
 
-URL: https://www.lumyo.pt/studio
+[Studio](https://www.lumyo.pt/studio)
 
 Lumyo is a Portuguese digital studio.
 
@@ -195,7 +195,7 @@ The studio combines strategy, design, technology, automation, artificial intelli
 
 ## Contact
 
-URL: https://www.lumyo.pt/contact
+[Contact Lumyo](https://www.lumyo.pt/contact)
 
 Businesses can contact Lumyo to discuss:
 
@@ -207,17 +207,17 @@ Businesses can contact Lumyo to discuss:
 
 ## Important URLs
 
-- Home: https://www.lumyo.pt/
-- Solutions: https://www.lumyo.pt/solutions
-- Premium Websites: https://www.lumyo.pt/solutions/websites
-- Automation: https://www.lumyo.pt/solutions/automation
-- Artificial Intelligence: https://www.lumyo.pt/solutions/ai
-- Digital Growth: https://www.lumyo.pt/solutions/growth
-- Case Studies: https://www.lumyo.pt/case-studies
-- Studio: https://www.lumyo.pt/studio
-- Contact: https://www.lumyo.pt/contact
+- [Home](https://www.lumyo.pt/)
+- [Solutions](https://www.lumyo.pt/solutions)
+- [Premium Websites](https://www.lumyo.pt/solutions/websites)
+- [Automation](https://www.lumyo.pt/solutions/automation)
+- [Artificial Intelligence](https://www.lumyo.pt/solutions/ai)
+- [Digital Growth](https://www.lumyo.pt/solutions/growth)
+- [Case Studies](https://www.lumyo.pt/case-studies)
+- [Studio](https://www.lumyo.pt/studio)
+- [Contact](https://www.lumyo.pt/contact)
 
 ## Official Profiles
 
-- Instagram: https://www.instagram.com/lumyopt/
-- Facebook: https://www.facebook.com/lumyopt
+- [Instagram](https://www.instagram.com/lumyopt/)
+- [Facebook](https://www.facebook.com/lumyopt)

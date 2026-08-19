@@ -72,6 +72,11 @@
 
   display: inline-block;
 
+  /* Estado inicial antes de o GSAP arrancar */
+  opacity: 0;
+  filter: blur(20px);
+  transform: translateY(12px);
+
   will-change:
     opacity,
     filter,

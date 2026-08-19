@@ -23,10 +23,6 @@ const translations = {
     },
 
     home: {
-      // =====================================================
-      // HERO
-      // =====================================================
-
       heroLine1: 'CONSTRUÍMOS',
       heroLine2: 'SISTEMAS',
       heroLine3: 'QUE ESCALAM',
@@ -65,10 +61,6 @@ const translations = {
         },
       ],
 
-      // =====================================================
-      // SERVICE 01 — PREMIUM WEBSITES
-      // =====================================================
-
       servicePremium: {
         number: '01',
         titleLine1: 'WEBSITES',
@@ -80,10 +72,6 @@ const translations = {
           'Criados para crescer.',
         ],
       },
-
-      // =====================================================
-      // SERVICE 02 — AUTOMATION
-      // =====================================================
 
       serviceAutomation: {
         number: '02',
@@ -97,10 +85,6 @@ const translations = {
         ],
       },
 
-      // =====================================================
-      // SERVICE 03 — ARTIFICIAL INTELLIGENCE
-      // =====================================================
-
       serviceAI: {
         number: '03',
         titleLine1: 'INTELIGÊNCIA',
@@ -113,10 +97,6 @@ const translations = {
         ],
       },
 
-      // =====================================================
-      // EDITORIAL EXPERIENCE
-      // =====================================================
-
       editorialExperience: {
         titleLine1: 'CRIAMOS EXPERIÊNCIAS',
         titleLine2: 'QUE TORNAM ',
@@ -126,29 +106,18 @@ const translations = {
           'Websites, software, automação e inteligência artificial desenvolvidos em torno de problemas reais de negócio.',
       },
 
-      // =====================================================
-      // AI CREATIVE
-      // =====================================================
-
       aiCreative: {
         eyebrowTop: 'VÍDEO IA',
-
         titleLeft: 'AI',
         titleRight: 'CREATIVE',
-
         eyebrowBottom: 'INFLUENCIADORES DIGITAIS',
 
         description:
           'Vídeo, conteúdo visual e identidades digitais criados com inteligência artificial para marcas que querem comunicar de forma diferente.',
       },
 
-      // =====================================================
-      // TESTIMONIALS
-      // =====================================================
-
       testimonials: {
         eyebrow: 'LUMYO',
-
         titleLine1: 'O QUE DIZEM',
         titleLine2: 'OS NOSSOS CLIENTES.',
 
@@ -177,10 +146,6 @@ const translations = {
         ],
       },
 
-      // =====================================================
-      // POSITIONING
-      // =====================================================
-
       positioning: {
         brand: 'LUMYO',
         eyebrow: 'SISTEMAS DIGITAIS',
@@ -192,10 +157,6 @@ const translations = {
         description:
           'Estratégia, design, desenvolvimento, automação e inteligência artificial combinados para resolver problemas reais de negócio.',
       },
-
-      // =====================================================
-      // LEGACY / OUTRAS ÁREAS DA HOME
-      // =====================================================
 
       solutionLabels: [
         ['WEBSITES', 'PREMIUM'],
@@ -232,7 +193,6 @@ const translations = {
       ],
 
       designEyebrow: 'DESIGN ÚNICO',
-
       designHeading: 'Cada negócio merece uma solução única.',
 
       designList: [
@@ -243,7 +203,6 @@ const translations = {
 
       whyLumyo: {
         eyebrow: 'PORQUÊ A LUMYO',
-
         heading: 'Quatro pilares de engenharia e design.',
 
         pillars: [
@@ -276,13 +235,11 @@ const translations = {
 
       selectedWork: {
         eyebrow: 'PROJETOS SELECIONADOS',
-
         heading: 'Sistemas reais com impacto no negócio.',
       },
 
       contactScene: {
         eyebrow: 'INICIAR PROJETO',
-
         titleLine1: 'PRONTO PARA CONSTRUIR',
         titleLine2: 'ALGO DIFERENTE?',
 
@@ -313,19 +270,13 @@ const translations = {
       },
     },
 
-    // =====================================================
-    // FOOTER
-    // =====================================================
-
     footer: {
       eyebrow: 'PORTUGAL · ESTÚDIO DIGITAL',
-
       headingLine1: 'VAMOS CONSTRUIR',
       headingLine2: 'ALGO',
       headingLine3: 'DIFERENTE.',
 
       startProject: 'INICIAR PROJETO',
-
       navigation: 'NAVEGAÇÃO',
       expertise: 'ESPECIALIDADES',
       social: 'SOCIAL',
@@ -345,10 +296,6 @@ const translations = {
 
       copyright: 'SISTEMAS DIGITAIS QUE ESCALAM',
     },
-
-    // =====================================================
-    // SOLUTIONS (PÁGINA GERAL E SERVIÇOS DETALHADOS)
-    // =====================================================
 
     solutions: {
       heading: 'Sistemas digitais inteligentes, feitos para escalar.',
@@ -397,6 +344,84 @@ const translations = {
       ],
 
       websites: {
+        hero: {
+          number: '01',
+          eyebrow: 'WEBSITES PREMIUM',
+          title: 'Não fazemos apenas websites.',
+          highlight: 'Construímos plataformas digitais para crescer.',
+          description:
+            'Criamos experiências digitais à medida que combinam design, tecnologia, performance, SEO e conversão desde o primeiro momento.',
+        },
+        capabilitiesEyebrow: 'O QUE CONSTRUÍMOS',
+        capabilitiesTitle: 'A infraestrutura digital do teu negócio.',
+        capabilitiesDesc:
+          'Do website institucional ao e-commerce, cada solução é construída para cumprir um objetivo concreto e integrar-se com o resto do negócio.',
+        capabilities: [
+          {
+            number: '01',
+            title: 'Websites à medida',
+            description:
+              'Design e desenvolvimento personalizados, construídos à volta da identidade, dos objetivos e das necessidades reais de cada negócio.',
+          },
+          {
+            number: '02',
+            title: 'E-commerce',
+            description:
+              'Lojas online rápidas, escaláveis e orientadas para conversão, incluindo experiências Shopify totalmente personalizadas.',
+          },
+          {
+            number: '03',
+            title: 'Landing pages',
+            description:
+              'Páginas focadas num único objetivo, pensadas para campanhas, aquisição de leads e conversão.',
+          },
+          {
+            number: '04',
+            title: 'Performance',
+            description:
+              'Experiências rápidas e responsivas, desenvolvidas com atenção à performance, Core Web Vitals e utilização em qualquer dispositivo.',
+          },
+          {
+            number: '05',
+            title: 'SEO técnico',
+            description:
+              'Estrutura, metadata, indexação, dados estruturados e arquitetura preparados desde a base para os motores de pesquisa.',
+          },
+          {
+            number: '06',
+            title: 'Integrações',
+            description:
+              'CRM, pagamentos, analytics, automações e sistemas externos ligados diretamente à experiência digital.',
+          },
+        ],
+        processEyebrow: 'COMO TRABALHAMOS',
+        processTitle: 'Da estratégia ao lançamento.',
+        process: [
+          {
+            number: '01',
+            title: 'Estratégia',
+            description:
+              'Percebemos o negócio, os objetivos, o público e o papel que o website deve desempenhar no sistema digital.',
+          },
+          {
+            number: '02',
+            title: 'Design',
+            description:
+              'Construímos a experiência visual e a arquitetura de informação à volta da marca e da conversão.',
+          },
+          {
+            number: '03',
+            title: 'Desenvolvimento',
+            description:
+              'Transformamos o design numa experiência rápida, responsiva, escalável e tecnicamente sólida.',
+          },
+          {
+            number: '04',
+            title: 'Otimização',
+            description:
+              'Preparamos performance, SEO técnico, analytics e integrações para que o website esteja pronto para crescer.',
+          },
+        ],
         faq: {
           eyebrow: 'PERGUNTAS FREQUENTES',
           title: 'O que precisas de saber antes de construir um website.',
@@ -418,9 +443,95 @@ const translations = {
             },
           ],
         },
+        cta: {
+          eyebrow: 'A BASE DO SISTEMA',
+          title: 'O website é onde tudo começa.',
+          description:
+            'É a infraestrutura que recebe tráfego, apresenta a proposta de valor, gera oportunidades e liga marketing, automação, inteligência artificial e dados num único sistema digital.',
+          buttonText: 'FALAR SOBRE O PROJETO',
+        },
       },
 
       automation: {
+        hero: {
+          number: '02',
+          eyebrow: 'AUTOMAÇÃO',
+          title: 'Menos tarefas repetitivas.',
+          highlight: 'Mais tempo para fazer o negócio crescer.',
+          description:
+            'Desenhamos sistemas de automação que ligam ferramentas, dados e processos para reduzir trabalho manual, eliminar tarefas repetitivas e tornar as operações mais eficientes.',
+        },
+        capabilitiesEyebrow: 'O QUE AUTOMATIZAMOS',
+        capabilitiesTitle:
+          'Processos que trabalham mesmo quando tu não estás a trabalhar neles.',
+        capabilitiesDesc:
+          'Da entrada de um contacto à operação interna, criamos fluxos que fazem a informação chegar ao sítio certo e desencadeiam automaticamente as ações necessárias.',
+        capabilities: [
+          {
+            number: '01',
+            title: 'Workflows automatizados',
+            description:
+              'Transformamos processos repetitivos em fluxos automáticos que executam tarefas, movimentam informação e mantêm as operações a funcionar sem intervenção constante.',
+          },
+          {
+            number: '02',
+            title: 'CRM e gestão de leads',
+            description:
+              'Ligamos formulários, contactos e equipas comerciais para organizar oportunidades, atualizar estados e garantir que cada lead segue o processo certo.',
+          },
+          {
+            number: '03',
+            title: 'Follow-ups automáticos',
+            description:
+              'Criamos sequências de email, notificações e ações automáticas para acompanhar contactos e clientes nos momentos certos.',
+          },
+          {
+            number: '04',
+            title: 'Operações internas',
+            description:
+              'Automatizamos tarefas administrativas, sincronização de dados, criação de registos, documentos e outros processos internos que consomem tempo à equipa.',
+          },
+          {
+            number: '05',
+            title: 'Integrações entre sistemas',
+            description:
+              'Ligamos websites, CRM, e-commerce, pagamentos, ferramentas de marketing e software interno para que a informação circule entre sistemas.',
+          },
+          {
+            number: '06',
+            title: 'Dados e reporting',
+            description:
+              'Centralizamos informação e automatizamos recolha, organização e reporting para reduzir trabalho manual e melhorar a visibilidade sobre o negócio.',
+          },
+        ],
+        processEyebrow: 'COMO TRABALHAMOS',
+        processTitle: 'Primeiro percebemos o processo. Depois automatizamos.',
+        process: [
+          {
+            number: '01',
+            title: 'Mapear',
+            description:
+              'Analisamos o processo atual, identificamos tarefas repetitivas, sistemas envolvidos e pontos onde existe perda de tempo ou informação.',
+          },
+          {
+            number: '02',
+            title: 'Desenhar',
+            description:
+              'Definimos o fluxo, as regras, os dados necessários e o comportamento esperado antes de automatizar.',
+          },
+          {
+            number: '03',
+            title: 'Integrar',
+            description:
+              'Ligamos as ferramentas e construímos os workflows necessários para executar o processo de forma consistente.',
+          },
+          {
+            number: '04',
+            title: 'Otimizar',
+            description:
+              'Testamos o sistema, acompanhamos resultados e ajustamos os fluxos à medida que o negócio e os processos evoluem.',
+          },
+        ],
         faq: {
           eyebrow: 'PERGUNTAS FREQUENTES',
           title: 'Onde a automação pode reduzir trabalho manual.',
@@ -442,9 +553,94 @@ const translations = {
             },
           ],
         },
+        cta: {
+          eyebrow: 'MENOS TRABALHO MANUAL',
+          title: 'Se acontece repetidamente, provavelmente pode ser automatizado.',
+          description:
+            'Analisamos os processos do teu negócio e identificamos onde a tecnologia pode reduzir tarefas manuais, ligar sistemas e libertar a equipa para trabalho com maior valor.',
+          buttonText: 'AUTOMATIZAR O MEU NEGÓCIO',
+        },
       },
 
       ai: {
+        hero: {
+          number: '03',
+          eyebrow: 'SOLUÇÕES IA',
+          title: 'Inteligência aplicada',
+          highlight: 'onde realmente cria valor.',
+          description:
+            'Desenvolvemos soluções de inteligência artificial integradas nos processos e sistemas do teu negócio — para interpretar informação, apoiar decisões e executar trabalho que não pode ser resolvido apenas com regras fixas.',
+        },
+        capabilitiesEyebrow: 'O QUE CONSTRUÍMOS',
+        capabilitiesTitle: 'IA desenhada à volta do teu negócio.',
+        capabilitiesDesc:
+          'Não adicionamos inteligência artificial apenas porque é possível. Identificamos onde a capacidade de interpretar contexto, informação e linguagem pode resolver problemas concretos.',
+        capabilities: [
+          {
+            number: '01',
+            title: 'Assistentes de IA',
+            description:
+              'Criamos assistentes inteligentes para apoiar clientes, equipas e operações, capazes de trabalhar com informação e contexto específicos do teu negócio.',
+          },
+          {
+            number: '02',
+            title: 'Classificação inteligente',
+            description:
+              'Utilizamos IA para interpretar informação, classificar pedidos, organizar contactos e encaminhar automaticamente cada situação para o processo adequado.',
+          },
+          {
+            number: '03',
+            title: 'Documentos e informação',
+            description:
+              'Transformamos documentos, mensagens e outros conteúdos não estruturados em informação útil que pode ser pesquisada, extraída e utilizada pelos teus sistemas.',
+          },
+          {
+            number: '04',
+            title: 'Geração de conteúdo',
+            description:
+              'Criamos sistemas capazes de gerar, adaptar e estruturar conteúdo com base nas regras, dados e identidade do negócio.',
+          },
+          {
+            number: '05',
+            title: 'IA integrada nos processos',
+            description:
+              'Integramos modelos de inteligência artificial em websites, CRM, aplicações e workflows existentes, em vez de criar ferramentas isoladas.',
+          },
+          {
+            number: '06',
+            title: 'Agentes inteligentes',
+            description:
+              'Para processos mais avançados, desenvolvemos sistemas capazes de utilizar ferramentas, consultar informação e executar sequências de tarefas com supervisão e controlo.',
+          },
+        ],
+        processEyebrow: 'COMO TRABALHAMOS',
+        processTitle: 'O problema primeiro. A inteligência artificial depois.',
+        process: [
+          {
+            number: '01',
+            title: 'Identificar',
+            description:
+              'Começamos pelo problema e identificamos onde a IA pode realmente melhorar velocidade, qualidade ou capacidade operacional.',
+          },
+          {
+            number: '02',
+            title: 'Desenhar',
+            description:
+              'Definimos dados, contexto, regras, integrações e limites necessários para o sistema funcionar de forma controlada.',
+          },
+          {
+            number: '03',
+            title: 'Construir',
+            description:
+              'Desenvolvemos e integramos a solução no ambiente real do negócio, ligando-a aos sistemas e fontes de informação necessários.',
+          },
+          {
+            number: '04',
+            title: 'Avaliar',
+            description:
+              'Testamos resultados, monitorizamos comportamento e melhoramos continuamente a solução com base na utilização real.',
+          },
+        ],
         faq: {
           eyebrow: 'PERGUNTAS FREQUENTES',
           title: 'Como aplicar inteligência artificial de forma útil no negócio.',
@@ -466,9 +662,94 @@ const translations = {
             },
           ],
         },
+        cta: {
+          eyebrow: 'IA COM PROPÓSITO',
+          title: 'Tens um processo que precisa de mais do que regras fixas?',
+          description:
+            'Analisamos o problema e determinamos se a inteligência artificial é realmente a solução adequada — e, quando é, construímo-la integrada no resto do teu sistema digital.',
+          buttonText: 'EXPLORAR UMA SOLUÇÃO IA',
+        },
       },
 
       growth: {
+        hero: {
+          number: '04',
+          eyebrow: 'CRESCIMENTO DIGITAL',
+          title: 'Atrair é apenas',
+          highlight: 'o início.',
+          description:
+            'Criamos sistemas de crescimento que ligam redes sociais, conteúdo, campanhas, SEO, conversão e dados para transformar atenção em oportunidades reais de negócio.',
+        },
+        capabilitiesEyebrow: 'COMO FAZEMOS CRESCER',
+        capabilitiesTitle: 'Da visibilidade à conversão.',
+        capabilitiesDesc:
+          'Não tratamos marketing como um conjunto de canais isolados. Ligamos conteúdo, aquisição, website e dados para que cada elemento contribua para o mesmo objetivo.',
+        capabilities: [
+          {
+            number: '01',
+            title: 'Redes sociais',
+            description:
+              'Planeamos e gerimos a presença da tua marca nas redes sociais, da estratégia editorial à criação e publicação de conteúdo alinhado com os objetivos do negócio.',
+          },
+          {
+            number: '02',
+            title: 'Conteúdo',
+            description:
+              'Criamos conteúdo pensado para diferentes momentos da jornada do cliente, transformando conhecimento, produtos e serviços em comunicação capaz de atrair e gerar interesse.',
+          },
+          {
+            number: '03',
+            title: 'Campanhas digitais',
+            description:
+              'Planeamos, lançamos e otimizamos campanhas pagas orientadas para objetivos concretos, ligando tráfego, landing pages e conversões num único sistema.',
+          },
+          {
+            number: '04',
+            title: 'SEO contínuo',
+            description:
+              'Trabalhamos conteúdo, estrutura, autoridade e desempenho técnico para aumentar progressivamente a visibilidade orgânica e captar procura relevante para o negócio.',
+          },
+          {
+            number: '05',
+            title: 'Conversão e CRO',
+            description:
+              'Analisamos páginas, jornadas e pontos de abandono para melhorar a experiência e transformar uma maior percentagem do tráfego existente em contactos, oportunidades ou vendas.',
+          },
+          {
+            number: '06',
+            title: 'Analytics e performance',
+            description:
+              'Medimos o percurso entre aquisição e resultado para perceber quais os canais, conteúdos e campanhas que realmente contribuem para o crescimento do negócio.',
+          },
+        ],
+        processEyebrow: 'COMO TRABALHAMOS',
+        processTitle: 'Crescimento baseado em dados, não em suposições.',
+        process: [
+          {
+            number: '01',
+            title: 'Medir',
+            description:
+              'Percebemos o ponto de partida, os canais existentes, o público, a procura e os dados disponíveis antes de definir onde investir.',
+          },
+          {
+            number: '02',
+            title: 'Planear',
+            description:
+              'Construímos uma estratégia que combina os canais adequados, conteúdo, aquisição e conversão em torno dos objetivos do negócio.',
+          },
+          {
+            number: '03',
+            title: 'Executar',
+            description:
+              'Produzimos conteúdo, gerimos canais, lançamos campanhas e implementamos as páginas e mecanismos necessários para transformar atenção em oportunidades.',
+          },
+          {
+            number: '04',
+            title: 'Otimizar',
+            description:
+              'Analisamos resultados e ajustamos continuamente campanhas, conteúdo, canais e experiência digital com base nos dados recolhidos.',
+          },
+        ],
         faq: {
           eyebrow: 'PERGUNTAS FREQUENTES',
           title: 'Como ligar visibilidade, tráfego e crescimento.',
@@ -490,18 +771,19 @@ const translations = {
             },
           ],
         },
+        cta: {
+          eyebrow: 'CRESCER COM DIREÇÃO',
+          title: 'Mais tráfego só interessa se contribuir para o negócio.',
+          description:
+            'Analisamos onde estás, onde queres chegar e construímos uma estratégia digital que liga aquisição, conteúdo e conversão a resultados mensuráveis.',
+          buttonText: 'FAZER CRESCER O MEU NEGÓCIO',
+        },
       },
     },
 
-    // =====================================================
-    // CASES
-    // =====================================================
-
     cases: {
       eyebrow: 'CASOS DE ESTUDO',
-
       heading: 'Problemas reais. Soluções construídas para os resolver.',
-
       intro:
         'Alguns exemplos de como combinamos estratégia, design, tecnologia, automação e crescimento para resolver problemas reais de negócio.',
 
@@ -509,27 +791,18 @@ const translations = {
         {
           id: 'auto-silcar',
           number: '01',
-
           tag: 'WEBSITE PREMIUM · PLATAFORMA AUTOMÓVEL',
-
           title: 'AUTO SILCAR',
-
           result:
             'Um website que funciona também como ferramenta de gestão comercial.',
-
           body:
             'Plataforma automóvel com gestão de viaturas, área administrativa, base de dados e captação centralizada de contactos.',
-
           problemTitle: 'O PROBLEMA',
-
           problem:
             'A gestão manual das viaturas e dos contactos comerciais torna a atualização do website mais lenta e dispersa informação importante gerada pelos potenciais clientes.',
-
           solutionTitle: 'A SOLUÇÃO',
-
           solution:
             'Desenvolvemos uma plataforma com base de dados e área de administração própria, permitindo inserir e remover viaturas facilmente. Os formulários enviam notificações por email através do Resend e todos os contactos ficam também registados na área administrativa.',
-
           capabilities: [
             'Área administrativa',
             'Base de dados',
@@ -538,37 +811,25 @@ const translations = {
             'Resend',
             'Gestão de leads',
           ],
-
           image: '/images/cases/ola/auto-silcar.png',
-
           cta: 'QUERO UM WEBSITE ASSIM',
           service: 'Website Premium',
         },
-
         {
           id: 'clinica-automacao',
           number: '02',
-
           tag: 'AUTOMAÇÃO · IA · LEAD MANAGEMENT',
-
           title: 'SISTEMA PARA CLÍNICAS',
-
           result:
             'Da primeira mensagem à marcação — e da marcação à retenção.',
-
           body:
             'Um sistema de qualificação, conversão e retenção que liga captação de leads, marcações, follow-ups e atendimento inteligente.',
-
           problemTitle: 'O PROBLEMA',
-
           problem:
             'Gerar contactos não chega. É necessário identificar rapidamente quem tem intenção real, responder sem atrasos, encaminhar potenciais clientes para uma marcação e manter o acompanhamento depois do primeiro contacto.',
-
           solutionTitle: 'A SOLUÇÃO',
-
           solution:
             'Criámos um sistema que centraliza captação de leads, qualificação, marcações e follow-ups, apoiado por um assistente disponível 24/7 no website, WhatsApp e Instagram.',
-
           capabilities: [
             'Qualificação de leads',
             'Marcações',
@@ -578,7 +839,6 @@ const translations = {
             'Instagram',
             'Transferência humana',
           ],
-
           features: [
             'Explicar serviços e preços iniciais',
             'Indicar profissionais e especialidades',
@@ -588,37 +848,25 @@ const translations = {
             'Responder a perguntas frequentes',
             'Transferir para uma pessoa quando necessário',
           ],
-
           image: '/images/cases/ola/clinic-automation.png',
-
           cta: 'QUERO AUTOMATIZAR O MEU NEGÓCIO',
           service: 'Automação',
         },
-
         {
           id: 'ola',
           number: '03',
-
           tag: 'PLATAFORMA SaaS · FITNESS & NUTRIÇÃO',
-
           title: 'OLÁ',
-
           result:
             'Treino, nutrição e acompanhamento profissional num único sistema.',
-
           body:
             'Uma plataforma criada para personal trainers, nutricionistas, ginásios e estúdios gerirem clientes, planos e acompanhamento sem depender de ferramentas dispersas.',
-
           problemTitle: 'O PROBLEMA',
-
           problem:
             'A gestão do acompanhamento pode ficar fragmentada entre folhas de cálculo, mensagens, aplicações de treino, ferramentas de nutrição e processos manuais. Isso cria trabalho repetitivo e dificulta uma visão completa de cada cliente.',
-
           solutionTitle: 'A SOLUÇÃO',
-
           solution:
-            'A Olá centraliza a operação numa plataforma única, permitindo gerir clientes, criar planos de treino e nutrição, acompanhar progresso, comunicar e estruturar todo o acompanhamento profissional.',
-
+            'Olá centralises a operação numa plataforma única, permitindo gerir clientes, criar planos de treino e nutrição, acompanhar progresso, comunicar e estruturar todo o acompanhamento profissional.',
           capabilities: [
             'Workout Builder',
             'Nutrition Builder',
@@ -628,37 +876,25 @@ const translations = {
             'Progresso',
             'Automação',
           ],
-
           image: '/images/cases/ola/ola-brand.png',
-
           cta: 'QUERO UM SISTEMA ASSIM',
           service: 'Soluções IA',
         },
-
         {
           id: 'crescimento-digital',
           number: '04',
-
           tag: 'CRESCIMENTO DIGITAL · SEO · GEO · PAID MEDIA',
-
           title: 'CRESCIMENTO DIGITAL',
-
           result:
             'Estratégias digitais orientadas por dados para aumentar visibilidade, tráfego e oportunidades.',
-
           body:
             'Gestão integrada de redes sociais, tráfego pago, SEO, GEO e análise de dados para transformar presença digital em crescimento mensurável.',
-
           problemTitle: 'O PROBLEMA',
-
           problem:
             'Redes sociais, publicidade e posicionamento digital são frequentemente trabalhados como canais separados, tornando difícil perceber o que realmente gera visibilidade, tráfego, contactos e oportunidades comerciais.',
-
           solutionTitle: 'A SOLUÇÃO',
-
           solution:
             'Construímos estratégias a partir da análise da presença digital, dos canais e dos dados do negócio, combinando redes sociais, Meta Ads, Google Ads, SEO, GEO e análise de desempenho.',
-
           capabilities: [
             'Meta Ads',
             'Google Ads',
@@ -668,9 +904,7 @@ const translations = {
             'Analytics',
             'Google Business Profile',
           ],
-
           image: '/images/cases/ola/digital-growth.png',
-
           cta: 'QUERO CRESCER O MEU NEGÓCIO',
           service: 'Crescimento Digital',
         },
@@ -678,37 +912,25 @@ const translations = {
 
       openCase: 'VER DETALHES',
       closeCase: 'FECHAR',
-
       cta: 'FALA-NOS DO TEU PROJETO',
     },
 
-    // =====================================================
-    // STUDIO
-    // =====================================================
-
     studio: {
       eyebrow: 'O ESTÚDIO',
-
       heading: 'Um estúdio para empresas ambiciosas.',
-
       intro:
         'A LUMYO é um estúdio digital que constrói websites premium, automação com IA e sistemas inteligentes. Trabalhamos com empresas que se recusam a aceitar templates — e construímos sistemas digitais que escalam com elas.',
-
       values: [
         'Craft acima de quantidade.',
         'Sistemas acima de páginas soltas.',
         'Parceria acima de projetos.',
         'Impacto acima de métricas de vaidade.',
       ],
-
       whatWeDoEyebrow: 'O QUE FAZEMOS',
-
       whatWeDoTitle:
         'Estratégia, tecnologia e crescimento no mesmo sistema.',
-
       whatWeDoIntro:
         'A Lumyo é um estúdio digital português especializado no desenvolvimento de websites premium, automação de processos, soluções de inteligência artificial e estratégias de crescimento digital para empresas.',
-
       services: [
         {
           number: '01',
@@ -739,15 +961,11 @@ const translations = {
           path: '/solutions/growth',
         },
       ],
-
       systemTitle:
         'Não construímos peças digitais isoladas.',
-
       systemDescription:
         'Website, automação, inteligência artificial e crescimento podem funcionar de forma independente. Quando faz sentido, ligamo-los num único sistema para que tecnologia, operações e aquisição trabalhem para o mesmo objetivo.',
-
       howWeWork: 'COMO TRABALHAMOS',
-
       process: [
         {
           t: 'Descobrir',
@@ -770,36 +988,26 @@ const translations = {
             'Medimos, otimizamos e fazemos o sistema crescer ao lado do seu negócio.',
         },
       ],
-
       cta: 'TRABALHE CONNOSCO',
     },
 
-    // =====================================================
-    // CONTACT (PAGE)
-    // =====================================================
-
     contact: {
       heading: 'Vamos construir algo único.',
-
       desc:
         'Fala-nos do teu projeto. Respondemos a todos os pedidos sérios em 24 horas.',
-
       labelName: 'NOME',
       labelEmail: 'EMAIL',
       labelService: 'SERVIÇO',
       labelMessage: 'MENSAGEM',
-
       phName: 'O teu nome',
       phEmail: 'email@empresa.com',
       phMessage: 'Fala-nos do teu projeto...',
-
       services: [
         'Website Premium',
         'Automação',
         'Soluções IA',
         'Crescimento Digital',
       ],
-
       submit: 'INICIAR PROJETO',
       sending: 'A ENVIAR...',
       successTitle: 'Mensagem enviada com sucesso.',
@@ -809,11 +1017,273 @@ const translations = {
       errorMsg:
         'Algo correu mal. Tenta novamente ou escreve-nos diretamente por email.',
     },
-  },
 
-  // =======================================================
-  // ENGLISH
-  // =======================================================
+    legal: {
+      lastUpdated: 'Última atualização: agosto de 2026',
+    },
+
+    terms: {
+      seoTitle: 'Termos de Utilização | Lumyo',
+      seoDescription: 'Consulta os Termos de Utilização do website da Lumyo.',
+      title: 'Termos de Utilização',
+      sections: [
+        {
+          title: '1. Objeto',
+          paragraphs: [
+            'Os presentes Termos de Utilização regulam o acesso e utilização do website da Lumyo.',
+            'Ao utilizar este website, o utilizador compromete-se a fazê-lo de forma lícita e de acordo com os presentes termos.',
+          ],
+        },
+        {
+          title: '2. Informação sobre os serviços',
+          paragraphs: [
+            'O website apresenta informação sobre serviços de desenvolvimento web, automação, inteligência artificial, crescimento digital e outras soluções digitais disponibilizadas pela Lumyo.',
+            'A informação apresentada tem caráter geral e não constitui, por si só, uma proposta contratual vinculativa.',
+          ],
+        },
+        {
+          title: '3. Propostas e contratação',
+          paragraphs: [
+            'Cada projeto pode apresentar requisitos, âmbito, prazos e custos diferentes. A contratação de serviços será efetuada através das condições especificamente acordadas entre a Lumyo e o cliente.',
+            'O envio de um formulário ou pedido de contacto através do website não implica a aceitação automática de qualquer projeto nem cria, por si só, uma relação contratual.',
+          ],
+        },
+        {
+          title: '4. Utilização do website',
+          paragraphs: ['O utilizador não deverá:'],
+          list: [
+            'Utilizar o website para fins ilícitos;',
+            'Tentar obter acesso não autorizado a sistemas, servidores ou informação;',
+            'Interferir deliberadamente com o funcionamento ou segurança do website;',
+            'Introduzir código malicioso ou utilizar mecanismos automatizados destinados a causar perturbação ou degradação do serviço.',
+          ],
+        },
+        {
+          title: '5. Propriedade intelectual',
+          paragraphs: [
+            'Salvo indicação em contrário, os conteúdos originais presentes no website, incluindo identidade visual, textos, elementos gráficos, interfaces, animações, código e outros materiais desenvolvidos pela Lumyo encontram-se protegidos pelos direitos de propriedade intelectual aplicáveis.',
+            'Não é permitida a reprodução, distribuição, modificação ou utilização comercial desses conteúdos sem autorização, exceto nos casos permitidos por lei.',
+          ],
+        },
+        {
+          title: '6. Projetos e marcas apresentados',
+          paragraphs: [
+            'O website poderá apresentar projetos, marcas, interfaces ou outros elementos pertencentes a clientes ou terceiros para efeitos de apresentação de trabalho e portefólio.',
+            'As marcas e conteúdos de terceiros permanecem propriedade dos respetivos titulares.',
+          ],
+        },
+        {
+          title: '7. Disponibilidade e exatidão',
+          paragraphs: [
+            'Procuramos manter a informação do website correta e atualizada, mas não garantimos que todos os conteúdos estejam permanentemente disponíveis ou isentos de erros.',
+            'O website poderá ser alterado, suspenso ou atualizado sem aviso prévio quando necessário por razões técnicas, operacionais ou de segurança.',
+          ],
+        },
+        {
+          title: '8. Ligações externas',
+          paragraphs: [
+            'O website poderá incluir ligações para websites ou serviços de terceiros. A Lumyo não controla esses serviços e não é responsável pelo respetivo conteúdo, disponibilidade ou políticas.',
+          ],
+        },
+        {
+          title: '9. Proteção de dados',
+          paragraphs: [
+            'O tratamento de dados pessoais realizado através deste website é descrito na Política de Privacidade e, relativamente a cookies e tecnologias semelhantes, na Política de Cookies.',
+          ],
+        },
+        {
+          title: '10. Alterações',
+          paragraphs: [
+            'A Lumyo poderá atualizar estes Termos de Utilização sempre que necessário. A versão em vigor estará disponível nesta página.',
+          ],
+        },
+        {
+          title: '11. Lei aplicável',
+          paragraphs: [
+            'Estes Termos de Utilização são regidos pela legislação portuguesa, sem prejuízo das normas imperativas que sejam aplicáveis.',
+          ],
+        },
+        {
+          title: '12. Contacto',
+          paragraphs: [
+            'Para questões relacionadas com este website ou com os presentes termos, contacta a Lumyo através dos meios disponibilizados na página de contacto.',
+          ],
+        },
+      ],
+    },
+
+    privacy: {
+      seoTitle: 'Política de Privacidade | Lumyo',
+      seoDescription:
+        'Consulta a Política de Privacidade da Lumyo e percebe como recolhemos, utilizamos e protegemos os teus dados pessoais.',
+      title: 'Política de Privacidade',
+      sections: [
+        {
+          title: '1. Responsável pelo tratamento',
+          paragraphs: [
+            'A presente Política de Privacidade descreve a forma como a Lumyo trata os dados pessoais recolhidos através deste website e no âmbito dos contactos estabelecidos com potenciais clientes, clientes e outros utilizadores.',
+            'Responsável pelo tratamento: Fernando Silva\nMarca: Lumyo\nPaís: Portugal\nEmail: fernando.silva@lumyo.pt',
+          ],
+        },
+        {
+          title: '2. Dados pessoais que podemos recolher',
+          paragraphs: [
+            'Podemos recolher dados fornecidos diretamente através dos formulários ou outros canais de contacto, nomeadamente nome, endereço de email, telefone, empresa, informação sobre o projeto ou serviço pretendido e o conteúdo das mensagens enviadas.',
+            'Quando forem utilizadas ferramentas de análise, segurança ou comunicação, poderão também ser tratados dados técnicos, como endereço IP, tipo de dispositivo, navegador, páginas visitadas, origem da visita e informação relacionada com a utilização do website.',
+          ],
+        },
+        {
+          title: '3. Finalidades do tratamento',
+          paragraphs: ['Os dados pessoais poderão ser tratados para:'],
+          list: [
+            'Responder a pedidos de contacto e pedidos de informação;',
+            'Analisar propostas e potenciais projetos;',
+            'Preparar e prestar serviços solicitados;',
+            'Gerir a relação com clientes;',
+            'Garantir a segurança e funcionamento do website;',
+            'Analisar a utilização e desempenho do website, quando aplicável;',
+            'Cumprir obrigações legais ou regulamentares aplicáveis.',
+          ],
+        },
+        {
+          title: '4. Fundamentos jurídicos',
+          paragraphs: [
+            'Dependendo da finalidade, o tratamento poderá basear-se na execução de diligências pré-contratuais solicitadas pelo titular, na execução de um contrato, no cumprimento de obrigações legais, em interesses legítimos da Lumyo ou no consentimento, quando este seja legalmente necessário.',
+          ],
+        },
+        {
+          title: '5. Formulários e comunicações',
+          paragraphs: [
+            'Quando envias um formulário através do website, os dados introduzidos são utilizados para receber, analisar e responder ao teu pedido.',
+            'O website pode recorrer a fornecedores tecnológicos para assegurar o envio e processamento das comunicações, incluindo serviços de infraestrutura e entrega de email.',
+          ],
+        },
+        {
+          title: '6. Chatbot e inteligência artificial',
+          paragraphs: [
+            'A Lumyo poderá disponibilizar um assistente ou chatbot baseado em inteligência artificial para responder a questões, prestar informações e encaminhar pedidos.',
+            'As informações introduzidas numa conversa poderão ser processadas pelos fornecedores tecnológicos necessários ao funcionamento do serviço. Não deves introduzir informação sensível ou confidencial que não seja necessária para o pedido.',
+            'Antes da ativação deste serviço, esta política será atualizada com informação adicional sobre os fornecedores utilizados, as finalidades do tratamento e, quando aplicável, transferências internacionais de dados.',
+          ],
+        },
+        {
+          title: '7. Partilha de dados',
+          paragraphs: [
+            'Os dados pessoais poderão ser tratados por fornecedores que prestem serviços necessários ao funcionamento do website e à atividade da Lumyo, como alojamento, infraestrutura tecnológica, email, segurança, análise de utilização ou comunicação.',
+            'Estes fornecedores apenas deverão tratar os dados na medida necessária à prestação dos respetivos serviços e de acordo com as obrigações legais aplicáveis.',
+          ],
+        },
+        {
+          title: '8. Transferências internacionais',
+          paragraphs: [
+            'Alguns fornecedores tecnológicos poderão tratar dados fora do Espaço Económico Europeu. Quando isso aconteça, serão utilizados os mecanismos legalmente aplicáveis para assegurar um nível adequado de proteção dos dados pessoais.',
+          ],
+        },
+        {
+          title: '9. Conservação dos dados',
+          paragraphs: [
+            'Os dados pessoais são conservados apenas durante o período necessário para as finalidades para que foram recolhidos, para cumprimento de obrigações legais ou durante os prazos necessários à defesa de direitos e interesses legítimos.',
+            'Pedidos de contacto que não resultem numa relação comercial serão eliminados ou anonimizados quando deixarem de ser necessários, salvo quando exista fundamento legal para a sua conservação.',
+          ],
+        },
+        {
+          title: '10. Direitos dos titulares',
+          paragraphs: [
+            'Nos termos da legislação aplicável, podes solicitar, quando aplicável, o acesso aos teus dados pessoais, a sua retificação, apagamento, limitação do tratamento, portabilidade ou oposição ao tratamento.',
+            'Quando o tratamento se baseie no consentimento, podes retirar esse consentimento a qualquer momento, sem afetar a licitude do tratamento realizado anteriormente.',
+            'Para exercer os teus direitos, contacta: fernando.silva@lumyo.pt.',
+          ],
+        },
+        {
+          title: '11. Reclamações',
+          paragraphs: [
+            'Tens também o direito de apresentar uma reclamação junto da Comissão Nacional de Proteção de Dados (CNPD), enquanto autoridade de controlo em Portugal.',
+          ],
+        },
+        {
+          title: '12. Segurança',
+          paragraphs: [
+            'São adotadas medidas técnicas e organizativas destinadas a proteger os dados pessoais contra acesso não autorizado, perda, alteração, divulgação ou destruição indevida.',
+          ],
+        },
+        {
+          title: '13. Alterações a esta política',
+          paragraphs: [
+            'Esta Política de Privacidade poderá ser atualizada sempre que existam alterações nos serviços, tecnologias utilizadas ou requisitos legais. A versão atual estará permanentemente disponível nesta página.',
+          ],
+        },
+      ],
+    },
+
+    cookies: {
+      seoTitle: 'Política de Cookies | Lumyo',
+      seoDescription:
+        'Consulta a Política de Cookies da Lumyo e percebe que tecnologias podem ser utilizadas neste website.',
+      title: 'Política de Cookies',
+      sections: [
+        {
+          title: '1. O que são cookies?',
+          paragraphs: [
+            'Cookies são pequenos ficheiros ou tecnologias semelhantes que podem ser armazenados ou consultados no dispositivo utilizado para aceder a um website.',
+            'Podem ser utilizados para assegurar funcionalidades técnicas, guardar preferências, compreender a utilização do website ou medir a eficácia de ações de marketing.',
+          ],
+        },
+        {
+          title: '2. Cookies estritamente necessários',
+          paragraphs: [
+            'O website pode utilizar cookies ou tecnologias estritamente necessárias ao seu funcionamento, segurança, gestão de sessão ou prestação de funcionalidades expressamente solicitadas pelo utilizador.',
+            'Estas tecnologias não dependem de consentimento quando são estritamente necessárias para fornecer o serviço solicitado.',
+          ],
+        },
+        {
+          title: '3. Cookies de análise',
+          paragraphs: [
+            'No futuro, a Lumyo poderá utilizar ferramentas de análise, como Google Analytics, para compreender de forma agregada como o website é utilizado, que páginas são visitadas e como os utilizadores chegam ao website.',
+            'Estas tecnologias apenas serão ativadas quando exista uma base legal adequada e, quando exigido, após obtenção do consentimento do utilizador.',
+          ],
+        },
+        {
+          title: '4. Publicidade e medição',
+          paragraphs: [
+            'A Lumyo poderá futuramente utilizar tecnologias de publicidade e medição, incluindo Meta Pixel e ferramentas associadas a plataformas publicitárias, para medir campanhas, atribuir conversões e melhorar a relevância das ações de marketing.',
+            'Estas tecnologias não deverão ser carregadas antes da obtenção do consentimento quando este seja legalmente necessário.',
+          ],
+        },
+        {
+          title: '5. Chatbot e serviços externos',
+          paragraphs: [
+            'Algumas funcionalidades, como um chatbot, poderão recorrer a tecnologias de armazenamento local, cookies ou serviços externos necessários ao funcionamento da conversa.',
+            'Quando esta funcionalidade for ativada, esta política será atualizada para identificar as tecnologias relevantes e indicar a sua finalidade e duração, quando aplicável.',
+          ],
+        },
+        {
+          title: '6. Consentimento',
+          paragraphs: [
+            'Quando o website utilizar cookies ou tecnologias não estritamente necessárias, será solicitado consentimento antes da sua ativação, de acordo com as opções apresentadas no mecanismo de gestão de cookies.',
+            'O utilizador poderá aceitar ou rejeitar as categorias opcionais e alterar posteriormente a sua escolha.',
+          ],
+        },
+        {
+          title: '7. Alterar ou retirar o consentimento',
+          paragraphs: [
+            'Quando forem utilizados cookies sujeitos a consentimento, será disponibilizado um mecanismo que permita rever ou retirar as preferências anteriormente definidas.',
+          ],
+        },
+        {
+          title: '8. Cookies de terceiros',
+          paragraphs: [
+            'Algumas funcionalidades poderão ser fornecidas por terceiros e implicar a utilização das suas próprias tecnologias. Quando estas forem ativadas, a informação relevante será apresentada nesta política e no mecanismo de gestão de consentimento.',
+          ],
+        },
+        {
+          title: '9. Atualizações',
+          paragraphs: [
+            'Esta Política de Cookies será atualizada sempre que sejam adicionadas, removidas ou alteradas tecnologias utilizadas pelo website.',
+          ],
+        },
+      ],
+    },
+  },
 
   en: {
     nav: {
@@ -831,10 +1301,6 @@ const translations = {
     },
 
     home: {
-      // =====================================================
-      // HERO
-      // =====================================================
-
       heroLine1: 'BUILD DIGITAL',
       heroLine2: 'SYSTEMS',
       heroLine3: 'THAT SCALE',
@@ -873,10 +1339,6 @@ const translations = {
         },
       ],
 
-      // =====================================================
-      // SERVICE 01
-      // =====================================================
-
       servicePremium: {
         number: '01',
         titleLine1: 'PREMIUM',
@@ -888,10 +1350,6 @@ const translations = {
           'Built to grow.',
         ],
       },
-
-      // =====================================================
-      // SERVICE 02
-      // =====================================================
 
       serviceAutomation: {
         number: '02',
@@ -905,10 +1363,6 @@ const translations = {
         ],
       },
 
-      // =====================================================
-      // SERVICE 03
-      // =====================================================
-
       serviceAI: {
         number: '03',
         titleLine1: 'ARTIFICIAL',
@@ -921,10 +1375,6 @@ const translations = {
         ],
       },
 
-      // =====================================================
-      // EDITORIAL EXPERIENCE
-      // =====================================================
-
       editorialExperience: {
         titleLine1: 'SHAPING EXPERIENCES',
         titleLine2: 'THAT MAKE LIFE',
@@ -934,29 +1384,18 @@ const translations = {
           'Websites, software, automation and artificial intelligence built around real business challenges.',
       },
 
-      // =====================================================
-      // AI CREATIVE
-      // =====================================================
-
       aiCreative: {
         eyebrowTop: 'AI VIDEO',
-
         titleLeft: 'AI',
         titleRight: 'CREATIVE',
-
         eyebrowBottom: 'DIGITAL INFLUENCERS',
 
         description:
           'Video, visual content and digital identities created with artificial intelligence for brands that want to communicate differently.',
       },
 
-      // =====================================================
-      // TESTIMONIALS
-      // =====================================================
-
       testimonials: {
         eyebrow: 'LUMYO',
-
         titleLine1: 'WHAT OUR',
         titleLine2: 'CLIENTS SAY.',
 
@@ -985,10 +1424,6 @@ const translations = {
         ],
       },
 
-      // =====================================================
-      // POSITIONING
-      // =====================================================
-
       positioning: {
         brand: 'LUMYO',
         eyebrow: 'DIGITAL SYSTEMS',
@@ -1000,10 +1435,6 @@ const translations = {
         description:
           'Strategy, design, development, automation and artificial intelligence combined to solve real business problems.',
       },
-
-      // =====================================================
-      // LEGACY / REMAINING HOME
-      // =====================================================
 
       solutionLabels: [
         ['PREMIUM', 'WEBSITES'],
@@ -1040,7 +1471,6 @@ const translations = {
       ],
 
       designEyebrow: 'UNIQUE DESIGN',
-
       designHeading: 'Every business deserves a unique solution.',
 
       designList: [
@@ -1051,7 +1481,6 @@ const translations = {
 
       whyLumyo: {
         eyebrow: 'WHY LUMYO',
-
         heading: 'Four pillars of engineering and design.',
 
         pillars: [
@@ -1084,13 +1513,11 @@ const translations = {
 
       selectedWork: {
         eyebrow: 'SELECTED WORK',
-
         heading: 'Real cases of business impact.',
       },
 
       contactScene: {
         eyebrow: 'START YOUR PROJECT',
-
         titleLine1: 'READY TO BUILD',
         titleLine2: 'SOMETHING DIFFERENT?',
 
@@ -1123,13 +1550,11 @@ const translations = {
 
     footer: {
       eyebrow: 'PORTUGAL · DIGITAL SYSTEMS STUDIO',
-
       headingLine1: "LET'S BUILD",
       headingLine2: 'SOMETHING',
       headingLine3: 'DIFFERENT.',
 
       startProject: 'START A PROJECT',
-
       navigation: 'NAVIGATION',
       expertise: 'EXPERTISE',
       social: 'SOCIAL',
@@ -1149,10 +1574,6 @@ const translations = {
 
       copyright: 'DIGITAL SYSTEMS THAT SCALE',
     },
-
-    // =====================================================
-    // SOLUTIONS (GENERAL PAGE & DETAILED SERVICES)
-    // =====================================================
 
     solutions: {
       heading: 'Intelligent digital systems, built to scale.',
@@ -1201,6 +1622,84 @@ const translations = {
       ],
 
       websites: {
+        hero: {
+          number: '01',
+          eyebrow: 'PREMIUM WEBSITES',
+          title: 'We do not just build websites.',
+          highlight: 'We build digital platforms to scale.',
+          description:
+            'We craft bespoke digital experiences combining design, technology, performance, SEO and conversion from day one.',
+        },
+        capabilitiesEyebrow: 'WHAT WE BUILD',
+        capabilitiesTitle: 'Your business digital infrastructure.',
+        capabilitiesDesc:
+          'From corporate websites to e-commerce, each solution is built to meet specific goals and integrate seamlessly with your operations.',
+        capabilities: [
+          {
+            number: '01',
+            title: 'Bespoke Websites',
+            description:
+              'Custom design and development built around identity, goals and real business requirements.',
+          },
+          {
+            number: '02',
+            title: 'E-commerce',
+            description:
+              'Fast, scalable, conversion-focused online stores, including fully customized Shopify experiences.',
+          },
+          {
+            number: '03',
+            title: 'Landing Pages',
+            description:
+              'Single-goal pages optimized for marketing campaigns, lead generation and conversion.',
+          },
+          {
+            number: '04',
+            title: 'Performance',
+            description:
+              'Fast and responsive experiences built with Core Web Vitals and cross-device speed in mind.',
+          },
+          {
+            number: '05',
+            title: 'Technical SEO',
+            description:
+              'Architecture, metadata, indexing and structured data prepared from the ground up for search engines.',
+          },
+          {
+            number: '06',
+            title: 'Integrations',
+            description:
+              'CRM, payment gateways, analytics and workflows connected directly into the digital experience.',
+          },
+        ],
+        processEyebrow: 'HOW WE WORK',
+        processTitle: 'From strategy to launch.',
+        process: [
+          {
+            number: '01',
+            title: 'Strategy',
+            description:
+              'We understand the business, audience and the exact role the website plays in your ecosystem.',
+          },
+          {
+            number: '02',
+            title: 'Design',
+            description:
+              'We shape the visual identity and UX architecture around brand values and conversions.',
+          },
+          {
+            number: '03',
+            title: 'Development',
+            description:
+              'We turn designs into fast, responsive, scalable and robust web systems.',
+          },
+          {
+            number: '04',
+            title: 'Optimization',
+            description:
+              'We fine-tune performance, technical SEO, analytics and integrations for long-term growth.',
+          },
+        ],
         faq: {
           eyebrow: 'FREQUENTLY ASKED QUESTIONS',
           title: 'What you should know before building a website.',
@@ -1222,9 +1721,94 @@ const translations = {
             },
           ],
         },
+        cta: {
+          eyebrow: 'THE SYSTEM FOUNDATION',
+          title: 'The website is where everything begins.',
+          description:
+            'The digital foundation that captures traffic, presents value, drives leads and connects automation, AI and data into one ecosystem.',
+          buttonText: 'DISCUSS YOUR PROJECT',
+        },
       },
 
       automation: {
+        hero: {
+          number: '02',
+          eyebrow: 'AUTOMATION',
+          title: 'Fewer repetitive tasks.',
+          highlight: 'More time to grow your business.',
+          description:
+            'We build automation systems connecting tools, data and workflows to eliminate manual work, reduce repetitive tasks and improve operational efficiency.',
+        },
+        capabilitiesEyebrow: 'WHAT WE AUTOMATE',
+        capabilitiesTitle: 'Workflows that run even when you are not working on them.',
+        capabilitiesDesc:
+          'From initial lead capture to internal operations, we build workflows that deliver data to the right place and trigger necessary actions automatically.',
+        capabilities: [
+          {
+            number: '01',
+            title: 'Automated Workflows',
+            description:
+              'We turn repetitive tasks into automated pipelines that execute work, transfer data and keep operations moving seamlessly.',
+          },
+          {
+            number: '02',
+            title: 'CRM & Lead Management',
+            description:
+              'We connect forms, contacts and sales teams to organize opportunities, update stages and route leads accurately.',
+          },
+          {
+            number: '03',
+            title: 'Automated Follow-ups',
+            description:
+              'We create email sequences, notifications and automated triggers to stay engaged with leads and clients at critical moments.',
+          },
+          {
+            number: '04',
+            title: 'Internal Operations',
+            description:
+              'We automate administrative duties, data syncs, document creation and back-office tasks that drain team capacity.',
+          },
+          {
+            number: '05',
+            title: 'System Integrations',
+            description:
+              'We connect websites, CRM platforms, e-commerce, payment gateways, marketing tools and custom internal software.',
+          },
+          {
+            number: '06',
+            title: 'Data & Reporting',
+            description:
+              'We centralize operational metrics and automate data collection to reduce manual reporting and provide clear visibility.',
+          },
+        ],
+        processEyebrow: 'HOW WE WORK',
+        processTitle: 'First we understand the process. Then we automate.',
+        process: [
+          {
+            number: '01',
+            title: 'Map',
+            description:
+              'We analyze the existing workflow, identifying bottleneck areas, manual steps and systems involved.',
+          },
+          {
+            number: '02',
+            title: 'Design',
+            description:
+              'We specify the logic, required data schemas and expected behavioral edge-cases before development.',
+          },
+          {
+            number: '03',
+            title: 'Integrate',
+            description:
+              'We link APIs and build production-ready pipelines to ensure consistent, reliable execution.',
+          },
+          {
+            number: '04',
+            title: 'Optimize',
+            description:
+              'We monitor pipeline health, gather performance metrics and fine-tune automations as operations evolve.',
+          },
+        ],
         faq: {
           eyebrow: 'FREQUENTLY ASKED QUESTIONS',
           title: 'Where automation can reduce manual work.',
@@ -1246,9 +1830,94 @@ const translations = {
             },
           ],
         },
+        cta: {
+          eyebrow: 'LESS MANUAL WORK',
+          title: 'If it happens repeatedly, it can probably be automated.',
+          description:
+            'We analyze your workflows and pinpoint where technology can eliminate manual overhead, link systems and free your team for higher-impact work.',
+          buttonText: 'AUTOMATE MY BUSINESS',
+        },
       },
 
       ai: {
+        hero: {
+          number: '03',
+          eyebrow: 'AI SOLUTIONS',
+          title: 'Applied intelligence',
+          highlight: 'where it genuinely creates value.',
+          description:
+            'We engineer custom artificial intelligence systems integrated directly into your business processes to interpret context, empower decisions and execute complex tasks.',
+        },
+        capabilitiesEyebrow: 'WHAT WE BUILD',
+        capabilitiesTitle: 'AI tailored around your business.',
+        capabilitiesDesc:
+          'We do not implement AI merely because it is possible. We identify where language understanding, classification and context solve concrete operational bottlenecks.',
+        capabilities: [
+          {
+            number: '01',
+            title: 'AI Assistants',
+            description:
+              'Custom intelligent assistants supporting customers, internal teams and operations with domain-specific context.',
+          },
+          {
+            number: '02',
+            title: 'Intelligent Classification',
+            description:
+              'AI systems to interpret incoming requests, organize inquiries and automatically route tasks to the right pipeline.',
+          },
+          {
+            number: '03',
+            title: 'Document Processing',
+            description:
+              'Transforming unstructured documents, messages and unstructured files into searchable, structured data.',
+          },
+          {
+            number: '04',
+            title: 'Content Generation',
+            description:
+              'Pipelines to create, adapt and structure business-aligned content based on custom guidelines and datasets.',
+          },
+          {
+            number: '05',
+            title: 'Integrated AI Workflows',
+            description:
+              'Embedding AI models directly inside existing web apps, CRMs and operational databases instead of isolated tools.',
+          },
+          {
+            number: '06',
+            title: 'Autonomous Agents',
+            description:
+              'Advanced systems capable of utilizing APIs, querying resources and completing multi-step tasks under human oversight.',
+          },
+        ],
+        processEyebrow: 'HOW WE WORK',
+        processTitle: 'The problem first. Artificial intelligence second.',
+        process: [
+          {
+            number: '01',
+            title: 'Identify',
+            description:
+              'We evaluate the problem to determine where AI delivers measurable speed, precision or operational capacity.',
+          },
+          {
+            number: '02',
+            title: 'Design',
+            description:
+              'We define data schemas, prompt architectures, API integrations and strict guardrails for reliable behavior.',
+          },
+          {
+            number: '03',
+            title: 'Build',
+            description:
+              'We construct and integrate the system within your infrastructure, connecting relevant enterprise knowledge bases.',
+          },
+          {
+            number: '04',
+            title: 'Evaluate',
+            description:
+              'We audit outputs, monitor inference latency and continuously fine-tune models based on real operational feedback.',
+          },
+        ],
         faq: {
           eyebrow: 'FREQUENTLY ASKED QUESTIONS',
           title: 'How to apply artificial intelligence usefully in business.',
@@ -1270,9 +1939,94 @@ const translations = {
             },
           ],
         },
+        cta: {
+          eyebrow: 'PURPOSE-BUILT AI',
+          title: 'Have a process that demands more than fixed rules?',
+          description:
+            'We assess your requirements, confirm whether AI is the right fit, and build it directly into your core digital platform.',
+          buttonText: 'EXPLORE AN AI SOLUTION',
+        },
       },
 
       growth: {
+        hero: {
+          number: '04',
+          eyebrow: 'DIGITAL GROWTH',
+          title: 'Attracting attention is only',
+          highlight: 'the beginning.',
+          description:
+            'We build growth systems linking social media, content, advertising, SEO, conversion pipelines and analytics to convert attention into qualified pipeline.',
+        },
+        capabilitiesEyebrow: 'HOW WE DRIVE GROWTH',
+        capabilitiesTitle: 'From visibility to conversion.',
+        capabilitiesDesc:
+          'We do not treat marketing as isolated channels. We synchronize content, acquisition, web UX and analytics to serve unified revenue goals.',
+        capabilities: [
+          {
+            number: '01',
+            title: 'Social Media',
+            description:
+              'Strategic social media management from editorial direction to high-performing content aligned with brand objectives.',
+          },
+          {
+            number: '02',
+            title: 'Content Strategy',
+            description:
+              'Targeted content designed across customer journey stages to showcase expertise and engage qualified prospects.',
+          },
+          {
+            number: '03',
+            title: 'Digital Advertising',
+            description:
+              'Paid media campaigns designed for concrete conversion goals, linking paid traffic, landing pages and sales pipelines.',
+          },
+          {
+            number: '04',
+            title: 'Continuous SEO',
+            description:
+              'Optimizing technical foundation, content architecture and domain authority to capture sustained organic search demand.',
+          },
+          {
+            number: '05',
+            title: 'Conversion Rate Optimization (CRO)',
+            description:
+              'Auditing user journeys and friction points to turn a greater portion of existing traffic into leads and revenue.',
+          },
+          {
+            number: '06',
+            title: 'Analytics & Performance',
+            description:
+              'Full-funnel attribution tracking to measure which campaigns, assets and channels generate genuine commercial returns.',
+          },
+        ],
+        processEyebrow: 'HOW WE WORK',
+        processTitle: 'Data-driven growth, free of guesswork.',
+        process: [
+          {
+            number: '01',
+            title: 'Measure',
+            description:
+              'We evaluate your current baselines, audience data, channel performance and market demand before deploying budget.',
+          },
+          {
+            number: '02',
+            title: 'Plan',
+            description:
+              'We map an omnichannel roadmap combining the optimal mix of content, acquisition and UX conversion mechanisms.',
+          },
+          {
+            number: '03',
+            title: 'Execute',
+            description:
+              'We produce assets, launch targeted campaigns, configure tracking and deploy optimized landing pages.',
+          },
+          {
+            number: '04',
+            title: 'Optimize',
+            description:
+              'We analyze user behavior data to continuously refine creatives, bidding strategies and conversion paths.',
+          },
+        ],
         faq: {
           eyebrow: 'FREQUENTLY ASKED QUESTIONS',
           title: 'How to connect visibility, traffic and growth.',
@@ -1294,18 +2048,19 @@ const translations = {
             },
           ],
         },
+        cta: {
+          eyebrow: 'GROW WITH DIRECTION',
+          title: 'Traffic is only valuable when it drives real business outcomes.',
+          description:
+            'We assess your market position and craft a predictable digital strategy connecting acquisition, content and conversion to measurable revenue.',
+          buttonText: 'GROW MY BUSINESS',
+        },
       },
     },
 
-    // =====================================================
-    // CASES
-    // =====================================================
-
     cases: {
       eyebrow: 'CASE STUDIES',
-
       heading: 'Real problems. Solutions built to solve them.',
-
       intro:
         'A selection of examples showing how we combine strategy, design, technology, automation and growth to solve real business problems.',
 
@@ -1313,27 +2068,18 @@ const translations = {
         {
           id: 'auto-silcar',
           number: '01',
-
           tag: 'PREMIUM WEBSITE · AUTOMOTIVE PLATFORM',
-
           title: 'AUTO SILCAR',
-
           result:
             'A website that also works as a commercial management tool.',
-
           body:
             'An automotive platform with vehicle management, administration area, database and centralised lead capture.',
-
           problemTitle: 'THE PROBLEM',
-
           problem:
             'Manual vehicle and commercial contact management makes website updates slower and spreads valuable information generated by potential customers across different channels.',
-
           solutionTitle: 'THE SOLUTION',
-
           solution:
             'We developed a platform with its own database and administration area, making it easy to add and remove vehicles. Forms send email notifications through Resend while every contact is also stored in the administration area.',
-
           capabilities: [
             'Admin area',
             'Database',
@@ -1342,37 +2088,25 @@ const translations = {
             'Resend',
             'Lead management',
           ],
-
           image: '/images/cases/ola/auto-silcar.png',
-
           cta: 'I WANT A WEBSITE LIKE THIS',
           service: 'Premium Website',
         },
-
         {
           id: 'clinica-automacao',
           number: '02',
-
           tag: 'AUTOMATION · AI · LEAD MANAGEMENT',
-
           title: 'SYSTEM FOR CLINICS',
-
           result:
             'From the first message to the appointment — and from appointment to retention.',
-
           body:
             'A qualification, conversion and retention system connecting lead capture, appointments, follow-ups and intelligent customer assistance.',
-
           problemTitle: 'THE PROBLEM',
-
           problem:
             'Generating leads is not enough. Clinics need to quickly identify real intent, respond without delays, move potential clients towards an appointment and maintain follow-up after the first contact.',
-
           solutionTitle: 'THE SOLUTION',
-
           solution:
             'We created a system that centralises lead capture, qualification, appointments and follow-ups, supported by a 24/7 assistant across the website, WhatsApp and Instagram.',
-
           capabilities: [
             'Lead qualification',
             'Appointments',
@@ -1382,7 +2116,6 @@ const translations = {
             'Instagram',
             'Human handoff',
           ],
-
           features: [
             'Explain services and initial pricing',
             'Recommend professionals and specialties',
@@ -1392,37 +2125,25 @@ const translations = {
             'Answer frequently asked questions',
             'Transfer conversations to a person when necessary',
           ],
-
           image: '/images/cases/ola/clinic-automation.png',
-
           cta: 'I WANT TO AUTOMATE MY BUSINESS',
           service: 'Automation',
         },
-
         {
           id: 'ola',
           number: '03',
-
           tag: 'SaaS PLATFORM · FITNESS & NUTRITION',
-
           title: 'OLÁ',
-
           result:
             'Training, nutrition and professional client management in one system.',
-
           body:
             'A platform built for personal trainers, nutritionists, gyms and studios to manage clients, plans and ongoing support without relying on fragmented tools.',
-
           problemTitle: 'THE PROBLEM',
-
           problem:
             'Client management can become fragmented across spreadsheets, messaging apps, training platforms, nutrition tools and manual processes. This creates repetitive work and makes it difficult to maintain a complete view of each client.',
-
           solutionTitle: 'THE SOLUTION',
-
           solution:
             'Olá centralises operations in a single platform, allowing professionals to manage clients, create training and nutrition plans, track progress, communicate and structure ongoing support.',
-
           capabilities: [
             'Workout Builder',
             'Nutrition Builder',
@@ -1432,37 +2153,25 @@ const translations = {
             'Progress tracking',
             'Automation',
           ],
-
           image: '/images/cases/ola/ola-brand.png',
-
           cta: 'I WANT A SYSTEM LIKE THIS',
           service: 'AI Solutions',
         },
-
         {
           id: 'digital-growth',
           number: '04',
-
           tag: 'DIGITAL GROWTH · SEO · GEO · PAID MEDIA',
-
           title: 'DIGITAL GROWTH',
-
           result:
             'Data-driven digital strategies designed to increase visibility, traffic and opportunities.',
-
           body:
             'Integrated social media management, paid traffic, SEO, GEO and data analysis designed to turn digital presence into measurable growth.',
-
           problemTitle: 'THE PROBLEM',
-
           problem:
             'Social media, advertising and digital positioning are often managed as separate channels, making it difficult to understand what is actually generating visibility, traffic, leads and commercial opportunities.',
-
           solutionTitle: 'THE SOLUTION',
-
           solution:
             'We build strategies around the company’s digital presence, channels and performance data, combining social media, Meta Ads, Google Ads, SEO, GEO and performance analysis.',
-
           capabilities: [
             'Meta Ads',
             'Google Ads',
@@ -1472,9 +2181,7 @@ const translations = {
             'Analytics',
             'Google Business Profile',
           ],
-
           image: '/images/cases/ola/digital-growth.png',
-
           cta: 'I WANT TO GROW MY BUSINESS',
           service: 'Digital Growth',
         },
@@ -1482,33 +2189,25 @@ const translations = {
 
       openCase: 'VIEW DETAILS',
       closeCase: 'CLOSE',
-
       cta: 'TELL US ABOUT YOUR PROJECT',
     },
 
     studio: {
       eyebrow: 'THE STUDIO',
-
       heading: 'A studio for ambitious businesses.',
-
       intro:
         'LUMYO is a digital studio building premium websites, AI automation and intelligent systems. We partner with businesses that refuse to settle for templates — and we build digital systems that scale with them.',
-
       values: [
         'Craft over quantity.',
         'Systems over one-off pages.',
         'Partnership over projects.',
         'Impact over vanity metrics.',
       ],
-
       whatWeDoEyebrow: 'WHAT WE DO',
-
       whatWeDoTitle:
         'Strategy, technology and growth in one system.',
-
       whatWeDoIntro:
         'Lumyo is a Portuguese digital studio specialising in premium website development, process automation, artificial intelligence solutions and digital growth strategies for businesses.',
-
       services: [
         {
           number: '01',
@@ -1539,15 +2238,11 @@ const translations = {
           path: '/solutions/growth',
         },
       ],
-
       systemTitle:
         'We do not build disconnected digital pieces.',
-
       systemDescription:
         'Websites, automation, artificial intelligence and digital growth can work independently. When it makes sense, we connect them into one system so technology, operations and acquisition work towards the same objective.',
-
       howWeWork: 'HOW WE WORK',
-
       process: [
         {
           t: 'Discover',
@@ -1570,36 +2265,26 @@ const translations = {
             'We measure, optimise and grow the system alongside your business.',
         },
       ],
-
       cta: 'WORK WITH US',
     },
 
-    // =====================================================
-    // CONTACT (PAGE)
-    // =====================================================
-
     contact: {
       heading: "Let's build something unique.",
-
       desc:
         'Tell us about your project. We reply to every serious enquiry within 24 hours.',
-
       labelName: 'NAME',
       labelEmail: 'EMAIL',
       labelService: 'SERVICE',
       labelMessage: 'MESSAGE',
-
       phName: 'Your name',
       phEmail: 'you@company.com',
       phMessage: 'Tell us about your project...',
-
       services: [
         'Premium Website',
         'Automation',
         'AI Solutions',
         'Digital Growth',
       ],
-
       submit: 'START YOUR PROJECT',
       sending: 'SENDING...',
       successTitle: 'Message sent successfully.',
@@ -1609,13 +2294,277 @@ const translations = {
       errorMsg:
         'Something went wrong. Please try again or email us directly.',
     },
+
+    legal: {
+      lastUpdated: 'Last updated: August 2026',
+    },
+
+    terms: {
+      seoTitle: 'Terms of Use | Lumyo',
+      seoDescription: 'Read the Terms of Use for the Lumyo website.',
+      title: 'Terms of Use',
+      sections: [
+        {
+          title: '1. Purpose',
+          paragraphs: [
+            'These Terms of Use govern access to and use of the Lumyo website.',
+            'By using this website, you agree to use it lawfully and in accordance with these terms.',
+          ],
+        },
+        {
+          title: '2. Information about our services',
+          paragraphs: [
+            'The website provides information about web development, automation, artificial intelligence, digital growth and other digital solutions offered by Lumyo.',
+            'The information provided is general in nature and does not, by itself, constitute a binding contractual offer.',
+          ],
+        },
+        {
+          title: '3. Proposals and engagement',
+          paragraphs: [
+            'Each project may have different requirements, scope, timelines and costs. Services will be provided under the specific terms agreed between Lumyo and the client.',
+            'Submitting a form or contact request through the website does not imply automatic acceptance of any project and does not, by itself, create a contractual relationship.',
+          ],
+        },
+        {
+          title: '4. Use of the website',
+          paragraphs: ['You must not:'],
+          list: [
+            'Use the website for unlawful purposes;',
+            'Attempt to gain unauthorised access to systems, servers or information;',
+            'Deliberately interfere with the operation or security of the website;',
+            'Introduce malicious code or use automated mechanisms intended to disrupt or degrade the service.',
+          ],
+        },
+        {
+          title: '5. Intellectual property',
+          paragraphs: [
+            'Unless otherwise stated, original content on this website, including its visual identity, text, graphic elements, interfaces, animations, code and other materials developed by Lumyo, is protected by applicable intellectual property rights.',
+            'Reproduction, distribution, modification or commercial use of this content without authorisation is not permitted, except where allowed by law.',
+          ],
+        },
+        {
+          title: '6. Featured projects and brands',
+          paragraphs: [
+            'The website may feature projects, brands, interfaces or other elements belonging to clients or third parties for portfolio and work presentation purposes.',
+            'Third-party brands and content remain the property of their respective owners.',
+          ],
+        },
+        {
+          title: '7. Availability and accuracy',
+          paragraphs: [
+            'We aim to keep the information on the website accurate and up to date, but we do not guarantee that all content will always be available or free from errors.',
+            'The website may be modified, suspended or updated without prior notice where necessary for technical, operational or security reasons.',
+          ],
+        },
+        {
+          title: '8. External links',
+          paragraphs: [
+            'The website may include links to third-party websites or services. Lumyo does not control these services and is not responsible for their content, availability or policies.',
+          ],
+        },
+        {
+          title: '9. Data protection',
+          paragraphs: [
+            'The processing of personal data through this website is described in our Privacy Policy and, in relation to cookies and similar technologies, in our Cookie Policy.',
+          ],
+        },
+        {
+          title: '10. Changes',
+          paragraphs: [
+            'Lumyo may update these Terms of Use whenever necessary. The current version will be available on this page.',
+          ],
+        },
+        {
+          title: '11. Governing law',
+          paragraphs: [
+            'These Terms of Use are governed by Portuguese law, without prejudice to any mandatory legal provisions that may apply.',
+          ],
+        },
+        {
+          title: '12. Contact',
+          paragraphs: [
+            'For questions regarding this website or these terms, contact Lumyo using the details provided on our contact page.',
+          ],
+        },
+      ],
+    },
+
+    privacy: {
+      seoTitle: 'Privacy Policy | Lumyo',
+      seoDescription:
+        'Read the Lumyo Privacy Policy and learn how we collect, use and protect your personal data.',
+      title: 'Privacy Policy',
+      sections: [
+        {
+          title: '1. Data controller',
+          paragraphs: [
+            'This Privacy Policy describes how Lumyo processes personal data collected through this website and through communications with prospective clients, clients and other users.',
+            'Data controller: Fernando Silva\nBrand: Lumyo\nCountry: Portugal\nEmail: fernando.silva@lumyo.pt',
+          ],
+        },
+        {
+          title: '2. Personal data we may collect',
+          paragraphs: [
+            'We may collect information provided directly through forms or other contact channels, including your name, email address, telephone number, company, information about the project or service you are interested in, and the content of messages you send us.',
+            'Where analytics, security or communication tools are used, technical data may also be processed, including IP address, device type, browser, pages visited, referral source and information relating to your use of the website.',
+          ],
+        },
+        {
+          title: '3. Purposes of processing',
+          paragraphs: ['Personal data may be processed to:'],
+          list: [
+            'Respond to contact requests and enquiries;',
+            'Assess proposals and potential projects;',
+            'Prepare and provide requested services;',
+            'Manage client relationships;',
+            'Ensure the security and operation of the website;',
+            'Analyse website usage and performance, where applicable;',
+            'Comply with applicable legal or regulatory obligations.',
+          ],
+        },
+        {
+          title: '4. Legal bases for processing',
+          paragraphs: [
+            'Depending on the purpose, processing may be based on taking pre-contractual steps requested by the data subject, performance of a contract, compliance with legal obligations, Lumyo’s legitimate interests or consent, where legally required.',
+          ],
+        },
+        {
+          title: '5. Forms and communications',
+          paragraphs: [
+            'When you submit a form through the website, the information you provide is used to receive, assess and respond to your request.',
+            'The website may use technology providers to support the sending and processing of communications, including infrastructure and email delivery services.',
+          ],
+        },
+        {
+          title: '6. Chatbot and artificial intelligence',
+          paragraphs: [
+            'Lumyo may provide an artificial intelligence-based assistant or chatbot to answer questions, provide information and route requests.',
+            'Information entered during a conversation may be processed by technology providers required to operate the service. You should not provide sensitive or confidential information that is not necessary for your request.',
+            'Before this service is activated, this policy will be updated with additional information about the providers used, the purposes of processing and, where applicable, international data transfers.',
+          ],
+        },
+        {
+          title: '7. Sharing of personal data',
+          paragraphs: [
+            'Personal data may be processed by providers supplying services necessary for the operation of the website and Lumyo’s activities, such as hosting, technology infrastructure, email, security, usage analytics or communications.',
+            'These providers should only process personal data to the extent necessary to provide their respective services and in accordance with applicable legal requirements.',
+          ],
+        },
+        {
+          title: '8. International data transfers',
+          paragraphs: [
+            'Some technology providers may process data outside the European Economic Area. Where this occurs, the legally applicable safeguards will be used to ensure an adequate level of protection for personal data.',
+          ],
+        },
+        {
+          title: '9. Data retention',
+          paragraphs: [
+            'Personal data is retained only for as long as necessary for the purposes for which it was collected, to comply with legal obligations or for the periods required to protect legitimate rights and interests.',
+            'Contact requests that do not result in a commercial relationship will be deleted or anonymised when they are no longer required, unless there is a legal basis for retaining them.',
+          ],
+        },
+        {
+          title: '10. Your rights',
+          paragraphs: [
+            'Under applicable law, you may request, where applicable, access to your personal data, rectification, erasure, restriction of processing, data portability or objection to processing.',
+            'Where processing is based on consent, you may withdraw that consent at any time without affecting the lawfulness of processing carried out before its withdrawal.',
+            'To exercise your rights, contact: fernando.silva@lumyo.pt.',
+          ],
+        },
+        {
+          title: '11. Complaints',
+          paragraphs: [
+            'You also have the right to lodge a complaint with the Portuguese Data Protection Authority (Comissão Nacional de Proteção de Dados — CNPD), as the supervisory authority in Portugal.',
+          ],
+        },
+        {
+          title: '12. Security',
+          paragraphs: [
+            'Technical and organisational measures are implemented to protect personal data against unauthorised access, loss, alteration, disclosure or improper destruction.',
+          ],
+        },
+        {
+          title: '13. Changes to this policy',
+          paragraphs: [
+            'This Privacy Policy may be updated whenever there are changes to our services, the technologies we use or applicable legal requirements. The current version will remain available on this page.',
+          ],
+        },
+      ],
+    },
+
+    cookies: {
+      seoTitle: 'Cookie Policy | Lumyo',
+      seoDescription:
+        'Read the Lumyo Cookie Policy and learn which technologies may be used on this website.',
+      title: 'Cookie Policy',
+      sections: [
+        {
+          title: '1. What are cookies?',
+          paragraphs: [
+            'Cookies are small files or similar technologies that may be stored on or accessed from the device used to visit a website.',
+            'They may be used to provide technical functionality, store preferences, understand how the website is used or measure the effectiveness of marketing activities.',
+          ],
+        },
+        {
+          title: '2. Strictly necessary cookies',
+          paragraphs: [
+            'The website may use cookies or similar technologies that are strictly necessary for its operation, security, session management or to provide functionality expressly requested by the user.',
+            'These technologies do not require consent where they are strictly necessary to provide the requested service.',
+          ],
+        },
+        {
+          title: '3. Analytics cookies',
+          paragraphs: [
+            'In the future, Lumyo may use analytics tools such as Google Analytics to understand, in aggregate, how the website is used, which pages are visited and how users reach the website.',
+            'These technologies will only be activated where there is an appropriate legal basis and, where required, after obtaining the user’s consent.',
+          ],
+        },
+        {
+          title: '4. Advertising and measurement',
+          paragraphs: [
+            'Lumyo may in the future use advertising and measurement technologies, including Meta Pixel and tools associated with advertising platforms, to measure campaigns, attribute conversions and improve the relevance of marketing activities.',
+            'These technologies should not be loaded before consent has been obtained where consent is legally required.',
+          ],
+        },
+        {
+          title: '5. Chatbot and external services',
+          paragraphs: [
+            'Some features, such as a chatbot, may use local storage technologies, cookies or external services required for the operation of the conversation.',
+            'When this functionality is activated, this policy will be updated to identify the relevant technologies and explain their purpose and duration, where applicable.',
+          ],
+        },
+        {
+          title: '6. Consent',
+          paragraphs: [
+            'Where the website uses cookies or technologies that are not strictly necessary, consent will be requested before they are activated, in accordance with the options presented through the cookie management mechanism.',
+            'Users will be able to accept or reject optional categories and subsequently change their choices.',
+          ],
+        },
+        {
+          title: '7. Changing or withdrawing consent',
+          paragraphs: [
+            'Where cookies subject to consent are used, a mechanism will be provided allowing users to review or withdraw their previously selected preferences.',
+          ],
+        },
+        {
+          title: '8. Third-party cookies',
+          paragraphs: [
+            'Some functionality may be provided by third parties and may involve the use of their own technologies. When these are activated, the relevant information will be provided in this policy and through the consent management mechanism.',
+          ],
+        },
+        {
+          title: '9. Updates',
+          paragraphs: [
+            'This Cookie Policy will be updated whenever technologies used by the website are added, removed or changed.',
+          ],
+        },
+      ],
+    },
   },
 };
 
-// 1. Instanciação do Contexto (Resolve o ReferenceError)
 const LanguageContext = createContext(null);
 
-// 2. Provedor de Idioma
 export function LanguageProvider({ children }) {
   const [lang, setLang] = useState(
     () => localStorage.getItem('lumyo_lang') || 'pt'
@@ -1654,7 +2603,6 @@ export function LanguageProvider({ children }) {
   );
 }
 
-// 3. Hook Personalizado
 export function useLang() {
   const ctx = useContext(LanguageContext);
 

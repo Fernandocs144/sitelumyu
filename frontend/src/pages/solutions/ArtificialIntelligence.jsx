@@ -22,82 +22,23 @@ import {
 } from '../../seo/schema';
 import { useLang } from '../../i18n';
 
-const capabilities = [
-  {
-    icon: MessagesSquare,
-    number: '01',
-    title: 'Assistentes de IA',
-    description:
-      'Criamos assistentes inteligentes para apoiar clientes, equipas e operações, capazes de trabalhar com informação e contexto específicos do teu negócio.',
-  },
-  {
-    icon: BrainCircuit,
-    number: '02',
-    title: 'Classificação inteligente',
-    description:
-      'Utilizamos IA para interpretar informação, classificar pedidos, organizar contactos e encaminhar automaticamente cada situação para o processo adequado.',
-  },
-  {
-    icon: FileSearch,
-    number: '03',
-    title: 'Documentos e informação',
-    description:
-      'Transformamos documentos, mensagens e outros conteúdos não estruturados em informação útil que pode ser pesquisada, extraída e utilizada pelos teus sistemas.',
-  },
-  {
-    icon: Sparkles,
-    number: '04',
-    title: 'Geração de conteúdo',
-    description:
-      'Criamos sistemas capazes de gerar, adaptar e estruturar conteúdo com base nas regras, dados e identidade do negócio.',
-  },
-  {
-    icon: Network,
-    number: '05',
-    title: 'IA integrada nos processos',
-    description:
-      'Integramos modelos de inteligência artificial em websites, CRM, aplicações e workflows existentes, em vez de criar ferramentas isoladas.',
-  },
-  {
-    icon: Bot,
-    number: '06',
-    title: 'Agentes inteligentes',
-    description:
-      'Para processos mais avançados, desenvolvemos sistemas capazes de utilizar ferramentas, consultar informação e executar sequências de tarefas com supervisão e controlo.',
-  },
-];
-
-const process = [
-  {
-    number: '01',
-    title: 'Identificar',
-    description:
-      'Começamos pelo problema e identificamos onde a IA pode realmente melhorar velocidade, qualidade ou capacidade operacional.',
-  },
-  {
-    number: '02',
-    title: 'Desenhar',
-    description:
-      'Definimos dados, contexto, regras, integrações e limites necessários para o sistema funcionar de forma controlada.',
-  },
-  {
-    number: '03',
-    title: 'Construir',
-    description:
-      'Desenvolvemos e integramos a solução no ambiente real do negócio, ligando-a aos sistemas e fontes de informação necessários.',
-  },
-  {
-    number: '04',
-    title: 'Avaliar',
-    description:
-      'Testamos resultados, monitorizamos comportamento e melhoramos continuamente a solução com base na utilização real.',
-  },
+const icons = [
+  MessagesSquare,
+  BrainCircuit,
+  FileSearch,
+  Sparkles,
+  Network,
+  Bot,
 ];
 
 export default function ArtificialIntelligence() {
   const { lang, t } = useLang();
+  const s = t.solutions?.ai;
 
-  const faq = t.solutions?.ai?.faq || t.ai?.faq;
+  const capabilities = (s?.capabilities || []).map((item, index) => ({
+    ...item,
+    icon: icons[index] || Bot,
+  }));
 
   const serviceSchema = createServiceSchema({
     name:
@@ -151,7 +92,7 @@ export default function ArtificialIntelligence() {
   });
 
   const faqSchema = createFAQSchema({
-    items: faq?.items || [],
+    items: s?.faq?.items || [],
     path: '/solutions/ai',
     lang,
   });
@@ -170,42 +111,46 @@ export default function ArtificialIntelligence() {
       <StructuredData data={breadcrumbSchema} />
       {faqSchema && <StructuredData data={faqSchema} />}
 
-      <SolutionHero
-        number="03"
-        eyebrow="SOLUÇÕES IA"
-        title="Inteligência aplicada"
-        highlight="onde realmente cria valor."
-        description="Desenvolvemos soluções de inteligência artificial integradas nos processos e sistemas do teu negócio — para interpretar informação, apoiar decisões e executar trabalho que não pode ser resolvido apenas com regras fixas."
-      />
+      {s && (
+        <>
+          <SolutionHero
+            number={s.hero.number}
+            eyebrow={s.hero.eyebrow}
+            title={s.hero.title}
+            highlight={s.hero.highlight}
+            description={s.hero.description}
+          />
 
-      <SolutionCapabilities
-        eyebrow="O QUE CONSTRUÍMOS"
-        title="IA desenhada à volta do teu negócio."
-        description="Não adicionamos inteligência artificial apenas porque é possível. Identificamos onde a capacidade de interpretar contexto, informação e linguagem pode resolver problemas concretos."
-        items={capabilities}
-      />
+          <SolutionCapabilities
+            eyebrow={s.capabilitiesEyebrow}
+            title={s.capabilitiesTitle}
+            description={s.capabilitiesDesc}
+            items={capabilities}
+          />
 
-      <SolutionProcess
-        eyebrow="COMO TRABALHAMOS"
-        title="O problema primeiro. A inteligência artificial depois."
-        items={process}
-      />
+          <SolutionProcess
+            eyebrow={s.processEyebrow}
+            title={s.processTitle}
+            items={s.process}
+          />
 
-      {faq && (
-        <SolutionFAQ
-          eyebrow={faq.eyebrow}
-          title={faq.title}
-          items={faq.items}
-        />
+          {s.faq && (
+            <SolutionFAQ
+              eyebrow={s.faq.eyebrow}
+              title={s.faq.title}
+              items={s.faq.items}
+            />
+          )}
+
+          <SolutionCTA
+  eyebrow={s.cta.eyebrow}
+  title={s.cta.title}
+  description={s.cta.description}
+  buttonText={s.cta.buttonText}
+  buttonTo="/contact?service=solucoes-ia"
+/>
+        </>
       )}
-
-      <SolutionCTA
-        eyebrow="IA COM PROPÓSITO"
-        title="Tens um processo que precisa de mais do que regras fixas?"
-        description="Analisamos o problema e determinamos se a inteligência artificial é realmente a solução adequada — e, quando é, construímo-la integrada no resto do teu sistema digital."
-        buttonText="EXPLORAR UMA SOLUÇÃO IA"
-        buttonTo="/contact"
-      />
     </main>
   );
 }
