@@ -302,7 +302,7 @@ function HomeFooter({ f }) {
                   font-head
                   text-[8px]
                   tracking-[0.22em]
-                  text-white/25
+                  text-white/50
                 "
               >
                 © {new Date().getFullYear()} LUMYO. ALL RIGHTS RESERVED.
