@@ -53,6 +53,7 @@ export default function HeroSocials() {
             return (
               <span
                 key={item.name}
+                role="img"
                 aria-label={`${item.name} — em breve`}
                 title={`${item.name} — em breve`}
                 className="

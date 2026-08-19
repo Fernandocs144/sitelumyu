@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, lazy, Suspense } from 'react';
 import {
   BrowserRouter,
   Routes,
@@ -8,23 +8,26 @@ import {
 
 import './App.css';
 import { LanguageProvider } from './i18n';
-import NotFound from './pages/NotFound';
 
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 
 import Home from './pages/Home';
-import Solutions from './pages/Solutions';
-import CaseStudies from './pages/CaseStudies';
-import Studio from './pages/Studio';
-import Contact from './pages/Contact';
-import Websites from './pages/solutions/Websites';
-import Automation from './pages/solutions/Automation';
-import ArtificialIntelligence from './pages/solutions/ArtificialIntelligence';
-import DigitalGrowth from './pages/solutions/DigitalGrowth';
-import Privacy from './pages/Privacy';
-import Cookies from './pages/Cookies';
-import Terms from './pages/Terms';
+
+// Secondary routes dynamically imported for code splitting
+const Solutions = lazy(() => import('./pages/Solutions'));
+const CaseStudies = lazy(() => import('./pages/CaseStudies'));
+const Studio = lazy(() => import('./pages/Studio'));
+const Contact = lazy(() => import('./pages/Contact'));
+const Websites = lazy(() => import('./pages/solutions/Websites'));
+const Automation = lazy(() => import('./pages/solutions/Automation'));
+const ArtificialIntelligence = lazy(() => import('./pages/solutions/ArtificialIntelligence'));
+const DigitalGrowth = lazy(() => import('./pages/solutions/DigitalGrowth'));
+const Privacy = lazy(() => import('./pages/Privacy'));
+const Cookies = lazy(() => import('./pages/Cookies'));
+const Terms = lazy(() => import('./pages/Terms'));
+const NotFound = lazy(() => import('./pages/NotFound'));
+
 import { HelmetProvider } from 'react-helmet-async';
 
 
@@ -97,26 +100,28 @@ function AppContent() {
       <Navbar />
 
       <main>
-        <Routes>
-          <Route path="/" element={<Home />} />
+        <Suspense fallback={null}>
+          <Routes>
+            <Route path="/" element={<Home />} />
 
-          <Route path="/solutions" element={<Solutions />} />
-          <Route path="/solutions/websites" element={<Websites />} />
-          <Route path="/solutions/automation" element={<Automation />} />
-          <Route path="/solutions/ai" element={<ArtificialIntelligence />} />
-          <Route path="/solutions/growth" element={<DigitalGrowth />} />
+            <Route path="/solutions" element={<Solutions />} />
+            <Route path="/solutions/websites" element={<Websites />} />
+            <Route path="/solutions/automation" element={<Automation />} />
+            <Route path="/solutions/ai" element={<ArtificialIntelligence />} />
+            <Route path="/solutions/growth" element={<DigitalGrowth />} />
 
-          <Route path="/case-studies" element={<CaseStudies />} />
-          <Route path="/studio" element={<Studio />} />
+            <Route path="/case-studies" element={<CaseStudies />} />
+            <Route path="/studio" element={<Studio />} />
 
-          <Route path="/contact" element={<Contact />} />
+            <Route path="/contact" element={<Contact />} />
 
-          <Route path="/privacy" element={<Privacy />} />
-          <Route path="/cookies" element={<Cookies />} />
-          <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/cookies" element={<Cookies />} />
+            <Route path="/terms" element={<Terms />} />
 
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
       </main>
 
       <ConditionalFooter />
