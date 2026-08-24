@@ -93,14 +93,38 @@
 - **Finalidade**: Identificar tecnicamente o visitante anónimo antes da atribuição de contacto.
 - **Campos**:
   - `id` (`UUID`, PK, `gen_random_uuid()`)
-  - `session_token_hash` (`VARCHAR(64)`, NOT NULL, UNIQUE) — Hash SHA-256 do token opaco
-  - `lead_id` (`UUID`, NULL, FK `leads.id` `ON DELETE SET NULL`)
-  - `created_at` (`TIMESTAMPTZ`, NOT NULL, `now()`)
-  - `last_seen_at` (`TIMESTAMPTZ`, NOT NULL, `now()`)
-  - `expires_at` (`TIMESTAMPTZ`, NOT NULL)
-  - `ip_hash` (`VARCHAR(64)`, NULL)
-  - `user_agent_hash` (`VARCHAR(64)`, NULL)
-- **Justificação `ON DELETE SET NULL` em `lead_id`**: Se uma lead for eliminada ou anonimizada por pedido de privacidade, a sessão técnica mantém-se sem quebrar registos anónimos de tráfego.
+  - `session_token_hash` (`VARCHAR(64)`, NOT NULL, UNIQUE) — SHA-256 hexadecimal minúsculo do token opaco
+  - `lead_id` (`UUID`, NULL, FK `leads.id` `ON DELETE SET NULL`) — Ligação opcional à lead
+  - `created_at` (`TIMESTAMPTZ`, NOT NULL, DEFAULT `now()`)
+  - `last_seen_at` (`TIMESTAMPTZ`, NOT NULL, DEFAULT `now()`)
+  - `expires_at` (`TIMESTAMPTZ`, NOT NULL) — Expiração técnica (máximo 30 dias após criação)
+  - `ip_hash` (`VARCHAR(64)`, NULL) — HMAC-SHA-256 hexadecimal minúsculo opcional do IP
+  - `user_agent_hash` (`VARCHAR(64)`, NULL) — HMAC-SHA-256 hexadecimal minúsculo opcional do user-agent
+- **Regras Criptográficas e de Privacidade**:
+  - O token de sessão original é opaco, aleatório e de elevada entropia;
+  - O token original **nunca é guardado** na base de dados;
+  - `session_token_hash` armazena o hash SHA-256 hexadecimal minúsculo (exactamente 64 caracteres hexadecimais: `^[0-9a-f]{64}$`);
+  - `ip_hash` armazena opcionalmente o HMAC-SHA-256 hexadecimal minúsculo do IP (exactamente 64 caracteres hexadecimais: `^[0-9a-f]{64}$`);
+  - `user_agent_hash` armazena opcionalmente o HMAC-SHA-256 hexadecimal minúsculo do user-agent (exactamente 64 caracteres hexadecimais: `^[0-9a-f]{64}$`);
+  - O segredo HMAC para cálculo dos hashes existe exclusivamente no backend privado;
+  - Endereços IP e user-agents brutos **nunca são guardados** nestes campos nem em logs operacionais de base de dados;
+  - Possuir o UUID da sessão (`id`) não constitui autorização.
+- **Constraints Exactas**:
+  - `uq_visitor_sessions_session_token_hash`: UNIQUE (`session_token_hash`);
+  - `fk_visitor_sessions_lead`: FK `lead_id` -> `public.leads(id)` `ON DELETE SET NULL`;
+  - `chk_visitor_sessions_token_hash_format`: `CHECK (session_token_hash ~ '^[0-9a-f]{64}$')`;
+  - `chk_visitor_sessions_ip_hash_format`: `CHECK (ip_hash IS NULL OR ip_hash ~ '^[0-9a-f]{64}$')`;
+  - `chk_visitor_sessions_user_agent_hash_format`: `CHECK (user_agent_hash IS NULL OR user_agent_hash ~ '^[0-9a-f]{64}$')`;
+  - `chk_visitor_sessions_expiry_after_creation`: `CHECK (expires_at > created_at)`;
+  - `chk_visitor_sessions_maximum_duration`: `CHECK (expires_at <= created_at + INTERVAL '30 days')`;
+  - `chk_visitor_sessions_last_seen_after_creation`: `CHECK (last_seen_at >= created_at)`;
+  - `chk_visitor_sessions_last_seen_before_expiry`: `CHECK (last_seen_at <= expires_at)`.
+- **Índices Exactos**:
+  - Primary Key `id` (`visitor_sessions_pkey`);
+  - Unique Index `session_token_hash` (`uq_visitor_sessions_session_token_hash`);
+  - Index `lead_id` (`idx_visitor_sessions_lead_id`);
+  - Index `expires_at` (`idx_visitor_sessions_expires_at`).
+- **Justificação `ON DELETE SET NULL` em `lead_id`**: Se uma lead for eliminada ou anonimizada por pedido de privacidade, a sessão técnica mantém-se sem quebrar registos anónimos de tráfego, definindo `lead_id = NULL`.
 
 ### 3.3. `conversations`
 - **Finalidade**: Gerir o estado, etapa comercial e resultado da interacção.
@@ -457,6 +481,14 @@ erDiagram
 7. **Mitigação de Prompt Injection**: A sanitização HTML é insuficiente contra *prompt injection*. O backend aplica delimitadores imutáveis nos prompts, esquemas de entrada/saída rigorosos e validação das propostas do modelo antes de qualquer acção.
 8. **Ferramentas com Privilégios Mínimos**: As ferramentas server-side executam apenas a função estritamente necessária, sem conceder acesso directo ao banco de dados ou APIs externas ao modelo.
 9. **Nenhuma Acção Sensível Autónoma**: Nenhuma acção sensível (alteração de estado de qualificação, envio de emails, agendamento de reuniões) é executada apenas por decisão do modelo; exige sempre a intermediação e validação das regras de negócio do backend.
+10. **Privilégios e RLS das Tabelas Operacionais (`leads` e `visitor_sessions`)**:
+    - Row Level Security (RLS) está activo em ambas as tabelas (`relrowsecurity = true`);
+    - Zero políticas de RLS para `anon` e `authenticated` (sem exposição de políticas públicas em `pg_policies`);
+    - Os papéis `PUBLIC`, `anon` e `authenticated` não possuem qualquer privilégio de acesso às tabelas (`REVOKE ALL ON TABLE`);
+    - O papel `service_role` possui exclusivamente os privilégios estritos: `SELECT`, `INSERT`, `UPDATE`, `DELETE`;
+    - O papel `service_role` **não possui** privilégios de `TRUNCATE`, `REFERENCES` ou `TRIGGER`;
+    - As chaves e credenciais do `service_role` permanecem exclusivamente no servidor (*backend*);
+    - O RLS **não é a única barreira de segurança**: o backend continua estritamente obrigado a validar o cookie `HttpOnly` e o hash do token de sessão em cada pedido, apesar de `service_role` contornar o RLS.
 
 ---
 
@@ -465,9 +497,13 @@ erDiagram
 > [!WARNING]
 > Todos os períodos de retenção abaixo são **preliminares e não aprovados juridicamente**, devendo ser validados por peritos de protecção de dados antes do lançamento em produção.
 
-- **`visitor_sessions` (Anónimas)**: 30 dias (eliminação física `DELETE`). A eliminação da sessão define `conversations.session_id = NULL` via `ON DELETE SET NULL`, preservando a conversa anónima para análise estatística de funil durante os 90 dias sem violação relacional.
+- **`visitor_sessions` (Anónimas)**: 30 dias (eliminação física `DELETE`).
+  - *Validade Técnica*: A validade técnica da sessão nunca pode ultrapassar 30 dias desde a criação (`expires_at <= created_at + 30 days`).
+  - *Expiração vs. Limpeza*: Expiração lógica (a sessão atinge `expires_at` e fica inutilizável no backend) e eliminação física são conceitos distintos.
+  - *Job de Limpeza*: Futuramente, um job server-side agendado deverá executar a limpeza física (`DELETE`) das sessões expiradas. *(Nota: O job de limpeza agendado ainda não está implementado).*
+  - *Preservação de Conversas*: A eliminação da sessão definirá `conversations.session_id = NULL` via `ON DELETE SET NULL`, permitindo que conversas anónimas permaneçam preservadas para estatística de funil durante 90 dias sem violação relacional.
 - **Conversas Anónimas (`conversations`)**: 90 dias (eliminação física de conversas sem lead e das suas mensagens por `ON DELETE CASCADE`).
-- **`leads` e `lead_memory`**: 2 anos após a última interacção. Eliminar uma lead define `lead_id = NULL` nas conversas ligadas via `ON DELETE SET NULL`, preservando a conversa desassociada para estatística sem manter dados pessoais.
+- **`leads` e `lead_memory`**: 2 anos após a última interacção. A eliminação de uma lead define `lead_id = NULL` nas conversas ligadas através de `ON DELETE SET NULL`, mas esta operação, isoladamente, não anonimiza o conteúdo das conversas ou mensagens. O futuro fluxo de eliminação deverá eliminar ou redigir dados pessoais existentes em mensagens, resumos, eventos e metadados antes de preservar qualquer registo para fins estatísticos.
 - **`messages`**: Eliminadas em cascata com a conversa associada (`ON DELETE CASCADE`).
 - **Eventos (`conversation_events`)**: 12 meses. Quando uma lead é eliminada, os eventos perdem as chaves de ligação (`lead_id = NULL`) e os payloads são limpos de dados identificáveis.
 - **Permissões (`privacy_permissions`)**: 5 anos (provisório para prova de conformidade; `session_id` e `lead_id` definidos como `SET NULL` ao eliminar a lead, mantendo a prova do acontecimento).
@@ -478,46 +514,69 @@ erDiagram
 
 ---
 
-## 11. Ordem Segura de Migrações Futuras (Sem Dependências Quebradas de FK)
+## 11. Ordem Segura de Migrações (Histórico Aplicado e Futuras Migrações)
 
-A sequência abaixo garante que **nenhuma migration tenta criar uma chave estrangeira (FK) a apontar para uma tabela ainda inexistente**. Cada migration cria a sua respectiva tabela, índices e constraints de forma atómica:
+A sequência abaixo reflecte o histórico real das migrações aplicadas e a ordem segura das futuras migrações, sem dependências de chaves estrangeiras por resolver.
 
-1. `001_create_leads.sql`
-   - *Dependências*: Nenhuma (Tabela base de leads).
-   - *Índices*: PK `id`, Index em `email_normalized`, `primary_service`, `lead_classification`, `financial_alignment_status`, `last_interaction_at`.
-2. `002_create_visitor_sessions.sql`
-   - *Dependências*: `leads` (FK `lead_id` `ON DELETE SET NULL`).
-   - *Índices*: PK `id`, Unique `session_token_hash`, Index em `expires_at`, `lead_id`.
-3. `003_create_conversations.sql`
-   - *Dependências*: `visitor_sessions` (FK `session_id` `ON DELETE SET NULL`), `leads` (FK `lead_id` `ON DELETE SET NULL`).
-   - *Índices*: PK `id`, Index em `status`, `last_activity_at`, `primary_outcome`.
-4. `004_create_messages.sql`
-   - *Dependências*: `conversations` (FK `conversation_id` `ON DELETE CASCADE`).
-   - *Índices*: PK `id`, Unique (`conversation_id`, `sequence_number`).
-5. `005_create_lead_memory.sql`
-   - *Dependências*: `leads` (FK `lead_id` `ON DELETE CASCADE`), `conversations` (FK `last_source_conversation_id` `ON DELETE SET NULL`).
-   - *Índices*: PK `id`, Unique `lead_id`.
-6. `006_create_privacy_permissions.sql`
-   - *Dependências*: `visitor_sessions` (FK `session_id` `ON DELETE SET NULL`), `leads` (FK `lead_id` `ON DELETE SET NULL`).
-   - *Índices*: PK `id`, Index em `lead_id`, `purpose`, `action`.
-7. `007_create_bookings.sql`
-   - *Dependências*: `conversations` (FK `conversation_id` `ON DELETE RESTRICT`), `leads` (FK `lead_id` `ON DELETE RESTRICT`).
-   - *Índices*: PK `id`, Unique `cal_booking_id`, Unique `idempotency_key`, Index em `status`, `start_time`.
-8. `008_create_follow_up_tasks.sql`
-   - *Dependências*: `leads` (FK `lead_id` `ON DELETE RESTRICT`), `conversations` (FK `conversation_id` `ON DELETE RESTRICT`).
-   - *Índices*: PK `id`, Unique `idempotency_key`, Index em `status`, `scheduled_for`.
-9. `009_create_webhook_receipts.sql`
-   - *Dependências*: Nenhuma (Tabela independente de registo físico de webhooks).
-   - *Índices*: PK `id`, Unique (`provider`, `external_event_id`).
-10. `010_create_tool_executions.sql`
-    - *Dependências*: `conversations` (FK `conversation_id` `ON DELETE CASCADE`), `messages` (FK `message_id` `ON DELETE SET NULL`).
-    - *Índices*: PK `id`, Unique `idempotency_key`, Index em `tool_name`, `status`.
-11. `011_create_knowledge_gaps.sql`
-    - *Dependências*: `conversations` (FK `conversation_id` `ON DELETE RESTRICT`), `messages` (FK `message_id` `ON DELETE SET NULL`).
-    - *Índices*: PK `id`, Index em `review_status`, `normalized_topic`.
-12. `012_create_conversation_events.sql`
-    - *Dependências*: `conversations` (FK `conversation_id` `ON DELETE SET NULL`), `leads` (FK `lead_id` `ON DELETE SET NULL`), `visitor_sessions` (FK `session_id` `ON DELETE SET NULL`).
-    - *Índices*: PK `id`, Unique `idempotency_key`, Index em `event_name`, `event_category`, `created_at`.
+1. `20260823211122_create_leads.sql`
+   - *Dependências*: Nenhuma.
+   - *Finalidade*: Criação inicial da tabela `public.leads`.
+   - *Índices criados originalmente*: Primary Key `leads_pkey`, `idx_leads_email_normalized`, `idx_leads_classification` e `idx_leads_last_activity_at`.
+
+2. `20260824221700_reconcile_leads_schema.sql`
+   - *Dependências*: `20260823211122_create_leads.sql`.
+   - *Finalidade*: Reconciliação da tabela `public.leads` com o modelo canónico.
+   - *Alterações de índices*: Renomeia `idx_leads_classification` para `idx_leads_lead_classification` e `idx_leads_last_activity_at` para `idx_leads_last_interaction_at`; adiciona `idx_leads_primary_service` e `idx_leads_financial_alignment_status`.
+   - *Índices finais de `leads`*: `leads_pkey`, `idx_leads_email_normalized`, `idx_leads_primary_service`, `idx_leads_lead_classification`, `idx_leads_financial_alignment_status` e `idx_leads_last_interaction_at`.
+
+3. `20260824224200_create_visitor_sessions.sql`
+   - *Dependências*: `public.leads`, através da FK `lead_id ON DELETE SET NULL`.
+   - *Finalidade*: Criação de sessões técnicas anónimas ou associadas a leads.
+   - *Índices*: Primary Key `visitor_sessions_pkey`, unique `uq_visitor_sessions_session_token_hash`, `idx_visitor_sessions_lead_id` e `idx_visitor_sessions_expires_at`.
+   - *DCL*: Remove todos os privilégios de `PUBLIC`, `anon` e `authenticated` sobre `leads` e `visitor_sessions`; remove privilégios excessivos de `service_role`; concede a `service_role` apenas `SELECT`, `INSERT`, `UPDATE` e `DELETE`.
+
+4. Futura migração `create_conversations`
+   - *Dependências*: `visitor_sessions`, através de `session_id NULL ON DELETE SET NULL`; `leads`, através de `lead_id NULL ON DELETE SET NULL`.
+   - *Índices previstos*: Primary Key `id`, índices em `status`, `last_activity_at` e `primary_outcome`.
+
+5. Futura migração `create_messages`
+   - *Dependências*: `conversations`, através de `conversation_id ON DELETE CASCADE`.
+   - *Índices previstos*: Primary Key `id` e unique composto em (`conversation_id`, `sequence_number`).
+
+6. Futura migração `create_lead_memory`
+   - *Dependências*: `leads`, através de `lead_id ON DELETE CASCADE`; `conversations`, através de `last_source_conversation_id ON DELETE SET NULL`.
+   - *Índices previstos*: Primary Key `id` e unique em `lead_id`.
+
+7. Futura migração `create_privacy_permissions`
+   - *Dependências*: `visitor_sessions`, através de `session_id ON DELETE SET NULL`; `leads`, através de `lead_id ON DELETE SET NULL`.
+   - *Índices previstos*: Primary Key `id` e índices em `lead_id`, `purpose` e `action`.
+
+8. Futura migração `create_bookings`
+   - *Dependências*: `conversations` e `leads`.
+   - *Políticas `ON DELETE`*: Pendentes de resolução definitiva antes da criação da migração.
+   - *Índices previstos*: Primary Key `id`, unique em `cal_booking_id`, unique em `idempotency_key` e índices em `status` e `start_time`.
+
+9. Futura migração `create_follow_up_tasks`
+   - *Dependências*: `leads` e `conversations`.
+   - *Políticas `ON DELETE`*: Pendentes de resolução definitiva antes da criação da migração.
+   - *Índices previstos*: Primary Key `id`, unique em `idempotency_key` e índices em `status` e `scheduled_for`.
+
+10. Futura migração `create_webhook_receipts`
+    - *Dependências*: Nenhuma.
+    - *Índices previstos*: Primary Key `id` e unique composto em (`provider`, `external_event_id`).
+
+11. Futura migração `create_tool_executions`
+    - *Dependências*: `conversations`, através de `conversation_id ON DELETE CASCADE`; `messages`, através de `message_id ON DELETE SET NULL`.
+    - *Índices previstos*: Primary Key `id`, unique em `idempotency_key` e índices em `tool_name` e `status`.
+
+12. Futura migração `create_knowledge_gaps`
+    - *Dependências*: `conversations`; `messages`, através de `message_id ON DELETE SET NULL`.
+    - *Política `ON DELETE` de `conversation_id`*: Pendente de resolução definitiva antes da criação da migração.
+    - *Índices previstos*: Primary Key `id` e índices em `review_status` e `normalized_topic`.
+
+13. Futura migração `create_conversation_events`
+    - *Dependências*: `conversations`, `leads` e `visitor_sessions`, através de FKs `ON DELETE SET NULL`.
+    - *Índices previstos*: Primary Key `id`, unique em `idempotency_key` e índices em `event_name`, `event_category` e `created_at`.
 
 ---
 
