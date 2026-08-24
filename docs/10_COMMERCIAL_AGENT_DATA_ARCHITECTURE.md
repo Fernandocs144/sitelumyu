@@ -47,38 +47,47 @@
 - **Deduplicação & Múltiplas Oportunidades**: O campo `email` **não possui restrição UNIQUE**. O mesmo utilizador/contacto pode criar múltiplas oportunidades (leads) distintas ao longo do tempo. Não se implementa uma tabela de `contacts` nesta fase; a deduplicação e agregação comercial é gerida pelo backend.
 - **Campos**:
   - `id` (`UUID`, PK, `gen_random_uuid()`)
-  - `name` (`VARCHAR(120)`, NULL)
   - `email` (`VARCHAR(200)`, NULL) — Email bruto declarado
-  - `email_normalized` (`VARCHAR(200)`, NULL) — Email em minúsculas e sem espaços (com índice normal para pesquisa)
-  - `company` (`VARCHAR(120)`, NULL)
-  - `website_url` (`VARCHAR(250)`, NULL)
-  - `language` (`VARCHAR(5)`, NOT NULL, DEFAULT `'pt'`)
-  - `primary_service` (`VARCHAR(50)`, NULL) — `websites`, `automation`, `ai`, `growth`
-  - `secondary_services` (`JSONB`, NOT NULL, DEFAULT `'[]'::jsonb`)
-  - `need_description` (`TEXT`, NULL)
-  - `operational_impact` (`TEXT`, NULL)
-  - `timeline` (`VARCHAR(50)`, NULL)
-  - `decision_involvement` (`VARCHAR(50)`, NULL)
-  - `intent_level` (`VARCHAR(30)`, NULL)
+  - `email_normalized` (`VARCHAR(200)`, NULL, GENERATED ALWAYS AS (lower(trim(email))) STORED) — Email em minúsculas e sem espaços (com índice normal para pesquisa)
+  - `name` (`VARCHAR(120)`, NULL)
+  - `phone` (`VARCHAR(50)`, NULL) — Canal de contacto telefónico alternativo
+  - `company_name` (`VARCHAR(120)`, NULL) — Nome da empresa do visitante
+  - `website_url` (`VARCHAR(250)`, NULL) — URL do website do visitante
+  - `language` (`VARCHAR(5)`, NOT NULL, DEFAULT `'pt'`) — Idioma da interação (`pt`, `en`)
+  - `primary_service` (`VARCHAR(50)`, NULL) — Serviço principal (`websites`, `automation`, `ai`, `digital_growth`)
+  - `secondary_services` (`JSONB`, NOT NULL, DEFAULT `'[]'::jsonb`) — Lista de serviços secundários/complementares
+  - `need_description` (`TEXT`, NULL) — Descrição detalhada da necessidade/dor do visitante
+  - `operational_impact` (`TEXT`, NULL) — Impacto operacional/financeiro do problema
+  - `timeline` (`VARCHAR(50)`, NULL) — Prazo/urgência do projecto
+  - `decision_involvement` (`VARCHAR(50)`, NULL) — Envolvimento/papel no processo de decisão
+  - `intent_level` (`VARCHAR(30)`, NULL) — Nível de intenção comercial
   - `stated_budget_raw` (`TEXT`, NULL) — Texto bruto original fornecido pelo visitante
   - `stated_budget_min` (`NUMERIC(12,2)`, NULL) — Valor mínimo extraído e validado
   - `stated_budget_max` (`NUMERIC(12,2)`, NULL) — Valor máximo extraído e validado
-  - `stated_budget_currency` (`CHAR(3)`, NULL, DEFAULT `'EUR'`)
-  - `stated_budget_period` (`VARCHAR(20)`, NULL, DEFAULT `'unknown'`) — `project`, `monthly`, `unknown`
-  - `budget_normalization_source` (`VARCHAR(30)`, NULL) — `visitor_structured`, `model_extracted`, `human`
-  - `budget_normalization_status` (`VARCHAR(20)`, NOT NULL, DEFAULT `'pending'`) — `pending`, `validated`, `rejected`
-  - `financial_alignment_status` (`VARCHAR(25)`, NOT NULL, DEFAULT `'unknown'`) — `aligned`, `possibly_low`, `low_alignment`, `unknown`
-  - `financial_alignment_reason` (`TEXT`, NULL)
-  - `financial_rule_version` (`VARCHAR(20)`, NULL)
-  - `financial_evaluated_at` (`TIMESTAMPTZ`, NULL)
-  - `lead_classification` (`VARCHAR(20)`, NOT NULL, DEFAULT `'informational'`) — `informational`, `potential`, `qualified`, `priority`, `disqualified`
-  - `classification_reason` (`TEXT`, NULL)
-  - `next_step` (`VARCHAR(50)`, NULL)
-  - `source` (`VARCHAR(50)`, NOT NULL, DEFAULT `'website_agent'`)
-  - `last_interaction_at` (`TIMESTAMPTZ`, NOT NULL, `now()`)
-  - `created_at` (`TIMESTAMPTZ`, NOT NULL, `now()`)
-  - `updated_at` (`TIMESTAMPTZ`, NOT NULL, `now()`)
-- **Índices**: PK (`id`), Index (`email_normalized`), Index (`primary_service`), Index (`lead_classification`), Index (`financial_alignment_status`).
+  - `stated_budget_currency` (`CHAR(3)`, NULL, DEFAULT `'EUR'`) — Moeda em formato ISO 4217
+  - `stated_budget_period` (`VARCHAR(20)`, NOT NULL, DEFAULT `'unknown'`) — Período (`project`, `monthly`, `unknown`)
+  - `budget_normalization_source` (`VARCHAR(30)`, NOT NULL, DEFAULT `'unknown'`) — Origem da captura (`visitor_structured`, `model_extracted`, `human`, `unknown`)
+  - `budget_normalization_status` (`VARCHAR(20)`, NOT NULL, DEFAULT `'not_attempted'`) — Estado da normalização (`not_attempted`, `normalized`, `ambiguous`, `invalid`)
+  - `financial_alignment_status` (`VARCHAR(25)`, NOT NULL, DEFAULT `'unknown'`) — Resultado qualitativo retornado pelo avaliador determinístico server-side (`aligned`, `possibly_low`, `low_alignment`, `unknown`)
+  - `financial_alignment_reason` (`TEXT`, NULL) — Justificação da avaliação financeira privada (preenchida apenas pelo backend)
+  - `financial_rule_version` (`VARCHAR(20)`, NULL) — Versão da regra determinística orçamental utilizada (preenchida apenas pelo backend)
+  - `financial_evaluated_at` (`TIMESTAMPTZ`, NULL) — Timestamp da avaliação orçamental (preenchida apenas pelo backend)
+  - `lead_classification` (`VARCHAR(20)`, NOT NULL, DEFAULT `'informational'`) — Classificação comercial atribuída por regras de backend (`informational`, `potential`, `qualified`, `priority`, `disqualified`)
+  - `classification_reason` (`TEXT`, NULL) — Justificação qualitativa da classificação atribuída
+  - `qualification_summary` (`TEXT`, NULL) — Síntese para leitura humana (não substitui os campos estruturados de qualificação)
+  - `next_step` (`VARCHAR(50)`, NULL) — Próximo passo comercial recomendado
+  - `assigned_to` (`VARCHAR(120)`, NULL) — Atribuição provisória textual a um colaborador Lumyo (no MVP)
+  - `source` (`VARCHAR(50)`, NOT NULL, DEFAULT `'website_agent'`) — Origem do registo
+  - `last_interaction_at` (`TIMESTAMPTZ`, NOT NULL, DEFAULT `now()`) — Timestamp da última interação
+  - `created_at` (`TIMESTAMPTZ`, NOT NULL, DEFAULT `now()`) — Timestamp de criação da lead
+  - `updated_at` (`TIMESTAMPTZ`, NOT NULL, DEFAULT `now()`) — Timestamp de atualização da lead
+- **Índices**: PK (`id`), Index (`email_normalized`), Index (`primary_service`), Index (`lead_classification`), Index (`financial_alignment_status`), Index (`last_interaction_at`).
+- **Regras Funcionais da Entidade**:
+  - `qualification_summary` é uma síntese para leitura humana e não substitui os campos estruturados (`need_description`, `timeline`, `decision_involvement`, etc.);
+  - `financial_alignment_reason`, `financial_rule_version` e `financial_evaluated_at` são preenchidos exclusivamente pelo backend determinístico;
+  - O modelo de IA **nunca consulta a matriz privada de preços** nem recebe valores numéricos limiares;
+  - `assigned_to` é provisoriamente um campo de texto livre no MVP e deverá tornar-se uma referência a um utilizador interno quando existir essa entidade/domínio no sistema;
+  - A inexistência ou omissão de orçamento não constitui, isoladamente, motivo para atribuir `lead_classification = 'disqualified'`. A classificação resulta dos restantes sinais observáveis e regras comerciais validadas.
 
 ### 3.2. `visitor_sessions`
 - **Finalidade**: Identificar tecnicamente o visitante anónimo antes da atribuição de contacto.
@@ -97,7 +106,7 @@
 - **Finalidade**: Gerir o estado, etapa comercial e resultado da interacção.
 - **Campos**:
   - `id` (`UUID`, PK, `gen_random_uuid()`)
-  - `session_id` (`UUID`, NOT NULL, FK `visitor_sessions.id` `ON DELETE RESTRICT`)
+  - `session_id` (`UUID`, NULL, FK `visitor_sessions.id` `ON DELETE SET NULL`)
   - `lead_id` (`UUID`, NULL, FK `leads.id` `ON DELETE SET NULL`)
   - `status` (`VARCHAR(20)`, NOT NULL, DEFAULT `'active'`) — `active`, `inactive`, `completed`, `escalated`, `archived`
   - `commercial_stage` (`VARCHAR(30)`, NOT NULL, DEFAULT `'discovery'`) — `discovery`, `exploring_need`, `qualifying`, `suggesting_booking`, `booking_in_progress`, `closed`
@@ -110,7 +119,7 @@
 - **Constraints**:
   - `status IN ('active', 'inactive', 'completed', 'escalated', 'archived')`
   - `(status IN ('completed', 'escalated', 'archived') AND closed_at IS NOT NULL) OR (status IN ('active', 'inactive') AND closed_at IS NULL)`
-- **Justificação `ON DELETE RESTRICT` em `session_id`**: Impede a eliminação de uma sessão activa enquanto existirem conversas associadas.
+- **Justificação `ON DELETE SET NULL` em `session_id`**: Uma conversa activa deve possuir uma sessão válida ao ser criada e utilizada. No entanto, quando a sessão técnica anónima for eliminada ao fim de 30 dias por retenção, a referência passa a `NULL`, permitindo que a conversa anónima seja preservada durante 90 dias sem violação de chave estrangeira.
 
 ### 3.4. `messages`
 - **Finalidade**: Armazenar o histórico ordenado de mensagens da conversa.
@@ -273,8 +282,8 @@
 2. Validação Estrita no Backend (Determinística)
    ├── O backend valida formato, moeda, periodicidade ('project', 'monthly', 'unknown')
    ├── Valida valores positivos (min >= 0, max >= 0) e coerência lógica (min <= max)
-   └── Se válido: Define budget_normalization_status = 'validated'
-       Se inválido: Define budget_normalization_status = 'rejected'
+   └── Se normalizado com sucesso: Define budget_normalization_status = 'normalized'
+       Se ambíguo ou inválido: Define budget_normalization_status = 'ambiguous' ou 'invalid'
    │
    ▼
 3. Execução da Ferramenta Determinística (budget_alignment_evaluator)
@@ -418,7 +427,7 @@ Para evitar acessos concorrentes e múltiplos envios em ambientes serverless, o 
 
 ```mermaid
 erDiagram
-    visitor_sessions ||--o{ conversations : "inicia"
+    visitor_sessions |o--o{ conversations : "inicia"
     leads ||--o{ conversations : "associa"
     leads ||--o| lead_memory : "possui"
     conversations ||--o{ messages : "contém"
@@ -456,7 +465,7 @@ erDiagram
 > [!WARNING]
 > Todos os períodos de retenção abaixo são **preliminares e não aprovados juridicamente**, devendo ser validados por peritos de protecção de dados antes do lançamento em produção.
 
-- **`visitor_sessions` (Anónimas)**: 30 dias (eliminação física `DELETE`).
+- **`visitor_sessions` (Anónimas)**: 30 dias (eliminação física `DELETE`). A eliminação da sessão define `conversations.session_id = NULL` via `ON DELETE SET NULL`, preservando a conversa anónima para análise estatística de funil durante os 90 dias sem violação relacional.
 - **Conversas Anónimas (`conversations`)**: 90 dias (eliminação física de conversas sem lead e das suas mensagens por `ON DELETE CASCADE`).
 - **`leads` e `lead_memory`**: 2 anos após a última interacção. Eliminar uma lead define `lead_id = NULL` nas conversas ligadas via `ON DELETE SET NULL`, preservando a conversa desassociada para estatística sem manter dados pessoais.
 - **`messages`**: Eliminadas em cascata com a conversa associada (`ON DELETE CASCADE`).
@@ -475,12 +484,12 @@ A sequência abaixo garante que **nenhuma migration tenta criar uma chave estran
 
 1. `001_create_leads.sql`
    - *Dependências*: Nenhuma (Tabela base de leads).
-   - *Índices*: PK `id`, Index em `email_normalized`, `primary_service`, `lead_classification`.
+   - *Índices*: PK `id`, Index em `email_normalized`, `primary_service`, `lead_classification`, `financial_alignment_status`, `last_interaction_at`.
 2. `002_create_visitor_sessions.sql`
    - *Dependências*: `leads` (FK `lead_id` `ON DELETE SET NULL`).
    - *Índices*: PK `id`, Unique `session_token_hash`, Index em `expires_at`, `lead_id`.
 3. `003_create_conversations.sql`
-   - *Dependências*: `visitor_sessions` (FK `session_id` `ON DELETE RESTRICT`), `leads` (FK `lead_id` `ON DELETE SET NULL`).
+   - *Dependências*: `visitor_sessions` (FK `session_id` `ON DELETE SET NULL`), `leads` (FK `lead_id` `ON DELETE SET NULL`).
    - *Índices*: PK `id`, Index em `status`, `last_activity_at`, `primary_outcome`.
 4. `004_create_messages.sql`
    - *Dependências*: `conversations` (FK `conversation_id` `ON DELETE CASCADE`).
@@ -522,7 +531,7 @@ A sequência abaixo garante que **nenhuma migration tenta criar uma chave estran
 
 ## 13. Decisões Pendentes para Migrações Posteriores
 
-1. **Compatibilização de Retenção de `visitor_sessions`**: Resolver a harmonização entre o período de retenção técnica de `visitor_sessions` e as referências activas em `conversations` e `privacy_permissions`.
+1. **Compatibilização de Retenção de `visitor_sessions`**: Decidida e formalizada a utilização de `conversations.session_id NULL` com `ON DELETE SET NULL`, harmonizando a eliminação da sessão técnica aos 30 dias com a conservação da conversa anónima durante 90 dias.
 2. **Tratamento de Dados Pessoais em `messages`**: Definir a estratégia detalhada de eliminação física ou redação de conteúdos sensíveis em mensagens quando uma `lead` associada for eliminada por pedido de privacidade.
 3. **Política de Eliminação de Leads Referenciadas**: Resolver a política e integridade referencial ao eliminar leads que possuam agendamentos activos (`bookings`) ou tarefas agendadas na fila (`follow_up_tasks`).
 
