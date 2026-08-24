@@ -130,20 +130,57 @@
 - **Finalidade**: Gerir o estado, etapa comercial e resultado da interacção.
 - **Campos**:
   - `id` (`UUID`, PK, `gen_random_uuid()`)
-  - `session_id` (`UUID`, NULL, FK `visitor_sessions.id` `ON DELETE SET NULL`)
-  - `lead_id` (`UUID`, NULL, FK `leads.id` `ON DELETE SET NULL`)
+  - `session_id` (`UUID`, NULL, FK `public.visitor_sessions(id)` `ON DELETE SET NULL`) — Sessão técnica associada
+  - `lead_id` (`UUID`, NULL, FK `public.leads(id)` `ON DELETE SET NULL`) — Lead associada
   - `status` (`VARCHAR(20)`, NOT NULL, DEFAULT `'active'`) — `active`, `inactive`, `completed`, `escalated`, `archived`
   - `commercial_stage` (`VARCHAR(30)`, NOT NULL, DEFAULT `'discovery'`) — `discovery`, `exploring_need`, `qualifying`, `suggesting_booking`, `booking_in_progress`, `closed`
-  - `primary_outcome` (`VARCHAR(35)`, NULL) — `information_only`, `lead_captured`, `lead_qualified`, `meeting_booked`, `human_handoff`, `not_interested`, `possible_abandonment`, `abandoned_before_contact`, `abandoned_during_qualification`, `abandoned_during_booking`, `technical_failure`, `spam_detected`. *Preenchido apenas no encerramento ou classificação posterior.*
-  - `language` (`VARCHAR(5)`, NOT NULL, DEFAULT `'pt'`)
-  - `last_activity_at` (`TIMESTAMPTZ`, NOT NULL, `now()`)
-  - `closed_at` (`TIMESTAMPTZ`, NULL)
-  - `created_at` (`TIMESTAMPTZ`, NOT NULL, `now()`)
-  - `updated_at` (`TIMESTAMPTZ`, NOT NULL, `now()`)
-- **Constraints**:
-  - `status IN ('active', 'inactive', 'completed', 'escalated', 'archived')`
-  - `(status IN ('completed', 'escalated', 'archived') AND closed_at IS NOT NULL) OR (status IN ('active', 'inactive') AND closed_at IS NULL)`
-- **Justificação `ON DELETE SET NULL` em `session_id`**: Uma conversa activa deve possuir uma sessão válida ao ser criada e utilizada. No entanto, quando a sessão técnica anónima for eliminada ao fim de 30 dias por retenção, a referência passa a `NULL`, permitindo que a conversa anónima seja preservada durante 90 dias sem violação de chave estrangeira.
+  - `primary_outcome` (`VARCHAR(35)`, NULL) — `information_only`, `lead_captured`, `lead_qualified`, `meeting_booked`, `human_handoff`, `not_interested`, `possible_abandonment`, `abandoned_before_contact`, `abandoned_during_qualification`, `abandoned_during_booking`, `technical_failure`, `spam_detected`. *Preenchido obrigatoriamente quando a conversa está encerrada.*
+  - `language` (`VARCHAR(5)`, NOT NULL, DEFAULT `'pt'`) — `pt`, `en`
+  - `last_activity_at` (`TIMESTAMPTZ`, NOT NULL, DEFAULT `now()`) — Timestamp da última atividade do visitante ou agente
+  - `closed_at` (`TIMESTAMPTZ`, NULL) — Timestamp de encerramento formal da conversa
+  - `created_at` (`TIMESTAMPTZ`, NOT NULL, DEFAULT `now()`) — Timestamp de criação da conversa
+  - `updated_at` (`TIMESTAMPTZ`, NOT NULL, DEFAULT `now()`) — Timestamp de atualização automática via trigger
+- **Regras Obrigatórias do Ciclo de Vida**:
+  - Para conversas em estado `active` ou `inactive`:
+    - `closed_at IS NULL`
+    - `commercial_stage <> 'closed'`
+    - `primary_outcome IS NULL`
+  - Para conversas em estado `completed`, `escalated` ou `archived`:
+    - `closed_at IS NOT NULL`
+    - `commercial_stage = 'closed'`
+    - `primary_outcome IS NOT NULL`
+  - `closed_at >= created_at` (quando preenchido);
+  - `last_activity_at >= created_at`;
+  - `last_activity_at <= closed_at` (quando a conversa está encerrada);
+  - Fechar ou minimizar o widget **não fecha a conversa**;
+  - Fechar o widget **não constitui abandono**;
+  - `possible_abandonment` e os restantes resultados de abandono são atribuídos exclusivamente por classificação posterior validada;
+  - Uma conversa activa deve ser utilizada apenas com uma sessão válida confirmada pelo backend no servidor, embora `session_id` seja anulável devido à política de retenção.
+- **Trigger**:
+  - Trigger `update_conversations_updated_at`: executado `BEFORE UPDATE ON public.conversations FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column()`. Atualiza automaticamente `updated_at`.
+- **Constraints Exactas**:
+  - `fk_conversations_session`: FK `session_id` -> `public.visitor_sessions(id)` `ON DELETE SET NULL`;
+  - `fk_conversations_lead`: FK `lead_id` -> `public.leads(id)` `ON DELETE SET NULL`;
+  - `chk_conversations_status`: `CHECK (status IN ('active', 'inactive', 'completed', 'escalated', 'archived'))`;
+  - `chk_conversations_commercial_stage`: `CHECK (commercial_stage IN ('discovery', 'exploring_need', 'qualifying', 'suggesting_booking', 'booking_in_progress', 'closed'))`;
+  - `chk_conversations_primary_outcome`: `CHECK (primary_outcome IS NULL OR primary_outcome IN ('information_only', 'lead_captured', 'lead_qualified', 'meeting_booked', 'human_handoff', 'not_interested', 'possible_abandonment', 'abandoned_before_contact', 'abandoned_during_qualification', 'abandoned_during_booking', 'technical_failure', 'spam_detected'))`;
+  - `chk_conversations_language`: `CHECK (language IN ('pt', 'en'))`;
+  - `chk_conversations_lifecycle`: CHECK da matriz de ciclo de vida (validação conjunta de `status`, `closed_at`, `commercial_stage` e `primary_outcome`);
+  - `chk_conversations_closed_after_creation`: `CHECK (closed_at IS NULL OR closed_at >= created_at)`;
+  - `chk_conversations_activity_after_creation`: `CHECK (last_activity_at >= created_at)`;
+  - `chk_conversations_activity_before_closure`: `CHECK (closed_at IS NULL OR last_activity_at <= closed_at)`.
+- **Índices Exactos**:
+  - Primary Key `id` (`conversations_pkey`);
+  - Index `session_id` (`idx_conversations_session_id`);
+  - Index `lead_id` (`idx_conversations_lead_id`);
+  - Index `status` (`idx_conversations_status`);
+  - Index `last_activity_at` (`idx_conversations_last_activity_at`);
+  - Index `primary_outcome` (`idx_conversations_primary_outcome`);
+  - Unique Index parcial `uq_conversations_one_active_per_session`: aplicado quando `status = 'active' AND session_id IS NOT NULL`, impedindo duas conversas activas simultâneas para a mesma sessão técnica.
+- **Foreign Keys e Retenção**:
+  - Eliminar a sessão preserva a conversa e define `session_id = NULL` (`ON DELETE SET NULL`);
+  - Eliminar a lead preserva a conversa e define `lead_id = NULL` (`ON DELETE SET NULL`);
+  - Estas operações apenas removem associações relacionais; não anonimizam automaticamente mensagens, resumos, eventos ou metadados. O futuro fluxo de eliminação deve redigir ou eliminar dados pessoais existentes no conteúdo associado.
 
 ### 3.4. `messages`
 - **Finalidade**: Armazenar o histórico ordenado de mensagens da conversa.
@@ -400,11 +437,12 @@ Para evitar acessos concorrentes e múltiplos envios em ambientes serverless, o 
 ### 7.1. Conversa (`conversations.status`)
 - **Estados**: `active`, `inactive`, `completed`, `escalated`, `archived`.
 - **Transições Válidas**:
-  - `active` -> `inactive` (Ator: `scheduled_job` por inactividade >15 min; Evento: `conversation_inactive`)
-  - `inactive` -> `active` (Ator: `visitor` ao enviar nova mensagem; Evento: `conversation_resumed`)
-  - `active` -> `completed` (Ator: `backend` por encerramento comercial; Evento: `conversation_completed`)
-  - `active` -> `escalated` (Ator: `backend` por transbordo humano; Evento: `human_handoff`)
-  - `completed` / `escalated` / `inactive` -> `archived` (Ator: `scheduled_job` de retenção)
+  - `active` -> `inactive` (Ator: `scheduled_job` por inactividade >15 min; Evento: `conversation_inactive`). Esta transição **não define** `closed_at` nem `primary_outcome`.
+  - `inactive` -> `active` (Ator: `visitor` ao enviar nova mensagem; Evento: `conversation_resumed`). Retoma a conversa existente.
+  - `active` -> `completed` (Ator: `backend` por encerramento comercial; Evento: `conversation_completed`). Preenche obrigatoriamente e de forma atómica: `commercial_stage = 'closed'`, `closed_at` e `primary_outcome`.
+  - `active` -> `escalated` (Ator: `backend` por transbordo humano; Evento: `human_handoff`). Preenche obrigatoriamente e de forma atómica: `commercial_stage = 'closed'`, `closed_at` e `primary_outcome`.
+  - `completed` / `escalated` / `inactive` -> `archived` (Ator: `scheduled_job` de retenção). A transição a partir de `inactive` -> `archived` exige igualmente o preenchimento atómico de `commercial_stage = 'closed'`, `closed_at` e `primary_outcome`.
+- **Regra de Ação Autónomamente Limitada**: O modelo de IA **não altera autonomamente** o estado da conversa; propõe o encerramento ou resultado comercial, e o backend valida e executa a alteração.
 - **Transições Inválidas**: `archived` -> `active`; `completed` -> `inactive`.
 
 ### 7.2. Qualificação da Lead (`leads.lead_classification`)
@@ -481,8 +519,8 @@ erDiagram
 7. **Mitigação de Prompt Injection**: A sanitização HTML é insuficiente contra *prompt injection*. O backend aplica delimitadores imutáveis nos prompts, esquemas de entrada/saída rigorosos e validação das propostas do modelo antes de qualquer acção.
 8. **Ferramentas com Privilégios Mínimos**: As ferramentas server-side executam apenas a função estritamente necessária, sem conceder acesso directo ao banco de dados ou APIs externas ao modelo.
 9. **Nenhuma Acção Sensível Autónoma**: Nenhuma acção sensível (alteração de estado de qualificação, envio de emails, agendamento de reuniões) é executada apenas por decisão do modelo; exige sempre a intermediação e validação das regras de negócio do backend.
-10. **Privilégios e RLS das Tabelas Operacionais (`leads` e `visitor_sessions`)**:
-    - Row Level Security (RLS) está activo em ambas as tabelas (`relrowsecurity = true`);
+10. **Privilégios e RLS das Tabelas Operacionais (`leads`, `visitor_sessions` e `conversations`)**:
+    - Row Level Security (RLS) está activo nas três tabelas (`relrowsecurity = true`);
     - Zero políticas de RLS para `anon` e `authenticated` (sem exposição de políticas públicas em `pg_policies`);
     - Os papéis `PUBLIC`, `anon` e `authenticated` não possuem qualquer privilégio de acesso às tabelas (`REVOKE ALL ON TABLE`);
     - O papel `service_role` possui exclusivamente os privilégios estritos: `SELECT`, `INSERT`, `UPDATE`, `DELETE`;
@@ -535,9 +573,11 @@ A sequência abaixo reflecte o histórico real das migrações aplicadas e a ord
    - *Índices*: Primary Key `visitor_sessions_pkey`, unique `uq_visitor_sessions_session_token_hash`, `idx_visitor_sessions_lead_id` e `idx_visitor_sessions_expires_at`.
    - *DCL*: Remove todos os privilégios de `PUBLIC`, `anon` e `authenticated` sobre `leads` e `visitor_sessions`; remove privilégios excessivos de `service_role`; concede a `service_role` apenas `SELECT`, `INSERT`, `UPDATE` e `DELETE`.
 
-4. Futura migração `create_conversations`
-   - *Dependências*: `visitor_sessions`, através de `session_id NULL ON DELETE SET NULL`; `leads`, através de `lead_id NULL ON DELETE SET NULL`.
-   - *Índices previstos*: Primary Key `id`, índices em `status`, `last_activity_at` e `primary_outcome`.
+4. `20260824231400_create_conversations.sql`
+   - *Dependências*: `visitor_sessions`, através de `session_id ON DELETE SET NULL`; `leads`, através de `lead_id ON DELETE SET NULL`.
+   - *Finalidade*: Gestão do ciclo de vida, etapa comercial e resultado das conversas.
+   - *Índices*: `conversations_pkey`, `idx_conversations_session_id`, `idx_conversations_lead_id`, `idx_conversations_status`, `idx_conversations_last_activity_at`, `idx_conversations_primary_outcome` e `uq_conversations_one_active_per_session`.
+   - *DCL*: `service_role` possui apenas `SELECT`, `INSERT`, `UPDATE` e `DELETE`; `PUBLIC`, `anon` e `authenticated` não possuem privilégios.
 
 5. Futura migração `create_messages`
    - *Dependências*: `conversations`, através de `conversation_id ON DELETE CASCADE`.
