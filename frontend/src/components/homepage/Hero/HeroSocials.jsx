@@ -7,9 +7,9 @@ import { Linkedin, Instagram, Facebook } from 'lucide-react';
 export default function HeroSocials() {
   const socials = [
     {
-      name: 'LinkedIn',
+      name: 'LinkedIn da Lumyo',
       icon: Linkedin,
-      href: null,
+      href: 'https://www.linkedin.com/company/lumyo-pt',
     },
     {
       name: 'Instagram',

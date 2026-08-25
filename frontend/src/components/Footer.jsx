@@ -221,7 +221,9 @@ function HomeFooter({ f }) {
               </span>
 
               <div className="flex flex-col items-start gap-3">
-                <SocialLabel>LINKEDIN</SocialLabel>
+                <SocialLink href="https://www.linkedin.com/company/lumyo-pt" aria-label="LinkedIn da Lumyo">
+                  LINKEDIN
+                </SocialLink>
                 <SocialLink href="https://www.instagram.com/lumyopt/">
                   INSTAGRAM
                 </SocialLink>
@@ -660,12 +662,13 @@ function SocialLabel({ children }) {
   );
 }
 
-function SocialLink({ href, children }) {
+function SocialLink({ href, 'aria-label': ariaLabel, children }) {
   return (
     <a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
+      aria-label={ariaLabel || (typeof children === 'string' ? `${children} da Lumyo` : undefined)}
       className="
         group
         relative
