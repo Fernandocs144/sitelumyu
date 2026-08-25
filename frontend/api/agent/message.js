@@ -1,4 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
+import OpenAI from 'openai';
+import { getCommercialAgentPrompt } from './commercial-agent-prompt.js';
 
 function bufferToHex(buffer) {
   return Array.from(new Uint8Array(buffer))
@@ -92,7 +94,12 @@ async function handleRequest(request) {
     );
   }
 
-  const requiredEnvs = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
+  const requiredEnvs = [
+    'SUPABASE_URL',
+    'SUPABASE_SERVICE_ROLE_KEY',
+    'OPENAI_API_KEY',
+    'OPENAI_MODEL',
+  ];
   const missingEnvs = requiredEnvs.filter((key) => !process.env[key]);
 
   if (missingEnvs.length > 0) {
@@ -404,12 +411,88 @@ async function handleRequest(request) {
       );
     }
 
-    // Resposta controlada temporária
-    const replyText =
-      activeLanguage === 'en'
-        ? 'Thank you for your message. I can help you with Premium Websites, Automation, AI Solutions, or Digital Growth. Which area would you like to explore?'
-        : 'Obrigado pela tua mensagem. Posso ajudar-te com Websites Premium, Automação, Soluções de IA ou Crescimento Digital. Qual destas áreas queres explorar?';
+    // Obter últimas 12 mensagens para histórico da OpenAI (ordem cronológica ASC)
+    const { data: rawHistory, error: historyError } = await supabase
+      .from('messages')
+      .select('message_type, content, sequence_number')
+      .eq('conversation_id', conversationId)
+      .in('message_type', ['visitor_text', 'agent_text'])
+      .order('sequence_number', { ascending: false })
+      .limit(12);
 
+    if (historyError) {
+      console.error('Failed to query message history', {
+        code: historyError.code || 'unknown',
+      });
+    }
+
+    let history = [];
+    if (!historyError && rawHistory) {
+      const sortedHistory = [...rawHistory].reverse();
+      history = sortedHistory.map((msg) => ({
+        role: msg.message_type === 'visitor_text' ? 'user' : 'assistant',
+        content: msg.content,
+      }));
+
+      // Remover mensagens assistant iniciais caso existam
+      while (history.length > 0 && history[0].role === 'assistant') {
+        history.shift();
+      }
+    }
+
+    let replyText = null;
+
+    const isHistoryValid =
+      !historyError &&
+      history.length >= 1 &&
+      history[history.length - 1].role === 'user' &&
+      !history.some((msg) => msg.role !== 'user' && msg.role !== 'assistant');
+
+    if (isHistoryValid) {
+      try {
+        const openai = new OpenAI({
+          apiKey: process.env.OPENAI_API_KEY,
+          timeout: 15000,
+          maxRetries: 1,
+        });
+
+        const instructions = getCommercialAgentPrompt(activeLanguage);
+
+        const response = await openai.responses.create({
+          model: process.env.OPENAI_MODEL,
+          instructions: instructions,
+          input: history,
+          reasoning: { effort: 'none' },
+          text: { verbosity: 'low' },
+          max_output_tokens: 500,
+          store: false,
+        });
+
+        if (response?.status === 'completed' && typeof response?.output_text === 'string') {
+          const rawOutput = response.output_text;
+          const trimmedOutput = rawOutput.trim();
+          if (trimmedOutput.length >= 1 && trimmedOutput.length <= 4000) {
+            replyText = trimmedOutput;
+          }
+        }
+      } catch (error) {
+        console.error('OpenAI response failure', {
+          name: error?.name || 'Error',
+          status: error?.status || error?.statusCode || undefined,
+          code: error?.code || undefined,
+        });
+      }
+    }
+
+    // Fallback de contingência caso a OpenAI não devolva resposta válida ou o histórico seja inválido
+    if (!replyText) {
+      replyText =
+        activeLanguage === 'en'
+          ? 'I cannot generate a complete response right now. Tell me whether you are looking for Premium Websites, Automation, AI Solutions, or Digital Growth, and I will help you explore that area.'
+          : 'Neste momento não consigo gerar uma resposta completa. Diz-me se procuras Websites Premium, Automação, Soluções de IA ou Crescimento Digital e ajudo-te a explorar essa área.';
+    }
+
+    // Persistir resposta do agente
     const agentRes = await insertMessageWithSequence(
       supabase,
       conversationId,
