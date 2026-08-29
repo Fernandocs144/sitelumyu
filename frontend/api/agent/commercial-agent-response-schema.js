@@ -13,6 +13,11 @@ export const commercialAgentResponseSchema = {
           enum: ['websites', 'automation', 'ai', 'digital_growth', null],
           description: 'Primary authorized service area requested by visitor.',
         },
+        service_variant: {
+          type: ['string', 'null'],
+          enum: ['landing_page', 'institutional_website', 'custom_website', 'ecommerce', null],
+          description: 'Specific variant of website service if primary_service is websites: landing_page, institutional_website, custom_website, or ecommerce.',
+        },
         secondary_services: {
           type: 'array',
           items: {
@@ -60,6 +65,7 @@ export const commercialAgentResponseSchema = {
       },
       required: [
         'primary_service',
+        'service_variant',
         'secondary_services',
         'name',
         'email',

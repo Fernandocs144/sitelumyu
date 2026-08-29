@@ -29,6 +29,12 @@ function parseCookieHeader(cookieHeader, cookieName) {
 }
 
 const ALLOWED_SERVICES = ['websites', 'automation', 'ai', 'digital_growth'];
+const ALLOWED_WEBSITE_VARIANTS = [
+  'landing_page',
+  'institutional_website',
+  'custom_website',
+  'ecommerce',
+];
 
 function sanitizeQualification(qual) {
   if (!qual || typeof qual !== 'object') return null;
@@ -42,6 +48,10 @@ function sanitizeQualification(qual) {
 
   const primaryService = ALLOWED_SERVICES.includes(qual.primary_service)
     ? qual.primary_service
+    : null;
+
+  const serviceVariant = ALLOWED_WEBSITE_VARIANTS.includes(qual.service_variant)
+    ? qual.service_variant
     : null;
 
   let secondaryServices = [];
@@ -90,6 +100,7 @@ function sanitizeQualification(qual) {
 
   return {
     primary_service: primaryService,
+    service_variant: serviceVariant,
     secondary_services: secondaryServices,
     name,
     email,
@@ -142,12 +153,21 @@ async function updateExistingLead(supabase, leadId, activeLanguage, cleanQualifi
     updatePayload.primary_service = cleanQualification.primary_service;
   }
 
+  const targetPrimaryService = updatePayload.primary_service || currentLead?.primary_service;
+
+  if (targetPrimaryService === 'websites') {
+    if (cleanQualification.service_variant) {
+      updatePayload.service_variant = cleanQualification.service_variant;
+    }
+  } else if (updatePayload.primary_service && updatePayload.primary_service !== 'websites') {
+    updatePayload.service_variant = null;
+  }
+
   if (cleanQualification.secondary_services && cleanQualification.secondary_services.length > 0) {
     const existingSecondary = Array.isArray(currentLead?.secondary_services) ? currentLead.secondary_services : [];
     const mergedSet = new Set([...existingSecondary, ...cleanQualification.secondary_services]);
-    const targetPrimary = updatePayload.primary_service || currentLead?.primary_service;
-    if (targetPrimary) {
-      mergedSet.delete(targetPrimary);
+    if (targetPrimaryService) {
+      mergedSet.delete(targetPrimaryService);
     }
     updatePayload.secondary_services = Array.from(mergedSet);
   }
@@ -164,7 +184,7 @@ async function updateExistingLead(supabase, leadId, activeLanguage, cleanQualifi
   // NORMALIZAÇÃO DO ORÇAMENTO QUANDO STATED_BUDGET_RAW FOI FORNECIDO NO TURNO
   if (typeof cleanQualification.stated_budget_raw === 'string' && cleanQualification.stated_budget_raw.trim().length > 0) {
     const rawText = cleanQualification.stated_budget_raw.trim();
-    const effectivePrimaryService = updatePayload.primary_service || currentLead?.primary_service || null;
+    const effectivePrimaryService = targetPrimaryService || null;
     const norm = normalizeBudget(rawText, effectivePrimaryService);
 
     updatePayload.stated_budget_raw = rawText;
@@ -256,6 +276,7 @@ async function processLeadQualification(supabase, sessionData, conversationId, a
       source: 'website_agent',
       last_interaction_at: new Date().toISOString(),
       ...(cleanQualification.primary_service ? { primary_service: cleanQualification.primary_service } : {}),
+      ...(cleanQualification.primary_service === 'websites' && cleanQualification.service_variant ? { service_variant: cleanQualification.service_variant } : {}),
       ...(cleanQualification.secondary_services?.length ? { secondary_services: cleanQualification.secondary_services } : {}),
       ...(cleanQualification.name ? { name: cleanQualification.name } : {}),
       ...(cleanQualification.email ? { email: cleanQualification.email } : {}),
