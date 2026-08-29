@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
 import { getCommercialAgentPrompt } from './commercial-agent-prompt.js';
 import { commercialAgentResponseSchema } from './commercial-agent-response-schema.js';
+import { normalizeBudget } from './budget-normalizer.js';
 
 function bufferToHex(buffer) {
   return Array.from(new Uint8Array(buffer))
@@ -159,7 +160,21 @@ async function updateExistingLead(supabase, leadId, activeLanguage, cleanQualifi
   if (cleanQualification.operational_impact) updatePayload.operational_impact = cleanQualification.operational_impact;
   if (cleanQualification.timeline) updatePayload.timeline = cleanQualification.timeline;
   if (cleanQualification.decision_involvement) updatePayload.decision_involvement = cleanQualification.decision_involvement;
-  if (cleanQualification.stated_budget_raw) updatePayload.stated_budget_raw = cleanQualification.stated_budget_raw;
+
+  // NORMALIZAÇÃO DO ORÇAMENTO QUANDO STATED_BUDGET_RAW FOI FORNECIDO NO TURNO
+  if (typeof cleanQualification.stated_budget_raw === 'string' && cleanQualification.stated_budget_raw.trim().length > 0) {
+    const rawText = cleanQualification.stated_budget_raw.trim();
+    const effectivePrimaryService = updatePayload.primary_service || currentLead?.primary_service || null;
+    const norm = normalizeBudget(rawText, effectivePrimaryService);
+
+    updatePayload.stated_budget_raw = rawText;
+    updatePayload.stated_budget_min = norm.min;
+    updatePayload.stated_budget_max = norm.max;
+    updatePayload.stated_budget_currency = norm.currency;
+    updatePayload.stated_budget_period = norm.period;
+    updatePayload.budget_normalization_status = norm.status;
+    updatePayload.budget_normalization_source = norm.source;
+  }
 
   const { error: updateErr } = await supabase
     .from('leads')
@@ -250,8 +265,20 @@ async function processLeadQualification(supabase, sessionData, conversationId, a
       ...(cleanQualification.operational_impact ? { operational_impact: cleanQualification.operational_impact } : {}),
       ...(cleanQualification.timeline ? { timeline: cleanQualification.timeline } : {}),
       ...(cleanQualification.decision_involvement ? { decision_involvement: cleanQualification.decision_involvement } : {}),
-      ...(cleanQualification.stated_budget_raw ? { stated_budget_raw: cleanQualification.stated_budget_raw } : {}),
     };
+
+    if (typeof cleanQualification.stated_budget_raw === 'string' && cleanQualification.stated_budget_raw.trim().length > 0) {
+      const rawText = cleanQualification.stated_budget_raw.trim();
+      const norm = normalizeBudget(rawText, cleanQualification.primary_service || null);
+
+      insertPayload.stated_budget_raw = rawText;
+      insertPayload.stated_budget_min = norm.min;
+      insertPayload.stated_budget_max = norm.max;
+      insertPayload.stated_budget_currency = norm.currency;
+      insertPayload.stated_budget_period = norm.period;
+      insertPayload.budget_normalization_status = norm.status;
+      insertPayload.budget_normalization_source = norm.source;
+    }
 
     const { data: candidateLead, error: insertLeadErr } = await supabase
       .from('leads')
