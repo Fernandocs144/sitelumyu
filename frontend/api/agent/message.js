@@ -4,6 +4,7 @@ import { getCommercialAgentPrompt } from './commercial-agent-prompt.js';
 import { commercialAgentResponseSchema } from './commercial-agent-response-schema.js';
 import { normalizeBudget } from './budget-normalizer.js';
 import { evaluateFinancialAlignment } from './financial-alignment-evaluator.js';
+import { classifyLead } from './lead-classifier.js';
 
 function bufferToHex(buffer) {
   return Array.from(new Uint8Array(buffer))
@@ -67,6 +68,26 @@ function cleanRawText(str) {
   return trimmed.length > 0 ? trimmed.toLowerCase() : null;
 }
 
+function cleanTrimmedString(val) {
+  if (typeof val !== 'string') return null;
+  const trimmed = val.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function cleanEmail(val) {
+  if (typeof val !== 'string') return null;
+  const trimmed = val.trim().toLowerCase();
+  if (trimmed.length < 1 || trimmed.length > 200) return null;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed) ? trimmed : null;
+}
+
+function isManualClassificationProtected(currentLead) {
+  return (
+    currentLead?.lead_classification === 'priority' ||
+    currentLead?.lead_classification === 'disqualified'
+  );
+}
+
 function hasFinancialStateChanged(currentLead, effectiveState) {
   if (!currentLead) return true;
 
@@ -84,6 +105,28 @@ function hasFinancialStateChanged(currentLead, effectiveState) {
   if ((currentLead.stated_budget_period || 'unknown') !== (effectiveState.stated_budget_period || 'unknown')) return true;
   if ((currentLead.budget_normalization_status || 'not_attempted') !== (effectiveState.budget_normalization_status || 'not_attempted')) return true;
   if ((currentLead.budget_normalization_source || 'unknown') !== (effectiveState.budget_normalization_source || 'unknown')) return true;
+
+  return false;
+}
+
+function hasClassificationStateChanged(currentLead, effectiveClassificationState) {
+  if (!currentLead) return true;
+
+  if (isManualClassificationProtected(currentLead)) {
+    return false;
+  }
+
+  // Inicialização preguiçosa única para leads legadas não classificadas
+  if (currentLead.lead_classification === 'informational' && currentLead.classification_reason === null) {
+    return true;
+  }
+
+  if ((currentLead.primary_service || null) !== (effectiveClassificationState.primary_service || null)) return true;
+  if ((currentLead.service_variant || null) !== (effectiveClassificationState.service_variant || null)) return true;
+  if (cleanTrimmedString(currentLead.need_description) !== cleanTrimmedString(effectiveClassificationState.need_description)) return true;
+  if (cleanEmail(currentLead.email) !== cleanEmail(effectiveClassificationState.email)) return true;
+  if (cleanTrimmedString(currentLead.timeline) !== cleanTrimmedString(effectiveClassificationState.timeline)) return true;
+  if ((currentLead.financial_alignment_status || 'unknown') !== (effectiveClassificationState.financial_alignment_status || 'unknown')) return true;
 
   return false;
 }
@@ -276,6 +319,53 @@ async function updateExistingLead(supabase, leadId, activeLanguage, cleanQualifi
     }
   }
 
+  // CLASSIFICAÇÃO DA LEAD QUANDO NÃO PROTEGIDA E HOUVER MUDANÇA CLASSIFICATÓRIA OU INICIALIZAÇÃO PREGUIÇOSA
+  if (!isManualClassificationProtected(currentLead)) {
+    const effectiveClassificationState = {
+      primary_service:
+        updatePayload.primary_service !== undefined
+          ? updatePayload.primary_service
+          : currentLead.primary_service ?? null,
+
+      service_variant:
+        updatePayload.service_variant !== undefined
+          ? updatePayload.service_variant
+          : currentLead.service_variant ?? null,
+
+      need_description:
+        updatePayload.need_description !== undefined
+          ? updatePayload.need_description
+          : currentLead.need_description ?? null,
+
+      email:
+        updatePayload.email !== undefined
+          ? updatePayload.email
+          : currentLead.email ?? null,
+
+      timeline:
+        updatePayload.timeline !== undefined
+          ? updatePayload.timeline
+          : currentLead.timeline ?? null,
+
+      financial_alignment_status:
+        updatePayload.financial_alignment_status !== undefined
+          ? updatePayload.financial_alignment_status
+          : currentLead.financial_alignment_status ?? 'unknown',
+    };
+
+    if (hasClassificationStateChanged(currentLead, effectiveClassificationState)) {
+      try {
+        const classification = classifyLead(effectiveClassificationState);
+        updatePayload.lead_classification = classification.classification;
+        updatePayload.classification_reason = classification.reason;
+      } catch (err) {
+        console.error('Failed to classify lead', {
+          code: 'lead_classification_failed',
+        });
+      }
+    }
+  }
+
   const { error: updateErr } = await supabase
     .from('leads')
     .update(updatePayload)
@@ -404,6 +494,26 @@ async function processLeadQualification(supabase, sessionData, conversationId, a
     } catch (err) {
       console.error('Failed to evaluate financial alignment', {
         code: 'financial_evaluation_failed',
+      });
+    }
+
+    // Avaliar classificação da lead na criação com estado classificatório explícito
+    const candidateClassificationState = {
+      primary_service: insertPayload.primary_service ?? null,
+      service_variant: insertPayload.service_variant ?? null,
+      need_description: insertPayload.need_description ?? null,
+      email: insertPayload.email ?? null,
+      timeline: insertPayload.timeline ?? null,
+      financial_alignment_status: insertPayload.financial_alignment_status ?? 'unknown',
+    };
+
+    try {
+      const classification = classifyLead(candidateClassificationState);
+      insertPayload.lead_classification = classification.classification;
+      insertPayload.classification_reason = classification.reason;
+    } catch (err) {
+      console.error('Failed to classify lead', {
+        code: 'lead_classification_failed',
       });
     }
 
