@@ -3,6 +3,7 @@ import OpenAI from 'openai';
 import { getCommercialAgentPrompt } from './commercial-agent-prompt.js';
 import { commercialAgentResponseSchema } from './commercial-agent-response-schema.js';
 import { normalizeBudget } from './budget-normalizer.js';
+import { evaluateFinancialAlignment } from './financial-alignment-evaluator.js';
 
 function bufferToHex(buffer) {
   return Array.from(new Uint8Array(buffer))
@@ -35,6 +36,57 @@ const ALLOWED_WEBSITE_VARIANTS = [
   'custom_website',
   'ecommerce',
 ];
+
+function normalizeServicesList(list, primaryService) {
+  if (!Array.isArray(list)) return [];
+  const validSet = new Set();
+  for (const item of list) {
+    if (typeof item === 'string' && ALLOWED_SERVICES.includes(item) && item !== primaryService) {
+      validSet.add(item);
+    }
+  }
+  return Array.from(validSet).sort();
+}
+
+function numbersEqual(val1, val2) {
+  if (val1 === null || val1 === undefined || val1 === '') {
+    return val2 === null || val2 === undefined || val2 === '';
+  }
+  if (val2 === null || val2 === undefined || val2 === '') {
+    return false;
+  }
+  const n1 = Number(val1);
+  const n2 = Number(val2);
+  if (isNaN(n1) || isNaN(n2)) return false;
+  return n1 === n2;
+}
+
+function cleanRawText(str) {
+  if (typeof str !== 'string') return null;
+  const trimmed = str.trim().replace(/[.,;\s]+$/, '');
+  return trimmed.length > 0 ? trimmed.toLowerCase() : null;
+}
+
+function hasFinancialStateChanged(currentLead, effectiveState) {
+  if (!currentLead) return true;
+
+  if ((currentLead.primary_service || null) !== (effectiveState.primary_service || null)) return true;
+  if ((currentLead.service_variant || null) !== (effectiveState.service_variant || null)) return true;
+
+  const currentSec = normalizeServicesList(currentLead.secondary_services, effectiveState.primary_service);
+  const effectiveSec = normalizeServicesList(effectiveState.secondary_services, effectiveState.primary_service);
+  if (JSON.stringify(currentSec) !== JSON.stringify(effectiveSec)) return true;
+
+  if (cleanRawText(currentLead.stated_budget_raw) !== cleanRawText(effectiveState.stated_budget_raw)) return true;
+  if (!numbersEqual(currentLead.stated_budget_min, effectiveState.stated_budget_min)) return true;
+  if (!numbersEqual(currentLead.stated_budget_max, effectiveState.stated_budget_max)) return true;
+  if ((currentLead.stated_budget_currency || null) !== (effectiveState.stated_budget_currency || null)) return true;
+  if ((currentLead.stated_budget_period || 'unknown') !== (effectiveState.stated_budget_period || 'unknown')) return true;
+  if ((currentLead.budget_normalization_status || 'not_attempted') !== (effectiveState.budget_normalization_status || 'not_attempted')) return true;
+  if ((currentLead.budget_normalization_source || 'unknown') !== (effectiveState.budget_normalization_source || 'unknown')) return true;
+
+  return false;
+}
 
 function sanitizeQualification(qual) {
   if (!qual || typeof qual !== 'object') return null;
@@ -196,6 +248,34 @@ async function updateExistingLead(supabase, leadId, activeLanguage, cleanQualifi
     updatePayload.budget_normalization_source = norm.source;
   }
 
+  // AVALIAÇÃO DO ALINHAMENTO FINANCEIRO QUANDO HOUVER MUDANÇA FINANCEIRA EFETIVA
+  const effectiveState = {
+    primary_service: updatePayload.primary_service !== undefined ? updatePayload.primary_service : (currentLead.primary_service || null),
+    service_variant: updatePayload.service_variant !== undefined ? updatePayload.service_variant : (currentLead.service_variant || null),
+    secondary_services: updatePayload.secondary_services !== undefined ? updatePayload.secondary_services : (currentLead.secondary_services || []),
+    stated_budget_raw: updatePayload.stated_budget_raw !== undefined ? updatePayload.stated_budget_raw : (currentLead.stated_budget_raw || null),
+    stated_budget_min: updatePayload.stated_budget_min !== undefined ? updatePayload.stated_budget_min : (currentLead.stated_budget_min ?? null),
+    stated_budget_max: updatePayload.stated_budget_max !== undefined ? updatePayload.stated_budget_max : (currentLead.stated_budget_max ?? null),
+    stated_budget_currency: updatePayload.stated_budget_currency !== undefined ? updatePayload.stated_budget_currency : (currentLead.stated_budget_currency || null),
+    stated_budget_period: updatePayload.stated_budget_period !== undefined ? updatePayload.stated_budget_period : (currentLead.stated_budget_period || 'unknown'),
+    budget_normalization_status: updatePayload.budget_normalization_status !== undefined ? updatePayload.budget_normalization_status : (currentLead.budget_normalization_status || 'not_attempted'),
+    budget_normalization_source: updatePayload.budget_normalization_source !== undefined ? updatePayload.budget_normalization_source : (currentLead.budget_normalization_source || 'unknown'),
+  };
+
+  if (hasFinancialStateChanged(currentLead, effectiveState)) {
+    try {
+      const alignment = evaluateFinancialAlignment(effectiveState);
+      updatePayload.financial_alignment_status = alignment.status;
+      updatePayload.financial_alignment_reason = alignment.reason;
+      updatePayload.financial_rule_version = alignment.ruleVersion;
+      updatePayload.financial_evaluated_at = alignment.evaluatedAt;
+    } catch (err) {
+      console.error('Failed to evaluate financial alignment', {
+        code: 'financial_evaluation_failed',
+      });
+    }
+  }
+
   const { error: updateErr } = await supabase
     .from('leads')
     .update(updatePayload)
@@ -299,6 +379,32 @@ async function processLeadQualification(supabase, sessionData, conversationId, a
       insertPayload.stated_budget_period = norm.period;
       insertPayload.budget_normalization_status = norm.status;
       insertPayload.budget_normalization_source = norm.source;
+    }
+
+    // Avaliar alinhamento financeiro na criação
+    const candidateState = {
+      primary_service: insertPayload.primary_service || null,
+      service_variant: insertPayload.service_variant || null,
+      secondary_services: insertPayload.secondary_services || [],
+      stated_budget_raw: insertPayload.stated_budget_raw || null,
+      stated_budget_min: insertPayload.stated_budget_min ?? null,
+      stated_budget_max: insertPayload.stated_budget_max ?? null,
+      stated_budget_currency: insertPayload.stated_budget_currency || null,
+      stated_budget_period: insertPayload.stated_budget_period || 'unknown',
+      budget_normalization_status: insertPayload.budget_normalization_status || 'not_attempted',
+      budget_normalization_source: insertPayload.budget_normalization_source || 'unknown',
+    };
+
+    try {
+      const alignment = evaluateFinancialAlignment(candidateState);
+      insertPayload.financial_alignment_status = alignment.status;
+      insertPayload.financial_alignment_reason = alignment.reason;
+      insertPayload.financial_rule_version = alignment.ruleVersion;
+      insertPayload.financial_evaluated_at = alignment.evaluatedAt;
+    } catch (err) {
+      console.error('Failed to evaluate financial alignment', {
+        code: 'financial_evaluation_failed',
+      });
     }
 
     const { data: candidateLead, error: insertLeadErr } = await supabase
