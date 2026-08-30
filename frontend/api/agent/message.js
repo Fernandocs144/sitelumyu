@@ -5,6 +5,7 @@ import { commercialAgentResponseSchema } from './commercial-agent-response-schem
 import { normalizeBudget } from './budget-normalizer.js';
 import { evaluateFinancialAlignment } from './financial-alignment-evaluator.js';
 import { classifyLead } from './lead-classifier.js';
+import { evaluateMeetingIntent } from './meeting-intent-evaluator.js';
 
 function bufferToHex(buffer) {
   return Array.from(new Uint8Array(buffer))
@@ -36,6 +37,12 @@ const ALLOWED_WEBSITE_VARIANTS = [
   'institutional_website',
   'custom_website',
   'ecommerce',
+];
+const ALLOWED_MEETING_INTENT_SIGNALS = [
+  'accepted',
+  'considering',
+  'declined',
+  'human_contact_requested',
 ];
 
 function normalizeServicesList(list, primaryService) {
@@ -193,6 +200,10 @@ function sanitizeQualification(qual) {
   const decisionInvolvement = sanitizeString(qual.decision_involvement, 50);
   const statedBudgetRaw = sanitizeString(qual.stated_budget_raw, 200);
 
+  const meetingIntentSignal = ALLOWED_MEETING_INTENT_SIGNALS.includes(qual.meeting_intent_signal)
+    ? qual.meeting_intent_signal
+    : null;
+
   return {
     primary_service: primaryService,
     service_variant: serviceVariant,
@@ -206,6 +217,7 @@ function sanitizeQualification(qual) {
     timeline,
     decision_involvement: decisionInvolvement,
     stated_budget_raw: statedBudgetRaw,
+    meeting_intent_signal: meetingIntentSignal,
   };
 }
 
@@ -315,6 +327,21 @@ async function updateExistingLead(supabase, leadId, activeLanguage, cleanQualifi
     } catch (err) {
       console.error('Failed to evaluate financial alignment', {
         code: 'financial_evaluation_failed',
+      });
+    }
+  }
+
+  // AVALIAÇÃO DA INTENÇÃO DE REUNIÃO (INTENT_LEVEL E NEXT_STEP)
+  if (cleanQualification.meeting_intent_signal) {
+    try {
+      const intentEval = evaluateMeetingIntent(cleanQualification.meeting_intent_signal);
+      if (intentEval.shouldUpdate) {
+        updatePayload.intent_level = intentEval.intentLevel;
+        updatePayload.next_step = intentEval.nextStep;
+      }
+    } catch (err) {
+      console.error('Failed to evaluate meeting intent', {
+        code: 'meeting_intent_evaluation_failed',
       });
     }
   }
@@ -495,6 +522,21 @@ async function processLeadQualification(supabase, sessionData, conversationId, a
       console.error('Failed to evaluate financial alignment', {
         code: 'financial_evaluation_failed',
       });
+    }
+
+    // Avaliar intenção de reunião na criação
+    if (cleanQualification.meeting_intent_signal) {
+      try {
+        const intentEval = evaluateMeetingIntent(cleanQualification.meeting_intent_signal);
+        if (intentEval.shouldUpdate) {
+          insertPayload.intent_level = intentEval.intentLevel;
+          insertPayload.next_step = intentEval.nextStep;
+        }
+      } catch (err) {
+        console.error('Failed to evaluate meeting intent', {
+          code: 'meeting_intent_evaluation_failed',
+        });
+      }
     }
 
     // Avaliar classificação da lead na criação com estado classificatório explícito
@@ -800,10 +842,11 @@ async function handleRequest(request) {
 
     const tokenHash = await sha256Hex(token);
     const nowIso = new Date().toISOString();
+    const updateLastSeenIso = new Date(Date.now() + 1000).toISOString();
 
     const { data: sessionData, error: sessionError } = await supabase
       .from('visitor_sessions')
-      .update({ last_seen_at: nowIso })
+      .update({ last_seen_at: updateLastSeenIso })
       .eq('session_token_hash', tokenHash)
       .gt('expires_at', nowIso)
       .select('id, lead_id')

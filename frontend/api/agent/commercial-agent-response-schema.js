@@ -62,6 +62,11 @@ export const commercialAgentResponseSchema = {
           type: ['string', 'null'],
           description: 'Raw budget or investment amount explicitly stated by visitor for their project.',
         },
+        meeting_intent_signal: {
+          type: ['string', 'null'],
+          enum: ['accepted', 'considering', 'declined', 'human_contact_requested', null],
+          description: 'Visitor intent signal regarding a meeting proposal or commercial advance.',
+        },
       },
       required: [
         'primary_service',
@@ -76,6 +81,7 @@ export const commercialAgentResponseSchema = {
         'timeline',
         'decision_involvement',
         'stated_budget_raw',
+        'meeting_intent_signal',
       ],
       additionalProperties: false,
     },
