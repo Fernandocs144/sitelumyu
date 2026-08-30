@@ -3,18 +3,10 @@
  * Função pura, síncrona e sem efeitos secundários.
  */
 
+import { getCommercialPricingReference } from './commercial-pricing-catalog.js';
+
 const ALLOWED_SERVICES = ['websites', 'automation', 'ai', 'digital_growth'];
 const ALLOWED_VARIANTS = ['landing_page', 'institutional_website', 'custom_website', 'ecommerce'];
-
-const REFERENCE_MATRIX = {
-  'websites/landing_page': { min: 500, period: 'project' },
-  'websites/institutional_website': { min: 900, period: 'project' },
-  'websites/custom_website': { min: 1500, period: 'project' },
-  'websites/ecommerce': { min: 1500, period: 'project' },
-  'automation/null': { min: 1000, period: 'project' },
-  'ai/null': { min: 1500, period: 'project' },
-  'digital_growth/null': { min: 500, period: 'monthly' },
-};
 
 function normalizeSecondaryServices(secondaryServices, primaryService) {
   if (!Array.isArray(secondaryServices)) return [];
@@ -110,20 +102,8 @@ export function evaluateFinancialAlignment(leadData) {
     };
   }
 
-  // 6. Verificação de moeda
-  if (leadData.stated_budget_currency !== 'EUR') {
-    return {
-      status: 'unknown',
-      reason: 'currency_not_supported',
-      ruleVersion,
-      evaluatedAt,
-    };
-  }
-
-  // 7. Pesquisa na matriz de referência
-  const matrixKey = `${primaryService}/${serviceVariant}`;
-  const ref = REFERENCE_MATRIX[matrixKey];
-
+  // 6. Pesquisa no catálogo comercial de referência
+  const ref = getCommercialPricingReference(primaryService, serviceVariant);
   if (!ref) {
     return {
       status: 'unknown',
@@ -133,8 +113,23 @@ export function evaluateFinancialAlignment(leadData) {
     };
   }
 
+  // 7. Verificação de moeda
+  if (leadData.stated_budget_currency !== ref.currency) {
+    return {
+      status: 'unknown',
+      reason: 'currency_not_supported',
+      ruleVersion,
+      evaluatedAt,
+    };
+  }
+
   // 8. Verificação de periodicidade
-  if (leadData.stated_budget_period !== ref.period) {
+  const isMonthlyMatch =
+    (ref.period === 'month' || ref.period === 'monthly') &&
+    (leadData.stated_budget_period === 'monthly' || leadData.stated_budget_period === 'month');
+  const isPeriodMatch = isMonthlyMatch || leadData.stated_budget_period === ref.period;
+
+  if (!isPeriodMatch) {
     return {
       status: 'unknown',
       reason: 'period_mismatch',

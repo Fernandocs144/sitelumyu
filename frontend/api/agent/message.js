@@ -1,11 +1,22 @@
 import { createClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
-import { getCommercialAgentPrompt } from './commercial-agent-prompt.js';
-import { commercialAgentResponseSchema } from './commercial-agent-response-schema.js';
+import {
+  getCommercialAgentPrompt,
+  getCommercialAgentExtractionPrompt,
+  buildSecondPhaseInstructions,
+} from './commercial-agent-prompt.js';
+import {
+  commercialAgentExtractionSchema,
+  commercialAgentReplySchema,
+} from './commercial-agent-response-schema.js';
 import { normalizeBudget } from './budget-normalizer.js';
 import { evaluateFinancialAlignment } from './financial-alignment-evaluator.js';
 import { classifyLead } from './lead-classifier.js';
 import { evaluateMeetingIntent } from './meeting-intent-evaluator.js';
+import { calculateNextCommercialGoal } from './commercial-conversation-policy.js';
+import { getCommercialGoalMessage } from './commercial-goal-messages.js';
+import { composeCommercialReply } from './commercial-reply-composer.js';
+import { buildDeterministicFinancialReply } from './commercial-financial-reply.js';
 
 function bufferToHex(buffer) {
   return Array.from(new Uint8Array(buffer))
@@ -44,6 +55,34 @@ const ALLOWED_MEETING_INTENT_SIGNALS = [
   'declined',
   'human_contact_requested',
 ];
+
+export function buildCalComBookingUrl(baseUrlStr, name, email) {
+  if (typeof baseUrlStr !== 'string' || !baseUrlStr.trim()) return null;
+  let parsedUrl;
+  try {
+    parsedUrl = new URL(baseUrlStr.trim());
+  } catch (err) {
+    console.error('Failed to parse Cal.com booking base URL', { code: 'calcom_url_invalid' });
+    return null;
+  }
+
+  if (parsedUrl.protocol !== 'https:' || parsedUrl.hostname !== 'cal.com') {
+    console.error('Cal.com booking base URL rejected due to security constraint', { code: 'calcom_url_untrusted' });
+    return null;
+  }
+
+  const cleanNameVal = typeof name === 'string' && name.trim().length >= 1 ? name.trim() : null;
+  const cleanEmailVal = typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ? email.trim() : null;
+
+  if (cleanNameVal) {
+    parsedUrl.searchParams.set('name', cleanNameVal);
+  }
+  if (cleanEmailVal) {
+    parsedUrl.searchParams.set('email', cleanEmailVal);
+  }
+
+  return parsedUrl.toString();
+}
 
 function normalizeServicesList(list, primaryService) {
   if (!Array.isArray(list)) return [];
@@ -123,7 +162,6 @@ function hasClassificationStateChanged(currentLead, effectiveClassificationState
     return false;
   }
 
-  // Inicialização preguiçosa única para leads legadas não classificadas
   if (currentLead.lead_classification === 'informational' && currentLead.classification_reason === null) {
     return true;
   }
@@ -138,7 +176,68 @@ function hasClassificationStateChanged(currentLead, effectiveClassificationState
   return false;
 }
 
-function sanitizeQualification(qual) {
+function extractEmailFromText(text) {
+  if (typeof text !== 'string') return null;
+  const match = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+  if (!match) return null;
+  const email = match[0].toLowerCase().trim();
+  if (email.length < 5 || email.length > 200) return null;
+  return email;
+}
+
+export function extractFallbackContact(recentText) {
+  if (typeof recentText !== 'string') return { name: null, email: null };
+
+  const extractedEmail = extractEmailFromText(recentText);
+  if (!extractedEmail) {
+    return { name: null, email: null };
+  }
+
+  const escapedEmail = extractedEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  let remaining = recentText.replace(new RegExp(escapedEmail, 'i'), '');
+  remaining = remaining.replace(/^[\s,;:/\-]+|[\s,;:/\-]+$/g, '').trim();
+
+  if (!remaining) {
+    return { name: null, email: extractedEmail };
+  }
+
+  const words = remaining.split(/\s+/).filter(Boolean);
+  if (words.length < 1 || words.length > 4) {
+    return { name: null, email: extractedEmail };
+  }
+
+  if (!/^[\p{L}\s'\-]+$/u.test(remaining)) {
+    return { name: null, email: extractedEmail };
+  }
+
+  const prohibitedKeywords = new Set([
+    'quero', 'preciso', 'gostaria', 'website', 'site', 'orçamento', 'orcamento',
+    'euros', 'euro', 'empresa', 'projeto', 'projecto', 'contacto', 'contato',
+    'telefone', 'suporte', 'ajuda', 'prazo', 'meses', 'mês', 'mes', 'semanas',
+    'semana', 'dias', 'dia', 'responder', 'enviar', 'envia', 'liga', 'chamo',
+    'chama', 'nome', 'email', 'mail', 'comercial', 'equipa', 'equipe', 'reunião',
+    'reuniao', 'solução', 'solucao', 'ia', 'automação', 'automacao'
+  ]);
+
+  const tokens = words.map((w) => w.toLowerCase().replace(/^[^\p{L}]+|[^\p{L}]+$/gu, ''));
+  for (const token of tokens) {
+    if (prohibitedKeywords.has(token)) {
+      return { name: null, email: extractedEmail };
+    }
+  }
+
+  const cleanName = remaining.trim();
+  if (cleanName.length < 1 || cleanName.length > 120) {
+    return { name: null, email: extractedEmail };
+  }
+
+  return {
+    name: cleanName,
+    email: extractedEmail,
+  };
+}
+
+export function sanitizeQualification(qual, recentText = null) {
   if (!qual || typeof qual !== 'object') return null;
 
   const sanitizeString = (val, maxLen) => {
@@ -167,11 +266,21 @@ function sanitizeQualification(qual) {
     secondaryServices = Array.from(validSet);
   }
 
-  const name = sanitizeString(qual.name, 120);
+  let name = sanitizeString(qual.name, 120);
 
   let email = sanitizeString(qual.email, 200);
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     email = null;
+  }
+
+  if (typeof recentText === 'string') {
+    const fallback = extractFallbackContact(recentText);
+    if (!name && fallback.name) {
+      name = fallback.name;
+    }
+    if (!email && fallback.email) {
+      email = fallback.email;
+    }
   }
 
   const companyName = sanitizeString(qual.company_name, 120);
@@ -204,10 +313,19 @@ function sanitizeQualification(qual) {
     ? qual.meeting_intent_signal
     : null;
 
+  let hasExistingWebsite = null;
+  if (typeof qual.has_existing_website === 'boolean') {
+    hasExistingWebsite = qual.has_existing_website;
+  }
+  if (websiteUrl) {
+    hasExistingWebsite = true;
+  }
+
   return {
     primary_service: primaryService,
     service_variant: serviceVariant,
     secondary_services: secondaryServices,
+    has_existing_website: hasExistingWebsite,
     name,
     email,
     company_name: companyName,
@@ -248,7 +366,7 @@ async function updateExistingLead(supabase, leadId, activeLanguage, cleanQualifi
     console.error('Failed to read existing lead qualification', {
       code: currentLeadError?.code || 'not_found',
     });
-    return false;
+    return null;
   }
 
   const updatePayload = {
@@ -282,13 +400,17 @@ async function updateExistingLead(supabase, leadId, activeLanguage, cleanQualifi
   if (cleanQualification.name) updatePayload.name = cleanQualification.name;
   if (cleanQualification.email) updatePayload.email = cleanQualification.email;
   if (cleanQualification.company_name) updatePayload.company_name = cleanQualification.company_name;
-  if (cleanQualification.website_url) updatePayload.website_url = cleanQualification.website_url;
+  if (cleanQualification.website_url) {
+    updatePayload.website_url = cleanQualification.website_url;
+    updatePayload.has_existing_website = true;
+  } else if (typeof cleanQualification.has_existing_website === 'boolean') {
+    updatePayload.has_existing_website = cleanQualification.has_existing_website;
+  }
   if (cleanQualification.need_description) updatePayload.need_description = cleanQualification.need_description;
   if (cleanQualification.operational_impact) updatePayload.operational_impact = cleanQualification.operational_impact;
   if (cleanQualification.timeline) updatePayload.timeline = cleanQualification.timeline;
   if (cleanQualification.decision_involvement) updatePayload.decision_involvement = cleanQualification.decision_involvement;
 
-  // NORMALIZAÇÃO DO ORÇAMENTO QUANDO STATED_BUDGET_RAW FOI FORNECIDO NO TURNO
   if (typeof cleanQualification.stated_budget_raw === 'string' && cleanQualification.stated_budget_raw.trim().length > 0) {
     const rawText = cleanQualification.stated_budget_raw.trim();
     const effectivePrimaryService = targetPrimaryService || null;
@@ -303,7 +425,6 @@ async function updateExistingLead(supabase, leadId, activeLanguage, cleanQualifi
     updatePayload.budget_normalization_source = norm.source;
   }
 
-  // AVALIAÇÃO DO ALINHAMENTO FINANCEIRO QUANDO HOUVER MUDANÇA FINANCEIRA EFETIVA
   const effectiveState = {
     primary_service: updatePayload.primary_service !== undefined ? updatePayload.primary_service : (currentLead.primary_service || null),
     service_variant: updatePayload.service_variant !== undefined ? updatePayload.service_variant : (currentLead.service_variant || null),
@@ -331,7 +452,6 @@ async function updateExistingLead(supabase, leadId, activeLanguage, cleanQualifi
     }
   }
 
-  // AVALIAÇÃO DA INTENÇÃO DE REUNIÃO (INTENT_LEVEL E NEXT_STEP)
   if (cleanQualification.meeting_intent_signal) {
     try {
       const intentEval = evaluateMeetingIntent(cleanQualification.meeting_intent_signal);
@@ -346,7 +466,6 @@ async function updateExistingLead(supabase, leadId, activeLanguage, cleanQualifi
     }
   }
 
-  // CLASSIFICAÇÃO DA LEAD QUANDO NÃO PROTEGIDA E HOUVER MUDANÇA CLASSIFICATÓRIA OU INICIALIZAÇÃO PREGUIÇOSA
   if (!isManualClassificationProtected(currentLead)) {
     const effectiveClassificationState = {
       primary_service:
@@ -393,17 +512,19 @@ async function updateExistingLead(supabase, leadId, activeLanguage, cleanQualifi
     }
   }
 
-  const { error: updateErr } = await supabase
+  const { data: updatedLead, error: updateErr } = await supabase
     .from('leads')
     .update(updatePayload)
-    .eq('id', leadId);
+    .eq('id', leadId)
+    .select('*')
+    .single();
 
   if (updateErr) {
     console.error('Failed to update lead qualification', { code: updateErr.code || 'unknown' });
-    return false;
+    return null;
   }
 
-  return true;
+  return updatedLead;
 }
 
 async function linkConversationToLead(supabase, conversationId, leadId) {
@@ -419,10 +540,9 @@ async function linkConversationToLead(supabase, conversationId, leadId) {
 }
 
 async function processLeadQualification(supabase, sessionData, conversationId, activeLanguage, cleanQualification) {
-  if (!cleanQualification) return;
+  if (!cleanQualification) return null;
 
   try {
-    // 1. REVERIFICAÇÃO NA BASE DE DADOS PARA GARANTIR SE A SESSÃO JÁ TEM LEAD_ID
     let existingLeadId = sessionData.lead_id;
 
     if (!existingLeadId) {
@@ -436,7 +556,7 @@ async function processLeadQualification(supabase, sessionData, conversationId, a
         console.error('Failed to refresh session lead link', {
           code: freshSessionError.code || 'unknown',
         });
-        return;
+        return null;
       }
 
       if (freshSession?.lead_id) {
@@ -446,28 +566,26 @@ async function processLeadQualification(supabase, sessionData, conversationId, a
     }
 
     if (existingLeadId) {
-      // LEAD JÁ EXISTE: Atualizar via função reutilizável e reparar link da conversa
-      await updateExistingLead(supabase, existingLeadId, activeLanguage, cleanQualification);
+      const updatedLead = await updateExistingLead(supabase, existingLeadId, activeLanguage, cleanQualification);
       await linkConversationToLead(supabase, conversationId, existingLeadId);
-      return;
+      return updatedLead;
     }
 
-    // 2. AVALIAR SE DEVE CRIAR NOVA LEAD CANDIDATA
     const hasSignal =
       Boolean(cleanQualification.need_description) ||
       Boolean(cleanQualification.timeline) ||
       Boolean(cleanQualification.stated_budget_raw) ||
       Boolean(cleanQualification.company_name) ||
       Boolean(cleanQualification.email) ||
-      Boolean(cleanQualification.website_url);
+      Boolean(cleanQualification.website_url) ||
+      typeof cleanQualification.has_existing_website === 'boolean';
 
     const shouldCreateLead = Boolean(cleanQualification.primary_service) && hasSignal;
 
     if (!shouldCreateLead) {
-      return;
+      return null;
     }
 
-    // CRIAR LEAD CANDIDATA
     const insertPayload = {
       language: activeLanguage,
       source: 'website_agent',
@@ -478,7 +596,11 @@ async function processLeadQualification(supabase, sessionData, conversationId, a
       ...(cleanQualification.name ? { name: cleanQualification.name } : {}),
       ...(cleanQualification.email ? { email: cleanQualification.email } : {}),
       ...(cleanQualification.company_name ? { company_name: cleanQualification.company_name } : {}),
-      ...(cleanQualification.website_url ? { website_url: cleanQualification.website_url } : {}),
+      ...(cleanQualification.website_url
+        ? { website_url: cleanQualification.website_url, has_existing_website: true }
+        : typeof cleanQualification.has_existing_website === 'boolean'
+        ? { has_existing_website: cleanQualification.has_existing_website }
+        : {}),
       ...(cleanQualification.need_description ? { need_description: cleanQualification.need_description } : {}),
       ...(cleanQualification.operational_impact ? { operational_impact: cleanQualification.operational_impact } : {}),
       ...(cleanQualification.timeline ? { timeline: cleanQualification.timeline } : {}),
@@ -498,7 +620,6 @@ async function processLeadQualification(supabase, sessionData, conversationId, a
       insertPayload.budget_normalization_source = norm.source;
     }
 
-    // Avaliar alinhamento financeiro na criação
     const candidateState = {
       primary_service: insertPayload.primary_service || null,
       service_variant: insertPayload.service_variant || null,
@@ -524,7 +645,6 @@ async function processLeadQualification(supabase, sessionData, conversationId, a
       });
     }
 
-    // Avaliar intenção de reunião na criação
     if (cleanQualification.meeting_intent_signal) {
       try {
         const intentEval = evaluateMeetingIntent(cleanQualification.meeting_intent_signal);
@@ -539,7 +659,6 @@ async function processLeadQualification(supabase, sessionData, conversationId, a
       }
     }
 
-    // Avaliar classificação da lead na criação com estado classificatório explícito
     const candidateClassificationState = {
       primary_service: insertPayload.primary_service ?? null,
       service_variant: insertPayload.service_variant ?? null,
@@ -562,17 +681,16 @@ async function processLeadQualification(supabase, sessionData, conversationId, a
     const { data: candidateLead, error: insertLeadErr } = await supabase
       .from('leads')
       .insert(insertPayload)
-      .select('id')
+      .select('*')
       .single();
 
     if (insertLeadErr || !candidateLead) {
       console.error('Failed to insert candidate lead', { code: insertLeadErr?.code || 'unknown' });
-      return;
+      return null;
     }
 
     const candidateId = candidateLead.id;
 
-    // 3. COMPARE-AND-SET NA SESSÃO (Associa apenas se lead_id for NULL)
     const { data: updatedSession, error: sessUpdateErr } = await supabase
       .from('visitor_sessions')
       .update({ lead_id: candidateId })
@@ -582,48 +700,41 @@ async function processLeadQualification(supabase, sessionData, conversationId, a
       .maybeSingle();
 
     if (sessUpdateErr) {
-      // Erro DB ao associar sessão: eliminar candidata órfã e sair limpo
       console.error('Failed to associate lead to session', { code: sessUpdateErr.code || 'unknown' });
       await deleteCandidateLead(supabase, candidateId);
-      return;
+      return null;
     }
 
     if (updatedSession && updatedSession.lead_id === candidateId) {
-      // A LEAD CANDIDATA VENCEU A CORRIDA
       sessionData.lead_id = candidateId;
       await linkConversationToLead(supabase, conversationId, candidateId);
-      return;
+      return candidateLead;
     }
 
-    // 4. A LEAD CANDIDATA PERDEU A CORRIDA (Outra chamada concorrente associou primeiro)
     const { data: latestSession, error: latestSessionError } = await supabase
       .from('visitor_sessions')
       .select('lead_id')
       .eq('id', sessionData.id)
       .maybeSingle();
 
-    // Eliminar sempre a candidata através de deleteCandidateLead pelo UUID exato
     const deletedOk = await deleteCandidateLead(supabase, candidateId);
 
-    if (latestSessionError) {
-      console.error('Failed to query latest session lead link', {
-        code: latestSessionError.code || 'unknown',
-      });
-      return;
-    }
-
-    if (!deletedOk) {
-      return;
+    if (latestSessionError || !deletedOk) {
+      return null;
     }
 
     const winningLeadId = latestSession?.lead_id;
     if (winningLeadId) {
       sessionData.lead_id = winningLeadId;
-      await updateExistingLead(supabase, winningLeadId, activeLanguage, cleanQualification);
+      const updatedLead = await updateExistingLead(supabase, winningLeadId, activeLanguage, cleanQualification);
       await linkConversationToLead(supabase, conversationId, winningLeadId);
+      return updatedLead;
     }
+
+    return null;
   } catch (err) {
     console.error('Unexpected lead qualification failure', { code: err?.code || 'unknown' });
+    return null;
   }
 }
 
@@ -888,7 +999,6 @@ async function handleRequest(request) {
       );
     }
 
-    // Resolver conversa activa
     let conversationId;
     let activeLanguage = requestedLanguage;
 
@@ -988,7 +1098,6 @@ async function handleRequest(request) {
       }
     }
 
-    // Persistir mensagem do visitante
     const visitorRes = await insertMessageWithSequence(
       supabase,
       conversationId,
@@ -1013,7 +1122,6 @@ async function handleRequest(request) {
       );
     }
 
-    // Obter últimas 12 mensagens para histórico da OpenAI (ordem cronológica ASC)
     const { data: rawHistory, error: historyError } = await supabase
       .from('messages')
       .select('message_type, content, sequence_number')
@@ -1036,13 +1144,12 @@ async function handleRequest(request) {
         content: msg.content,
       }));
 
-      // Remover mensagens assistant iniciais caso existam
       while (history.length > 0 && history[0].role === 'assistant') {
         history.shift();
       }
     }
 
-    let replyText = null;
+    // FASE 1 — EXTRAÇÃO E QUALIFICAÇÃO ESTRUTURADA
     let rawQualification = null;
 
     const isHistoryValid =
@@ -1059,83 +1166,237 @@ async function handleRequest(request) {
           maxRetries: 1,
         });
 
-        const instructions = getCommercialAgentPrompt(activeLanguage);
+        const extractionInstructions = getCommercialAgentExtractionPrompt(activeLanguage);
 
-        const response = await openai.responses.create({
+        const extractionResponse = await openai.responses.create({
           model: process.env.OPENAI_MODEL,
-          instructions: instructions,
+          instructions: extractionInstructions,
           input: history,
           reasoning: { effort: 'none' },
           text: {
             verbosity: 'low',
             format: {
               type: 'json_schema',
-              name: 'commercial_agent_response',
+              name: 'commercial_agent_extraction',
               strict: true,
-              schema: commercialAgentResponseSchema,
+              schema: commercialAgentExtractionSchema,
             },
           },
-          max_output_tokens: 1000,
+          max_output_tokens: 800,
           store: false,
         });
 
-        if (response?.status === 'completed' && typeof response?.output_text === 'string') {
+        if (extractionResponse?.status === 'completed' && typeof extractionResponse?.output_text === 'string') {
           try {
-            const parsed = JSON.parse(response.output_text);
-            if (parsed && typeof parsed === 'object') {
-              if (typeof parsed.reply === 'string') {
-                const trimmedReply = parsed.reply.trim();
-                if (trimmedReply.length >= 1 && trimmedReply.length <= 4000) {
-                  replyText = trimmedReply;
+            const parsedExtraction = JSON.parse(extractionResponse.output_text);
+            if (parsedExtraction && typeof parsedExtraction === 'object') {
+              if (parsedExtraction.language === 'pt' || parsedExtraction.language === 'en') {
+                if (parsedExtraction.language !== activeLanguage) {
+                  activeLanguage = parsedExtraction.language;
+                  await supabase
+                    .from('conversations')
+                    .update({ language: activeLanguage })
+                    .eq('id', conversationId);
                 }
               }
-              if (parsed.qualification && typeof parsed.qualification === 'object') {
-                rawQualification = parsed.qualification;
+              if (parsedExtraction.qualification && typeof parsedExtraction.qualification === 'object') {
+                rawQualification = parsedExtraction.qualification;
               }
             }
           } catch (parseErr) {
-            console.error('Failed to parse OpenAI Structured Output', {
-              name: parseErr?.name || 'Error',
+            console.error('Failed to parse OpenAI Extraction Structured Output', {
+              code: 'extraction_parse_failed',
             });
           }
         }
       } catch (error) {
-        console.error('OpenAI response failure', {
-          name: error?.name || 'Error',
-          status: error?.status || error?.statusCode || undefined,
-          code: error?.code || undefined,
+        console.error('OpenAI extraction failure', {
+          code: 'extraction_request_failed',
         });
       }
     }
 
-    // Fallback de contingência caso a OpenAI não devolva resposta válida ou o histórico seja inválido
-    if (!replyText) {
-      rawQualification = null; // Garantir que nao se cria lead com fallback
-      replyText =
-        activeLanguage === 'en'
-          ? 'I cannot generate a complete response right now. Tell me whether you are looking for Premium Websites, Automation, AI Solutions, or Digital Growth, and I will help you explore that area.'
-          : 'Neste momento não consigo gerar uma resposta completa. Diz-me se procuras Websites Premium, Automação, Soluções de IA ou Crescimento Digital e ajudo-te a explorar essa área.';
+    // FASE 2 — CONSOLIDAÇÃO DA LEAD NA BASE DE DADOS
+    let cleanQualification = null;
+    let consolidatedLead = null;
+
+    if (rawQualification || cleanMessage) {
+      cleanQualification = sanitizeQualification(rawQualification || {}, cleanMessage);
+      if (cleanQualification) {
+        consolidatedLead = await processLeadQualification(
+          supabase,
+          sessionData,
+          conversationId,
+          activeLanguage,
+          cleanQualification
+        );
+      }
     }
 
-    // Processar e persistir qualificação estruturada de lead se existir resposta valida
-    if (rawQualification) {
-      const cleanQualification = sanitizeQualification(rawQualification);
-      await processLeadQualification(
-        supabase,
-        sessionData,
-        conversationId,
-        activeLanguage,
-        cleanQualification
-      );
+    const budgetProvidedThisTurn =
+      typeof cleanQualification?.stated_budget_raw === 'string' &&
+      cleanQualification.stated_budget_raw.trim().length > 0;
+
+    // CONSTRUIR ESTADO EFETIVO DA LEAD
+    const effectiveLeadState = consolidatedLead || {
+      id: sessionData.lead_id || null,
+      primary_service: cleanQualification?.primary_service || null,
+      service_variant: cleanQualification?.service_variant || null,
+      secondary_services: cleanQualification?.secondary_services || [],
+      need_description: cleanQualification?.need_description || null,
+      timeline: cleanQualification?.timeline || null,
+      name: cleanQualification?.name || null,
+      email: cleanQualification?.email || null,
+      company_name: cleanQualification?.company_name || null,
+      website_url: cleanQualification?.website_url || null,
+      stated_budget_raw: cleanQualification?.stated_budget_raw || null,
+      financial_alignment_status: null,
+      financial_alignment_reason: null,
+      next_step: cleanQualification?.meeting_intent_signal === 'accepted'
+        ? 'booking_pending'
+        : (cleanQualification?.meeting_intent_signal === 'human_contact_requested' ? 'human_contact_requested' : null),
+      intent_level: cleanQualification?.meeting_intent_signal === 'accepted' || cleanQualification?.meeting_intent_signal === 'human_contact_requested' ? 'high' : null,
+    };
+
+    // FASE 3 — CÁLCULO DO GOAL COMERCIAL E DA MENSAGEM DE META
+    const commercialGoal = calculateNextCommercialGoal(effectiveLeadState);
+    const goalMessage = getCommercialGoalMessage(commercialGoal.goal, activeLanguage);
+
+    const deterministicFinancialReply = budgetProvidedThisTurn
+      ? buildDeterministicFinancialReply(effectiveLeadState, activeLanguage)
+      : null;
+
+    let finalReplyText = null;
+
+    if (commercialGoal.goal === 'show_booking' || commercialGoal.goal === 'human_contact_requested') {
+      // NÃO CHAMAR O SEGUNDO MODELO PARA SHOW_BOOKING OU HUMAN_CONTACT_REQUESTED
+      const composerRes = composeCommercialReply({
+        generatedReply: null,
+        deterministicReply: null,
+        goalMessage,
+      });
+      finalReplyText = composerRes.reply;
+    } else if (deterministicFinancialReply) {
+      // USAR RESPOSTA FINANCEIRA DETERMINÍSTICA E NÃO CHAMAR A SEGUNDA FASE OPENAI
+      const composerRes = composeCommercialReply({
+        generatedReply: null,
+        deterministicReply: deterministicFinancialReply,
+        goalMessage,
+      });
+      finalReplyText = composerRes.reply;
+    } else {
+      // CHAMAR O SEGUNDO MODELO COM commercialAgentReplySchema
+      let generatedSecondPhaseReply = null;
+      if (isHistoryValid) {
+        try {
+          const openai = new OpenAI({
+            apiKey: process.env.OPENAI_API_KEY,
+            timeout: 15000,
+            maxRetries: 1,
+          });
+
+          const secondPhaseInstructions = buildSecondPhaseInstructions({
+            language: activeLanguage,
+            goalMessage,
+            effectiveLeadState,
+          });
+
+          const secondPhaseResponse = await openai.responses.create({
+            model: process.env.OPENAI_MODEL,
+            instructions: secondPhaseInstructions,
+            input: history,
+            reasoning: { effort: 'none' },
+            text: {
+              verbosity: 'low',
+              format: {
+                type: 'json_schema',
+                name: 'commercial_agent_reply',
+                strict: true,
+                schema: commercialAgentReplySchema,
+              },
+            },
+            max_output_tokens: 800,
+            store: false,
+          });
+
+          if (secondPhaseResponse?.status === 'completed' && typeof secondPhaseResponse?.output_text === 'string') {
+            try {
+              const parsedReplyObj = JSON.parse(secondPhaseResponse.output_text);
+              if (parsedReplyObj && typeof parsedReplyObj.reply === 'string') {
+                generatedSecondPhaseReply = parsedReplyObj.reply;
+              }
+            } catch (parseErr) {
+              console.error('Failed to parse OpenAI Reply Structured Output', {
+                code: 'reply_parse_failed',
+              });
+            }
+          }
+        } catch (err) {
+          console.error('OpenAI second phase reply failure', {
+            code: 'commercial_reply_generation_failed',
+          });
+        }
+      }
+
+      const composerRes = composeCommercialReply({
+        generatedReply: generatedSecondPhaseReply,
+        deterministicReply: null,
+        goalMessage,
+      });
+
+      finalReplyText = composerRes.reply;
     }
 
-    // Persistir resposta do agente
+    // AVALIAÇÃO DETERMINÍSTICA DE BOOKING ACTION
+    let bookingAction = null;
+    if (
+      commercialGoal.goal === 'show_booking' &&
+      goalMessage.action === 'booking'
+    ) {
+      const associatedLeadId = sessionData.lead_id || effectiveLeadState?.id;
+      if (associatedLeadId) {
+        const calComBaseUrl = process.env.CALCOM_BOOKING_URL;
+        if (calComBaseUrl) {
+          let leadName = effectiveLeadState?.name || cleanQualification?.name || null;
+          let leadEmail = effectiveLeadState?.email || cleanQualification?.email || null;
+
+          if (!leadName || !leadEmail) {
+            const { data: dbLead } = await supabase
+              .from('leads')
+              .select('name, email')
+              .eq('id', associatedLeadId)
+              .maybeSingle();
+            if (dbLead) {
+              if (!leadName) leadName = dbLead.name;
+              if (!leadEmail) leadEmail = dbLead.email;
+            }
+          }
+
+          const calComUrl = buildCalComBookingUrl(calComBaseUrl, leadName, leadEmail);
+
+          if (calComUrl) {
+            bookingAction = {
+              type: 'calcom',
+              label: activeLanguage === 'en' ? 'Choose a time' : 'Escolher horário',
+              url: calComUrl,
+            };
+          }
+        }
+      }
+
+      if (!bookingAction) {
+        finalReplyText = activeLanguage === 'en'
+          ? 'The booking page is temporarily unavailable. The Lumyo team can help complete the booking.'
+          : 'Não foi possível disponibilizar agora a página de agendamento. A equipa Lumyo poderá ajudar a concluir a marcação.';
+      }
+    }
+
     const agentRes = await insertMessageWithSequence(
       supabase,
       conversationId,
       'agent_text',
       'agent',
-      replyText
+      finalReplyText
     );
 
     if (!agentRes.success) {
@@ -1154,7 +1415,6 @@ async function handleRequest(request) {
       );
     }
 
-    // Atualizar last_activity_at da conversa
     const { error: updateConvError } = await supabase
       .from('conversations')
       .update({
@@ -1185,8 +1445,9 @@ async function handleRequest(request) {
       {
         success: true,
         data: {
-          reply: replyText,
+          reply: finalReplyText,
           language: activeLanguage,
+          ...(bookingAction ? { bookingAction } : {}),
         },
       },
       {

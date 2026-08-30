@@ -276,7 +276,6 @@ export default function CommercialAgentWidget() {
         return;
       }
 
-      // Adicionar mensagem do visitante SEMPRE para novas submissoes (isRetryCall === false)
       if (!isRetryCall) {
         const userMsgId = `user_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
         setMessages((prev) => [
@@ -306,7 +305,6 @@ export default function CommercialAgentWidget() {
       try {
         let { res, data } = await makeRequest();
 
-        // Tratar erro 401 SESSION_REQUIRED com uma unica tentativa e bloco try/finally
         if (res.status === 401 && !isRetrying401Ref.current) {
           isRetrying401Ref.current = true;
           try {
@@ -332,7 +330,12 @@ export default function CommercialAgentWidget() {
             const agentMsgId = `agent_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
             setMessages((prev) => [
               ...prev,
-              { id: agentMsgId, sender: 'agent', text: data.data.reply },
+              {
+                id: agentMsgId,
+                sender: 'agent',
+                text: data.data.reply,
+                bookingAction: data.data.bookingAction || null,
+              },
             ]);
             setIsSending(false);
           } else {
@@ -350,7 +353,6 @@ export default function CommercialAgentWidget() {
     [input, isSending, sessionStatus, currentLang]
   );
 
-  // Submissao via Enter (Shift+Enter insere nova linha)
   const handleTextareaKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -358,7 +360,6 @@ export default function CommercialAgentWidget() {
     }
   };
 
-  // Atalhos do Empty State
   const shortcuts = [
     {
       label: currentLang === 'en' ? 'Premium Websites' : 'Websites Premium',
@@ -480,7 +481,6 @@ export default function CommercialAgentWidget() {
 
           {/* Área de Mensagens */}
           <div className="lumyo-chat-messages-area" aria-live="polite">
-            {/* Estado de Inicialização da Sessão */}
             {sessionStatus === 'initializing' && (
               <div className="lumyo-chat-empty-state">
                 <p className="lumyo-chat-subtitle">
@@ -491,7 +491,6 @@ export default function CommercialAgentWidget() {
               </div>
             )}
 
-            {/* Erro de Inicialização da Sessão */}
             {sessionStatus === 'error' && (
               <div className="lumyo-chat-empty-state">
                 <p className="lumyo-chat-empty-title">
@@ -509,7 +508,6 @@ export default function CommercialAgentWidget() {
               </div>
             )}
 
-            {/* Empty State quando a sessão está pronta e não há mensagens */}
             {sessionStatus === 'ready' && messages.length === 0 && (
               <div className="lumyo-chat-empty-state">
                 <h2 className="lumyo-chat-empty-title">
@@ -532,14 +530,46 @@ export default function CommercialAgentWidget() {
               </div>
             )}
 
-            {/* Lista de Mensagens */}
             {messages.map((m) => (
               <div key={m.id} className={`lumyo-chat-msg-row ${m.sender}`}>
-                <div className="lumyo-chat-bubble">{m.text}</div>
+                <div className="lumyo-chat-bubble-container">
+                  <div className="lumyo-chat-bubble">{m.text}</div>
+                  {m.bookingAction &&
+                    m.bookingAction.type === 'calcom' &&
+                    typeof m.bookingAction.url === 'string' &&
+                    m.bookingAction.url.startsWith('https://cal.com/') && (
+                      <a
+                        href={m.bookingAction.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="lumyo-chat-booking-btn"
+                      >
+                        <span>
+                          {m.bookingAction.label ||
+                            (currentLang === 'en' ? 'Choose a time' : 'Escolher horário')}
+                        </span>
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
+                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                          <line x1="16" y1="2" x2="16" y2="6" />
+                          <line x1="8" y1="2" x2="8" y2="6" />
+                          <line x1="3" y1="10" x2="21" y2="10" />
+                        </svg>
+                      </a>
+                    )}
+                </div>
               </div>
             ))}
 
-            {/* Indicador de Resposta a ser gerada */}
             {isSending && (
               <div className="lumyo-chat-msg-row agent">
                 <div
@@ -615,7 +645,6 @@ export default function CommercialAgentWidget() {
               </button>
             </form>
 
-            {/* Aviso e botão de repetição em caso de falha de envio */}
             {failedMessageText && !isSending && (
               <div className="lumyo-chat-error-banner">
                 <span>
