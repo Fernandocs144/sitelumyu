@@ -4,19 +4,19 @@ import {
   getCommercialAgentPrompt,
   getCommercialAgentExtractionPrompt,
   buildSecondPhaseInstructions,
-} from './commercial-agent-prompt.js';
+} from '../../server/agent/commercial-agent-prompt.js';
 import {
   commercialAgentExtractionSchema,
   commercialAgentReplySchema,
-} from './commercial-agent-response-schema.js';
-import { normalizeBudget } from './budget-normalizer.js';
-import { evaluateFinancialAlignment } from './financial-alignment-evaluator.js';
-import { classifyLead } from './lead-classifier.js';
-import { evaluateMeetingIntent } from './meeting-intent-evaluator.js';
-import { calculateNextCommercialGoal } from './commercial-conversation-policy.js';
-import { getCommercialGoalMessage } from './commercial-goal-messages.js';
-import { composeCommercialReply } from './commercial-reply-composer.js';
-import { buildDeterministicFinancialReply } from './commercial-financial-reply.js';
+} from '../../server/agent/commercial-agent-response-schema.js';
+import { normalizeBudget } from '../../server/agent/budget-normalizer.js';
+import { evaluateFinancialAlignment } from '../../server/agent/financial-alignment-evaluator.js';
+import { classifyLead } from '../../server/agent/lead-classifier.js';
+import { evaluateMeetingIntent } from '../../server/agent/meeting-intent-evaluator.js';
+import { calculateNextCommercialGoal } from '../../server/agent/commercial-conversation-policy.js';
+import { getCommercialGoalMessage } from '../../server/agent/commercial-goal-messages.js';
+import { composeCommercialReply } from '../../server/agent/commercial-reply-composer.js';
+import { buildDeterministicFinancialReply } from '../../server/agent/commercial-financial-reply.js';
 
 function bufferToHex(buffer) {
   return Array.from(new Uint8Array(buffer))
