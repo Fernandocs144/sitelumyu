@@ -209,8 +209,14 @@ async function handleRequest(request) {
     });
 
     if (insertError) {
+      const safeString = (val) => (typeof val === 'string' ? val.slice(0, 500) : null);
       console.error('Failed to insert visitor session', {
-        code: insertError.code || 'unknown',
+        name: safeString(insertError.name),
+        code: safeString(insertError.code) || 'unknown',
+        message: safeString(insertError.message),
+        details: safeString(insertError.details),
+        hint: safeString(insertError.hint),
+        status: typeof insertError.status === 'number' ? insertError.status : null,
       });
       return Response.json(
         {
