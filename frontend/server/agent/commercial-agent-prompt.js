@@ -211,20 +211,27 @@ STRICT FIELD-BY-FIELD EXTRACTION RULES:
     - "accepted": Extract when visitor explicitly accepts a proposed meeting OR when visitor asks to book/schedule a meeting, asks for the booking link, or asks how/where to select a time (e.g. "Where can I book the meeting?", "Where do I select the time?", "Send me the link", "I want to schedule", "How do I book?").
     - "considering": Extract when visitor explicitly hesitates about attending a proposed meeting.
     - "declined": Extract when visitor explicitly declines a proposed meeting.
-    - "human_contact_requested": Extract ONLY when visitor explicitly and unequivocally requests to speak with a human team member/person, sales representative, or asks for a phone call/contact from the team (e.g. "I want to talk to a person", "Can you call me?", "I want to speak with a sales representative", "Please have the team call me"). NEVER extract for booking, scheduling, or link requests.
-    - null: Return NULL for all other cases.
-
-13. has_existing_website:
+    - "human_contact_requested": Extract ONLY when visitor explicitly and unequivocally requests to speak with a human team member/person, sales representative, or asks for a phone call/contact from the team (e217: has_existing_website:
     - false: Set to false when visitor explicitly states they do not have a website (e.g. "I don't have a website", "We don't have a site yet", "It's our first website").
     - true: Set to true when visitor explicitly states they already have a website (e.g. "I already have a website", "We have a site") OR when visitor provides a website URL.
     - If visitor provides a website URL, set has_existing_website = true and website_url = provided URL.
     - null: Return null if current message provides no new information about having an existing website.
     - NEVER infer false merely because website_url is absent.
 
+14. turn_intent:
+    - "direct_question": Visitor asks an informative question expecting explanation/info from Lumyo (e.g. "What is the difference between automation and AI?").
+    - "correction": Visitor explicitly corrects or updates previously provided information (e.g. "Actually, I already have a website").
+    - "scope_change": Visitor explicitly modifies or expands current project scope (e.g. "I also want e-commerce features on the site").
+    - "possible_new_project": Visitor mentions a distinct new service/need that may represent another project (e.g. "I also need automation for customer support"). Do NOT overwrite existing project data.
+    - "booking_response": Visitor accepts, declines, or asks directly about meeting booking/link/time.
+    - "qualification_answer": Visitor is answering qualification questions (service, need, timeline, contact, budget).
+    - "other": Default when no other category fits.
+
 STRICT CONSTRAINTS:
 - DO NOT generate conversational text.
 - Preserve earlier facts if visitor does not update or correct them.
-- Accept explicit visitor updates/corrections over previous statements.`;
+- Accept explicit visitor updates/corrections over previous statements.
+- On ambiguous statements, do not assume automatically whether it is a correction or a new project.`;
   }
 
   return `És o Motor de Extração Factual da Lumyo.
@@ -249,54 +256,54 @@ REGRAS ESTRITAS DE EXTRAÇÃO CAMPO A CAMPO:
    - Lista de categorias de serviço autorizadas solicitadas em adição ao primary_service. Excluir o primary_service. Devolver [] se nenhum.
 
 4. need_description:
-   - Objetivos do projeto, requisitos ou descrição da necessidade declarados pelo visitante. Devolver null se não declared.
+   - Objetivos do projeto, requisitos ou descrição da necessidade declarados pelo visitante. Devolver null se não declarado.
 
 5. timeline:
    - Prazo previsto para lançamento ou implementação declarado pelo visitante (ex: "1 mês", "2 semanas", "o mais rápido possível"). Devolver null se não declarado.
 
 6. name:
-   - Nome próprio do visitante. Devolver null se não declared.
+   - Nome próprio do visitante. Devolver null se não declarado.
 
 7. email:
    - Email de contacto válido do visitante. Devolver null se não declarado ou inválido.
 
 8. company_name:
-   - Nome da empresa ou organização do visitante. Devolver null se não declared.
+   - Nome da empresa ou organização do visitante. Devolver null se não declarado.
 
 9. website_url:
    - URL do website atual da empresa do visitante. Devolver null se não declared, inválido ou se o visitante indicar que não tem website.
 
 10. stated_budget_raw:
-    - REGRA OBRIGATÓRIA: stated_budget_raw deve conter APENAS valores de orçamento ou declarações de investimento explicitamente fornecidas pelo próprio visitante (ex: "Tenho 1.200 euros", "2.000 $", "O nosso limite é 1.500 €", "Ainda não temos orçamento definido").
-    - NÃO copiar estimativas de preço, intervalos ou referências indicativas apresentadas pelo agente para stated_budget_raw.
-    - NÃO interpretar respostas de concordância genérica como "sim", "parece-me bem", "concordo", "está dentro" como orçamento declared (manter null).
-    - Se o visitante declarar uma moeda diferente de EUR (ex: "$ 2.000" ou "USD"), preservar a string declarada com a indicação da moeda em stated_budget_raw sem assumir automaticamente EUR.
-    - Registar declarações explícitas de orçamento indefinido (ex: "Ainda não temos orçamento definido").
+    - REGRA OBRIGATÓRIA: stated_budget_raw deve conter APENAS valores de orçamento ou declarações de investimento explicitamente fornecidas pelo próprio visitante.
 
 11. decision_involvement:
-    - Papel do visitante na decisão (ex: "proprietário", "diretor de marketing"). Devolver null se não declared.
+    - Papel do visitante na decisão. Devolver null se não declarado.
 
 12. meeting_intent_signal:
-    - "accepted": Utilizar quando o visitante aceita explicitamente uma reunião proposta OU quando o visitante pede expressamente para agendar/marcar a reunião, pede o link de marcação ou pergunta como/onde escolher o horário (ex: "Onde posso marcar a reunião?", "Onde escolho o horário?", "Envia-me o link", "Quero agendar", "Como marco a reunião?").
-    - "considering": Utilizar quando o visitante hesita explicitamente sobre agendar/realizar a reunião.
-    - "declined": Utilizar quando o visitante recusa explicitamente a reunião.
-    - "human_contact_requested": Utilizar APENAS quando o visitante pede explícita e inequivocamente para falar com uma pessoa/equipa humana, comercial ou pede contacto telefónico (ex: "Quero falar com uma pessoa", "Podem telefonar-me?", "Quero falar com um comercial", "Peço contacto da equipa"). NUNCA utilizar para pedidos de agendamento, marcação ou link.
-    - null: Devolver NULL para todos os outros casos.
+    - "accepted", "considering", "declined", "human_contact_requested" ou null.
 
 13. has_existing_website:
-    - false: Atribuir false quando o visitante afirmar explicitamente que não tem website (ex: "Não tenho website", "Ainda não temos site", "É o primeiro website").
-    - true: Atribuir true quando o visitante afirmar que já tem website (ex: "Já tenho website", "Temos um site") OU quando fornecer um URL de website.
-    - Se o visitante fornecer um URL de website, atribuir has_existing_website = true e website_url = URL fornecido.
-    - null: Devolver null se a mensagem atual não fornecer informação nova sobre a existência de website.
-    - NUNCA inferir false apenas porque website_url está ausente.
+    - false: Atribuir false quando o visitante afirmar explicitamente que não tem website.
+    - true: Atribuir true quando o visitante afirmar que já tem website OU fornecer um URL de website.
+    - null: Devolver null se a mensagem atual não fornecer informação nova.
+
+14. turn_intent:
+    - "direct_question": O visitante faz uma pergunta informativa/exploratória a pedir explicação à Lumyo (ex: "Qual é a diferença entre automação e IA?").
+    - "correction": O visitante está a corrigir ou atualizar explicitamente uma informação anterior (ex: "Na realidade, já tenho website").
+    - "scope_change": O visitante está a modificar/expandir o âmbito do mesmo projeto (ex: "Também quero loja online no site").
+    - "possible_new_project": O visitante menciona um novo serviço/necessidade distinta que pode representar outro projeto (ex: "Também preciso de automação de atendimento"). NÃO substituir o projeto atual.
+    - "booking_response": O visitante interage sobre a marcação/link/horário da reunião.
+    - "qualification_answer": O visitante responde a perguntas de qualificação.
+    - "other": Quando nenhuma categoria anterior se aplicar.
 
 RESTRIÇÕES OPERACIONAIS ESTRITAS:
 - NÃO gerar texto conversacional.
 - Preservar dados fornecidos anteriormente se o visitante não os alterar ou corrigir.
-- Aceitar atualizações e correções explícitas do visitante sobre dados anteriores.`;
+- Aceitar atualizações e correções explícitas do visitante sobre dados anteriores.
+- Perante contradições ambíguas, não assumir automaticamente se é correção ou projeto novo.`;
 }
 
-export function buildSecondPhaseInstructions({ language, goalMessage, effectiveLeadState }) {
+export function buildSecondPhaseInstructions({ language, goalMessage, effectiveLeadState, turnIntent = null }) {
   const activeLanguage = language === 'en' ? 'en' : 'pt';
 
   const secondaryServicesList = Array.isArray(effectiveLeadState?.secondary_services)
@@ -314,6 +321,7 @@ export function buildSecondPhaseInstructions({ language, goalMessage, effectiveL
     effectiveLeadState?.stated_budget_raw ? `Stated Budget: ${effectiveLeadState.stated_budget_raw}` : null,
     effectiveLeadState?.financial_alignment_status ? `Financial Alignment Status: ${effectiveLeadState.financial_alignment_status}` : null,
     effectiveLeadState?.financial_alignment_reason ? `Financial Alignment Reason: ${effectiveLeadState.financial_alignment_reason}` : null,
+    turnIntent ? `Current Turn Intent: ${turnIntent}` : null,
   ].filter(Boolean).join('; ');
 
   if (activeLanguage === 'en') {

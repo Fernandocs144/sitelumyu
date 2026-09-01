@@ -89,10 +89,14 @@ export function isLeadQualificationComplete(leadData) {
  * @param {Object|null|undefined} leadData Objeto consolidado da lead.
  * @returns {{ goal: string, reason: string }} Objeto com o goal e a reason determinísticos.
  */
-export function calculateNextCommercialGoal(leadData) {
+export function calculateNextCommercialGoal(leadData, options = {}) {
   const data = (leadData && typeof leadData === 'object' && !Array.isArray(leadData))
     ? leadData
     : {};
+
+  const turnIntent = typeof options.turnIntent === 'string'
+    ? options.turnIntent
+    : (typeof data.turn_intent === 'string' ? data.turn_intent : null);
 
   // 1. ESTADOS COMERCIAIS JÁ ATIVOS (Precedência sobre qualificação pendente)
   const nextStep = typeof data.next_step === 'string' ? data.next_step : null;
@@ -108,6 +112,20 @@ export function calculateNextCommercialGoal(leadData) {
 
   if (nextStep === 'booking_pending') {
     if (isLeadQualificationComplete(data)) {
+      const turnIntentRequiresResponse = [
+        'direct_question',
+        'correction',
+        'scope_change',
+        'possible_new_project',
+      ].includes(turnIntent);
+
+      if (turnIntentRequiresResponse) {
+        return {
+          goal: 'answer_turn_intent',
+          reason: 'booking_pending_requires_response',
+        };
+      }
+
       return {
         goal: 'show_booking',
         reason: 'booking_pending',

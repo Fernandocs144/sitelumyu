@@ -182,6 +182,20 @@ export function getCommercialGoalMessage(goal, language) {
         action: 'booking',
       };
 
+    case 'answer_turn_intent':
+      return {
+        goal: 'answer_turn_intent',
+        language: lang,
+        modelInstruction: lang === 'en'
+          ? "First respond concisely and directly to the visitor's current message (question, correction, scope change, or potential new project). Do not invent unapproved facts or prices. Conclude naturally by indicating that the meeting booking remains available below. Do not ask unauthorized questions."
+          : 'Responda primeiro de forma concisa e direta à mensagem atual do visitante (dúvida, correção, alteração de âmbito ou possível novo projeto). Não invente factos nem preços não autorizados. Conclua naturalmente indicando que o agendamento da reunião continua disponível abaixo. Não faça perguntas não autorizadas.',
+        requiredClosing: null,
+        fallbackReply: lang === 'en'
+          ? 'You can choose an available time for the diagnostic meeting below.'
+          : 'Pode escolher um horário disponível para a reunião de diagnóstico abaixo.',
+        action: 'booking',
+      };
+
     case 'human_contact_requested':
       return {
         goal: 'human_contact_requested',

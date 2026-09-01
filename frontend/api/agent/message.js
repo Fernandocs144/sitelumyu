@@ -55,6 +55,15 @@ const ALLOWED_MEETING_INTENT_SIGNALS = [
   'declined',
   'human_contact_requested',
 ];
+const ALLOWED_TURN_INTENTS = [
+  'qualification_answer',
+  'direct_question',
+  'correction',
+  'scope_change',
+  'possible_new_project',
+  'booking_response',
+  'other',
+];
 
 export function buildCalComBookingUrl(baseUrlStr, name, email) {
   if (typeof baseUrlStr !== 'string' || !baseUrlStr.trim()) return null;
@@ -321,6 +330,10 @@ export function sanitizeQualification(qual, recentText = null) {
     hasExistingWebsite = true;
   }
 
+  const turnIntent = ALLOWED_TURN_INTENTS.includes(qual.turn_intent)
+    ? qual.turn_intent
+    : 'other';
+
   return {
     primary_service: primaryService,
     service_variant: serviceVariant,
@@ -336,6 +349,7 @@ export function sanitizeQualification(qual, recentText = null) {
     decision_involvement: decisionInvolvement,
     stated_budget_raw: statedBudgetRaw,
     meeting_intent_signal: meetingIntentSignal,
+    turn_intent: turnIntent,
   };
 }
 
@@ -355,6 +369,124 @@ async function deleteCandidateLead(supabase, candidateId) {
   return true;
 }
 
+export function filterQualificationForPersistence({
+  cleanQualification,
+  currentLead = null,
+  turnIntent = 'other',
+  isNewLead = false,
+}) {
+  if (!cleanQualification || typeof cleanQualification !== 'object') {
+    return null;
+  }
+
+  if (isNewLead || !currentLead) {
+    return { ...cleanQualification };
+  }
+
+  const allowed = {
+    primary_service: currentLead.primary_service || null,
+    service_variant: currentLead.service_variant || null,
+    secondary_services: Array.isArray(currentLead.secondary_services) ? currentLead.secondary_services : [],
+    has_existing_website: currentLead.has_existing_website ?? null,
+    need_description: currentLead.need_description || null,
+    operational_impact: currentLead.operational_impact || null,
+    timeline: currentLead.timeline || null,
+    stated_budget_raw: currentLead.stated_budget_raw || null,
+    name: currentLead.name || null,
+    email: currentLead.email || null,
+    company_name: currentLead.company_name || null,
+    website_url: currentLead.website_url || null,
+    decision_involvement: currentLead.decision_involvement || null,
+    meeting_intent_signal: currentLead.meeting_intent_signal || null,
+  };
+
+  if (!currentLead.name && cleanQualification.name) allowed.name = cleanQualification.name;
+  if (!currentLead.email && cleanQualification.email) allowed.email = cleanQualification.email;
+  if (cleanQualification.meeting_intent_signal) allowed.meeting_intent_signal = cleanQualification.meeting_intent_signal;
+
+  const resolveWebsitePersistence = (allowContradiction = false) => {
+    const currentHas = currentLead.has_existing_website ?? null;
+    const extractedHas = typeof cleanQualification.has_existing_website === 'boolean'
+      ? cleanQualification.has_existing_website
+      : (cleanQualification.website_url ? true : null);
+
+    if (currentHas === null) {
+      if (extractedHas !== null) {
+        allowed.has_existing_website = extractedHas;
+      }
+      if (cleanQualification.website_url) {
+        allowed.website_url = cleanQualification.website_url;
+      }
+    } else {
+      if (extractedHas !== null && extractedHas !== currentHas) {
+        if (allowContradiction) {
+          allowed.has_existing_website = extractedHas;
+          if (cleanQualification.website_url) {
+            allowed.website_url = cleanQualification.website_url;
+          }
+        } else {
+          allowed.has_existing_website = currentHas;
+        }
+      } else if (extractedHas === currentHas) {
+        if (cleanQualification.website_url) {
+          allowed.website_url = cleanQualification.website_url;
+        }
+      }
+    }
+  };
+
+  if (turnIntent === 'possible_new_project' || turnIntent === 'direct_question' || turnIntent === 'booking_response') {
+    return allowed;
+  }
+
+  if (turnIntent === 'correction') {
+    if (cleanQualification.primary_service) allowed.primary_service = cleanQualification.primary_service;
+    if (cleanQualification.service_variant !== undefined) allowed.service_variant = cleanQualification.service_variant;
+    if (cleanQualification.secondary_services?.length) allowed.secondary_services = cleanQualification.secondary_services;
+    if (cleanQualification.need_description) allowed.need_description = cleanQualification.need_description;
+    if (cleanQualification.operational_impact) allowed.operational_impact = cleanQualification.operational_impact;
+    if (cleanQualification.timeline) allowed.timeline = cleanQualification.timeline;
+    if (cleanQualification.stated_budget_raw) allowed.stated_budget_raw = cleanQualification.stated_budget_raw;
+    if (cleanQualification.company_name) allowed.company_name = cleanQualification.company_name;
+    if (cleanQualification.decision_involvement) allowed.decision_involvement = cleanQualification.decision_involvement;
+
+    resolveWebsitePersistence(true);
+    return allowed;
+  }
+
+  if (turnIntent === 'scope_change') {
+    if (cleanQualification.primary_service) allowed.primary_service = cleanQualification.primary_service;
+    if (cleanQualification.service_variant !== undefined && cleanQualification.service_variant !== null) allowed.service_variant = cleanQualification.service_variant;
+    if (cleanQualification.secondary_services?.length) allowed.secondary_services = cleanQualification.secondary_services;
+    if (cleanQualification.need_description) allowed.need_description = cleanQualification.need_description;
+    if (cleanQualification.operational_impact) allowed.operational_impact = cleanQualification.operational_impact;
+    if (cleanQualification.timeline) allowed.timeline = cleanQualification.timeline;
+    if (cleanQualification.stated_budget_raw) allowed.stated_budget_raw = cleanQualification.stated_budget_raw;
+    if (cleanQualification.company_name) allowed.company_name = cleanQualification.company_name;
+    if (cleanQualification.decision_involvement) allowed.decision_involvement = cleanQualification.decision_involvement;
+
+    resolveWebsitePersistence(false);
+    return allowed;
+  }
+
+  for (const key of Object.keys(cleanQualification)) {
+    if (key === 'turn_intent' || key === 'meeting_intent_signal' || key === 'has_existing_website' || key === 'website_url') continue;
+    const val = cleanQualification[key];
+    if (val === null || val === undefined) continue;
+
+    const currentVal = currentLead[key];
+    if (currentVal === null || currentVal === undefined) {
+      allowed[key] = val;
+    } else {
+      allowed[key] = currentVal;
+    }
+  }
+
+  resolveWebsitePersistence(false);
+
+  return allowed;
+}
+
 async function updateExistingLead(supabase, leadId, activeLanguage, cleanQualification) {
   const { data: currentLead, error: currentLeadError } = await supabase
     .from('leads')
@@ -369,50 +501,57 @@ async function updateExistingLead(supabase, leadId, activeLanguage, cleanQualifi
     return null;
   }
 
+  const qualToPersist = filterQualificationForPersistence({
+    cleanQualification,
+    currentLead,
+    turnIntent: cleanQualification?.turn_intent || 'other',
+    isNewLead: false,
+  });
+
   const updatePayload = {
     language: activeLanguage,
     last_interaction_at: new Date().toISOString(),
   };
 
-  if (cleanQualification.primary_service) {
-    updatePayload.primary_service = cleanQualification.primary_service;
+  if (qualToPersist.primary_service && qualToPersist.primary_service !== currentLead.primary_service) {
+    updatePayload.primary_service = qualToPersist.primary_service;
   }
 
   const targetPrimaryService = updatePayload.primary_service || currentLead?.primary_service;
 
   if (targetPrimaryService === 'websites') {
-    if (cleanQualification.service_variant) {
-      updatePayload.service_variant = cleanQualification.service_variant;
+    if (qualToPersist.service_variant !== undefined && qualToPersist.service_variant !== currentLead.service_variant) {
+      updatePayload.service_variant = qualToPersist.service_variant;
     }
-  } else if (updatePayload.primary_service && updatePayload.primary_service !== 'websites') {
-    updatePayload.service_variant = null;
   }
 
-  if (cleanQualification.secondary_services && cleanQualification.secondary_services.length > 0) {
+  if (qualToPersist.secondary_services && qualToPersist.secondary_services.length > 0) {
     const existingSecondary = Array.isArray(currentLead?.secondary_services) ? currentLead.secondary_services : [];
-    const mergedSet = new Set([...existingSecondary, ...cleanQualification.secondary_services]);
+    const mergedSet = new Set([...existingSecondary, ...qualToPersist.secondary_services]);
     if (targetPrimaryService) {
       mergedSet.delete(targetPrimaryService);
     }
     updatePayload.secondary_services = Array.from(mergedSet);
   }
 
-  if (cleanQualification.name) updatePayload.name = cleanQualification.name;
-  if (cleanQualification.email) updatePayload.email = cleanQualification.email;
-  if (cleanQualification.company_name) updatePayload.company_name = cleanQualification.company_name;
-  if (cleanQualification.website_url) {
-    updatePayload.website_url = cleanQualification.website_url;
-    updatePayload.has_existing_website = true;
-  } else if (typeof cleanQualification.has_existing_website === 'boolean') {
-    updatePayload.has_existing_website = cleanQualification.has_existing_website;
-  }
-  if (cleanQualification.need_description) updatePayload.need_description = cleanQualification.need_description;
-  if (cleanQualification.operational_impact) updatePayload.operational_impact = cleanQualification.operational_impact;
-  if (cleanQualification.timeline) updatePayload.timeline = cleanQualification.timeline;
-  if (cleanQualification.decision_involvement) updatePayload.decision_involvement = cleanQualification.decision_involvement;
+  if (qualToPersist.name && qualToPersist.name !== currentLead.name) updatePayload.name = qualToPersist.name;
+  if (qualToPersist.email && qualToPersist.email !== currentLead.email) updatePayload.email = qualToPersist.email;
+  if (qualToPersist.company_name && qualToPersist.company_name !== currentLead.company_name) updatePayload.company_name = qualToPersist.company_name;
 
-  if (typeof cleanQualification.stated_budget_raw === 'string' && cleanQualification.stated_budget_raw.trim().length > 0) {
-    const rawText = cleanQualification.stated_budget_raw.trim();
+  if (typeof qualToPersist.has_existing_website === 'boolean' && qualToPersist.has_existing_website !== currentLead.has_existing_website) {
+    updatePayload.has_existing_website = qualToPersist.has_existing_website;
+  }
+  if (qualToPersist.website_url && qualToPersist.website_url !== currentLead.website_url) {
+    updatePayload.website_url = qualToPersist.website_url;
+  }
+
+  if (qualToPersist.need_description && qualToPersist.need_description !== currentLead.need_description) updatePayload.need_description = qualToPersist.need_description;
+  if (qualToPersist.operational_impact && qualToPersist.operational_impact !== currentLead.operational_impact) updatePayload.operational_impact = qualToPersist.operational_impact;
+  if (qualToPersist.timeline && qualToPersist.timeline !== currentLead.timeline) updatePayload.timeline = qualToPersist.timeline;
+  if (qualToPersist.decision_involvement && qualToPersist.decision_involvement !== currentLead.decision_involvement) updatePayload.decision_involvement = qualToPersist.decision_involvement;
+
+  if (typeof qualToPersist.stated_budget_raw === 'string' && qualToPersist.stated_budget_raw.trim().length > 0 && qualToPersist.stated_budget_raw !== currentLead.stated_budget_raw) {
+    const rawText = qualToPersist.stated_budget_raw.trim();
     const effectivePrimaryService = targetPrimaryService || null;
     const norm = normalizeBudget(rawText, effectivePrimaryService);
 
@@ -1250,6 +1389,9 @@ async function handleRequest(request) {
       primary_service: cleanQualification?.primary_service || null,
       service_variant: cleanQualification?.service_variant || null,
       secondary_services: cleanQualification?.secondary_services || [],
+      has_existing_website: typeof cleanQualification?.has_existing_website === 'boolean'
+        ? cleanQualification.has_existing_website
+        : null,
       need_description: cleanQualification?.need_description || null,
       timeline: cleanQualification?.timeline || null,
       name: cleanQualification?.name || null,
@@ -1266,8 +1408,17 @@ async function handleRequest(request) {
     };
 
     // FASE 3 — CÁLCULO DO GOAL COMERCIAL E DA MENSAGEM DE META
-    const commercialGoal = calculateNextCommercialGoal(effectiveLeadState);
+    const commercialGoal = calculateNextCommercialGoal(effectiveLeadState, {
+      turnIntent: cleanQualification?.turn_intent || null,
+    });
     const goalMessage = getCommercialGoalMessage(commercialGoal.goal, activeLanguage);
+
+    const turnIntentRequiresResponse = [
+      'direct_question',
+      'correction',
+      'scope_change',
+      'possible_new_project',
+    ].includes(cleanQualification?.turn_intent);
 
     const deterministicFinancialReply = budgetProvidedThisTurn
       ? buildDeterministicFinancialReply(effectiveLeadState, activeLanguage)
@@ -1275,8 +1426,11 @@ async function handleRequest(request) {
 
     let finalReplyText = null;
 
-    if (commercialGoal.goal === 'show_booking' || commercialGoal.goal === 'human_contact_requested') {
-      // NÃO CHAMAR O SEGUNDO MODELO PARA SHOW_BOOKING OU HUMAN_CONTACT_REQUESTED
+    if (
+      (commercialGoal.goal === 'show_booking' && !turnIntentRequiresResponse) ||
+      commercialGoal.goal === 'human_contact_requested'
+    ) {
+      // NÃO CHAMAR O SEGUNDO MODELO PARA SHOW_BOOKING OU HUMAN_CONTACT_REQUESTED SEM PERGUNTA/CORREÇÃO
       const composerRes = composeCommercialReply({
         generatedReply: null,
         deterministicReply: null,
@@ -1306,6 +1460,7 @@ async function handleRequest(request) {
             language: activeLanguage,
             goalMessage,
             effectiveLeadState,
+            turnIntent: cleanQualification?.turn_intent || null,
           });
 
           const secondPhaseResponse = await openai.responses.create({
@@ -1363,10 +1518,12 @@ async function handleRequest(request) {
 
     // AVALIAÇÃO DETERMINÍSTICA DE BOOKING ACTION
     let bookingAction = null;
-    if (
-      commercialGoal.goal === 'show_booking' &&
-      goalMessage.action === 'booking'
-    ) {
+    const isBookingState =
+      commercialGoal.goal === 'show_booking' ||
+      commercialGoal.goal === 'answer_turn_intent' ||
+      effectiveLeadState?.next_step === 'booking_pending';
+
+    if (isBookingState && (goalMessage.action === 'booking' || effectiveLeadState?.next_step === 'booking_pending')) {
       const associatedLeadId = sessionData.lead_id || effectiveLeadState?.id;
       if (associatedLeadId) {
         const calComBaseUrl = process.env.CALCOM_BOOKING_URL;

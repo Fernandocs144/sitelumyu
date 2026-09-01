@@ -65,6 +65,20 @@ function createQualificationSchema() {
         enum: ['accepted', 'considering', 'declined', 'human_contact_requested', null],
         description: 'Visitor intent signal regarding a meeting proposal or commercial advance.',
       },
+      turn_intent: {
+        type: ['string', 'null'],
+        enum: [
+          'qualification_answer',
+          'direct_question',
+          'correction',
+          'scope_change',
+          'possible_new_project',
+          'booking_response',
+          'other',
+          null,
+        ],
+        description: 'Predominant intent of the visitor message in the current turn.',
+      },
     },
     required: [
       'primary_service',
@@ -81,6 +95,7 @@ function createQualificationSchema() {
       'decision_involvement',
       'stated_budget_raw',
       'meeting_intent_signal',
+      'turn_intent',
     ],
     additionalProperties: false,
   };
