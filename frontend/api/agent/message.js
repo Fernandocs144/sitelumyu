@@ -1210,8 +1210,15 @@ async function handleRequest(request) {
           }
         }
       } catch (error) {
+        const safeString = (val) => (typeof val === 'string' ? val.slice(0, 500) : null);
         console.error('OpenAI extraction failure', {
           code: 'extraction_request_failed',
+          name: safeString(error?.name),
+          status: typeof error?.status === 'number' ? error.status : safeString(error?.status),
+          errorCode: safeString(error?.code),
+          type: safeString(error?.type),
+          param: safeString(error?.param),
+          message: safeString(error?.message),
         });
       }
     }
@@ -1332,8 +1339,15 @@ async function handleRequest(request) {
             }
           }
         } catch (err) {
+          const safeString = (val) => (typeof val === 'string' ? val.slice(0, 500) : null);
           console.error('OpenAI second phase reply failure', {
             code: 'commercial_reply_generation_failed',
+            name: safeString(err?.name),
+            status: typeof err?.status === 'number' ? err.status : safeString(err?.status),
+            errorCode: safeString(err?.code),
+            type: safeString(err?.type),
+            param: safeString(err?.param),
+            message: safeString(err?.message),
           });
         }
       }
