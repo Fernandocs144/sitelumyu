@@ -246,6 +246,14 @@ export function extractFallbackContact(recentText) {
   };
 }
 
+export function isBudgetProvidedInCurrentTurn(cleanQualification) {
+  return (
+    cleanQualification?.turn_intent === 'qualification_answer' &&
+    typeof cleanQualification?.stated_budget_raw === 'string' &&
+    cleanQualification.stated_budget_raw.trim().length > 0
+  );
+}
+
 export function sanitizeQualification(qual, recentText = null) {
   if (!qual || typeof qual !== 'object') return null;
 
@@ -1379,9 +1387,7 @@ async function handleRequest(request) {
       }
     }
 
-    const budgetProvidedThisTurn =
-      typeof cleanQualification?.stated_budget_raw === 'string' &&
-      cleanQualification.stated_budget_raw.trim().length > 0;
+    const budgetProvidedThisTurn = isBudgetProvidedInCurrentTurn(cleanQualification);
 
     // CONSTRUIR ESTADO EFETIVO DA LEAD
     const effectiveLeadState = consolidatedLead || {
@@ -1420,9 +1426,10 @@ async function handleRequest(request) {
       'possible_new_project',
     ].includes(cleanQualification?.turn_intent);
 
-    const deterministicFinancialReply = budgetProvidedThisTurn
-      ? buildDeterministicFinancialReply(effectiveLeadState, activeLanguage)
-      : null;
+    const deterministicFinancialReply =
+      budgetProvidedThisTurn && !turnIntentRequiresResponse
+        ? buildDeterministicFinancialReply(effectiveLeadState, activeLanguage)
+        : null;
 
     let finalReplyText = null;
 

@@ -1,7 +1,8 @@
-import { filterQualificationForPersistence } from '../../api/agent/message.js';
+import { filterQualificationForPersistence, isBudgetProvidedInCurrentTurn } from '../../api/agent/message.js';
 import { calculateNextCommercialGoal, isLeadQualificationComplete } from './commercial-conversation-policy.js';
 import { composeCommercialReply } from './commercial-reply-composer.js';
 import { getCommercialGoalMessage } from './commercial-goal-messages.js';
+import { buildDeterministicFinancialReply } from './commercial-financial-reply.js';
 
 function assert(cond, msg) {
   if (!cond) throw new Error(`FALHA NO TESTE: ${msg}`);
@@ -193,5 +194,74 @@ const goalMsgH_EN = getCommercialGoalMessage('answer_turn_intent', 'en');
 assert(goalMsgH_PT.fallbackReply.includes('reunião'), 'CASO H: Mensagem PT válida');
 assert(goalMsgH_EN.fallbackReply.includes('meeting'), 'CASO H: Mensagem EN válida');
 console.log('H. CASO H PASSOU: PT e EN suportados para pergunta direta e correção.');
+
+// TESTES DE REGRESSÃO DE ACTIVAÇÃO DE RESPOSTA FINANCEIRA (A-F):
+// Teste Financeiro A: qualification_answer + stated_budget_raw = "1000" -> reconhecido como orçamento no turno atual
+const isBudgetA = isBudgetProvidedInCurrentTurn({
+  turn_intent: 'qualification_answer',
+  stated_budget_raw: '1000',
+});
+assert(isBudgetA === true, 'TESTE FINANCEIRO A: qualification_answer + stated_budget_raw é reconhecido');
+console.log('TESTE FINANCEIRO A PASSOU: qualification_answer ativa orçamento do turno.');
+
+// Teste Financeiro B: direct_question + stated_budget_raw histórico = "1000" -> NÃO reconhecido
+const isBudgetB = isBudgetProvidedInCurrentTurn({
+  turn_intent: 'direct_question',
+  stated_budget_raw: '1000',
+});
+assert(isBudgetB === false, 'TESTE FINANCEIRO B: direct_question + orçamento histórico NÃO ativa resposta financeira');
+console.log('TESTE FINANCEIRO B PASSOU: direct_question com orçamento histórico NÃO ativa resposta financeira.');
+
+// Teste Financeiro C: correction + stated_budget_raw histórico = "1000" -> NÃO ativa resposta financeira
+const isBudgetC = isBudgetProvidedInCurrentTurn({
+  turn_intent: 'correction',
+  stated_budget_raw: '1000',
+});
+assert(isBudgetC === false, 'TESTE FINANCEIRO C: correction com orçamento histórico NÃO ativa resposta financeira');
+console.log('TESTE FINANCEIRO C PASSOU: correction com orçamento histórico NÃO ativa resposta financeira.');
+
+// Teste Financeiro D: booking_response + stated_budget_raw histórico = "1000" -> NÃO ativa resposta financeira
+const isBudgetD = isBudgetProvidedInCurrentTurn({
+  turn_intent: 'booking_response',
+  stated_budget_raw: '1000',
+});
+assert(isBudgetD === false, 'TESTE FINANCEIRO D: booking_response com orçamento histórico NÃO ativa resposta financeira');
+console.log('TESTE FINANCEIRO D PASSOU: booking_response com orçamento histórico NÃO ativa resposta financeira.');
+
+// Teste Financeiro E: Lead em booking_pending + direct_question + orçamento histórico
+const leadPendingE = {
+  ...currentLeadA,
+  stated_budget_raw: '1000',
+  next_step: 'booking_pending',
+  intent_level: 'high',
+};
+const qualE = {
+  turn_intent: 'direct_question',
+  stated_budget_raw: '1000',
+};
+const goalFinE = calculateNextCommercialGoal(leadPendingE, { turnIntent: qualE.turn_intent });
+assert(goalFinE.goal === 'answer_turn_intent', 'TESTE FINANCEIRO E: Goal deve continuar answer_turn_intent');
+const goalMsgFinE = getCommercialGoalMessage(goalFinE.goal, 'pt');
+assert(goalMsgFinE.action === 'booking', 'TESTE FINANCEIRO E: bookingAction continua disponível');
+const turnIntentRequiresResponseE = ['direct_question', 'correction', 'scope_change', 'possible_new_project'].includes(qualE.turn_intent);
+const budgetProvidedThisTurnE = isBudgetProvidedInCurrentTurn(qualE);
+const deterministicFinancialReplyE = budgetProvidedThisTurnE && !turnIntentRequiresResponseE
+  ? buildDeterministicFinancialReply(leadPendingE, 'pt')
+  : null;
+assert(deterministicFinancialReplyE === null, 'TESTE FINANCEIRO E: Resposta financeira determinística NÃO é selecionada');
+console.log('TESTE FINANCEIRO E PASSOU: Lead em booking_pending + direct_question mantém answer_turn_intent, bookingAction e ignora resposta financeira.');
+
+// Teste Financeiro F: Fluxo normal em que o visitante responde "1000" à pergunta de orçamento (qualification_answer)
+const qualF = {
+  turn_intent: 'qualification_answer',
+  stated_budget_raw: '1000',
+};
+const budgetProvidedThisTurnF = isBudgetProvidedInCurrentTurn(qualF);
+assert(budgetProvidedThisTurnF === true, 'TESTE FINANCEIRO F: Visita responde "1000" é reconhecido no turno');
+const deterministicFinancialReplyF = budgetProvidedThisTurnF
+  ? buildDeterministicFinancialReply(leadPendingE, 'pt')
+  : null;
+assert(typeof deterministicFinancialReplyF === 'string' && deterministicFinancialReplyF.length > 0, 'TESTE FINANCEIRO F: Avaliação financeira gerada com sucesso');
+console.log('TESTE FINANCEIRO F PASSOU: Resposta de orçamento normal gera avaliação financeira com sucesso.');
 
 console.log('\n=== TODOS OS TESTES PERSISTENTES PASSARAM COM SUCESSO ===');
