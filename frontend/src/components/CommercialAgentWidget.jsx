@@ -187,6 +187,12 @@ export default function CommercialAgentWidget() {
     return () => window.removeEventListener('keydown', handleTabTrap);
   }, [isOpen, isMobile]);
 
+  // Helper para repor o estado conversacional visual do widget ao iniciar sessao nova
+  const resetConversationalState = useCallback(() => {
+    setMessages([]);
+    setFailedMessageText(null);
+  }, []);
+
   // Inicializar sessao via POST /api/agent/session
   const initSession = useCallback(async () => {
     if (!isMountedRef.current) return;
@@ -202,6 +208,9 @@ export default function CommercialAgentWidget() {
 
       if (isMountedRef.current) {
         if (res.ok && data?.success) {
+          if (data?.data?.resumed === false) {
+            resetConversationalState();
+          }
           setSessionStatus('ready');
         } else {
           setSessionStatus('error');
@@ -212,7 +221,7 @@ export default function CommercialAgentWidget() {
         setSessionStatus('error');
       }
     }
-  }, []);
+  }, [resetConversationalState]);
 
   // Controlar abertura/fecho do chat com timer limpo para retorno de foco
   const handleToggle = useCallback(() => {
@@ -316,6 +325,15 @@ export default function CommercialAgentWidget() {
             const sessionRefreshData = await sessionRefreshRes.json().catch(() => null);
 
             if (sessionRefreshRes.ok && sessionRefreshData?.success) {
+              const isNewSession = sessionRefreshData?.data?.resumed === false;
+              if (isNewSession) {
+                const userMsgId = `user_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+                setMessages([
+                  { id: userMsgId, sender: 'user', text: textToSend },
+                ]);
+                setFailedMessageText(null);
+              }
+
               const retryObj = await makeRequest();
               res = retryObj.res;
               data = retryObj.data;
