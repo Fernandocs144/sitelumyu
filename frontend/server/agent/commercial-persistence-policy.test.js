@@ -2,7 +2,7 @@ import { filterQualificationForPersistence, isBudgetProvidedInCurrentTurn } from
 import { calculateNextCommercialGoal, isLeadQualificationComplete } from './commercial-conversation-policy.js';
 import { composeCommercialReply } from './commercial-reply-composer.js';
 import { getCommercialGoalMessage } from './commercial-goal-messages.js';
-import { buildSecondPhaseInstructions } from './commercial-agent-prompt.js';
+import { buildSecondPhaseInstructions, getCommercialAgentExtractionPrompt } from './commercial-agent-prompt.js';
 import { buildDeterministicFinancialReply } from './commercial-financial-reply.js';
 
 function assert(cond, msg) {
@@ -266,6 +266,16 @@ assert(
 assert(
   getCommercialGoalMessage('ask_target_audience', 'en').requiredClosing.includes('target audience'),
   'CASO I.6: Pergunta de público-alvo EN disponível'
+);
+const extractionPromptPT = getCommercialAgentExtractionPrompt('pt');
+const extractionPromptEN = getCommercialAgentExtractionPrompt('en');
+assert(
+  extractionPromptPT.includes('5. operational_impact:') && extractionPromptPT.includes('aumentar a credibilidade'),
+  'CASO I.7: Extração PT instrui o preenchimento de operational_impact'
+);
+assert(
+  extractionPromptEN.includes('5. operational_impact:') && extractionPromptEN.includes('increase credibility'),
+  'CASO I.8: Extração EN instrui o preenchimento de operational_impact'
 );
 console.log('I. CASO I PASSOU: Qualificação empresarial antecede prazo, contacto, orçamento e reunião.');
 

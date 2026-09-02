@@ -182,51 +182,56 @@ STRICT FIELD-BY-FIELD EXTRACTION RULES:
 4. need_description:
    - Specific project goals, requirements, or problem description stated by visitor. Return null if unstated.
 
-5. timeline:
+5. operational_impact:
+   - Current business problem, operational pain, or measurable business result the visitor wants the project to solve or achieve. Return null if unstated.
+   - Examples: increase credibility, generate more quote requests, reduce manual work, shorten response time, reduce errors, or improve conversion.
+   - Do not duplicate a generic solution description already stored in need_description.
+
+6. timeline:
    - Expected timeframe or launch deadline stated by visitor (e.g. "1 month", "ASAP", "in 2 weeks"). Return null if unstated.
 
-6. name:
+7. name:
    - Visitor's personal name. Return null if unstated.
 
-7. email:
+8. email:
    - Visitor's valid contact email address. Return null if unstated or invalid.
 
-8. company_name:
+9. company_name:
    - Visitor's business or organization name. Return null if unstated.
 
-9. company_activity:
+10. company_activity:
    - Main business activity or sector of the visitor's company. Return null if unstated. Do not infer it from the company name or website URL.
 
-10. target_audience:
+11. target_audience:
    - Main customer profile, market, or target audience explicitly described by the visitor. Return null if unstated.
 
-11. website_url:
+12. website_url:
    - Visitor's existing company website URL. Return null if unstated, invalid, or if visitor states they do not have a website.
 
-12. stated_budget_raw:
+13. stated_budget_raw:
     - MANDATORY RULE: stated_budget_raw must contain ONLY budget figures or investment statements explicitly declared by the visitor (e.g., "I have 1200 euros", "$2000", "Our budget is 1500€", "We don't have a defined budget yet").
     - DO NOT copy price estimates, ranges, or indicative amounts presented by the agent into stated_budget_raw.
     - DO NOT treat generic agreement responses like "yes", "sounds good", "I agree", "that works" as a declared budget (return null).
     - If visitor states a currency other than EUR (e.g. "$2,000" or "USD"), preserve the raw string with currency symbol in stated_budget_raw (do not convert currency symbol).
     - Store explicit statements of undefined budget (e.g., "Ainda não temos orçamento definido").
 
-13. decision_involvement:
+14. decision_involvement:
     - Visitor's role in decision making (e.g., "owner", "marketing manager"). Return null if unstated.
 
-14. meeting_intent_signal:
+15. meeting_intent_signal:
     - "accepted": Extract when visitor explicitly accepts a proposed meeting OR when visitor asks to book/schedule a meeting, asks for the booking link, or asks how/where to select a time (e.g. "Where can I book the meeting?", "Where do I select the time?", "Send me the link", "I want to schedule", "How do I book?").
     - "considering": Extract when visitor explicitly hesitates about attending a proposed meeting.
     - "declined": Extract when visitor explicitly declines a proposed meeting.
     - "human_contact_requested": Extract ONLY when visitor explicitly and unequivocally requests to speak with a human team member/person, sales representative, or asks for a phone call/contact from the team.
 
-15. has_existing_website:
+16. has_existing_website:
     - false: Set to false when visitor explicitly states they do not have a website (e.g. "I don't have a website", "We don't have a site yet", "It's our first website").
     - true: Set to true when visitor explicitly states they already have a website (e.g. "I already have a website", "We have a site") OR when visitor provides a website URL.
     - If visitor provides a website URL, set has_existing_website = true and website_url = provided URL.
     - null: Return null if current message provides no new information about having an existing website.
     - NEVER infer false merely because website_url is absent.
 
-16. turn_intent:
+17. turn_intent:
     - "direct_question": Visitor asks an informative question expecting explanation/info from Lumyo (e.g. "What is the difference between automation and AI?").
     - "correction": Visitor explicitly corrects or updates previously provided information (e.g. "Actually, I already have a website").
     - "scope_change": Visitor explicitly modifies or expands current project scope (e.g. "I also want e-commerce features on the site").
@@ -266,42 +271,47 @@ REGRAS ESTRITAS DE EXTRAÇÃO CAMPO A CAMPO:
 4. need_description:
    - Objetivos do projeto, requisitos ou descrição da necessidade declarados pelo visitante. Devolver null se não declarado.
 
-5. timeline:
+5. operational_impact:
+   - Problema empresarial atual, dificuldade operacional ou resultado de negócio mensurável que o visitante pretende resolver ou alcançar com o projeto. Devolver null se não declarado.
+   - Exemplos: aumentar a credibilidade, gerar mais pedidos de orçamento, reduzir trabalho manual, diminuir o tempo de resposta, reduzir erros ou melhorar a conversão.
+   - Não duplicar uma descrição genérica da solução já guardada em need_description.
+
+6. timeline:
    - Prazo previsto para lançamento ou implementação declarado pelo visitante (ex: "1 mês", "2 semanas", "o mais rápido possível"). Devolver null se não declarado.
 
-6. name:
+7. name:
    - Nome próprio do visitante. Devolver null se não declarado.
 
-7. email:
+8. email:
    - Email de contacto válido do visitante. Devolver null se não declarado ou inválido.
 
-8. company_name:
+9. company_name:
    - Nome da empresa ou organização do visitante. Devolver null se não declarado.
 
-9. company_activity:
+10. company_activity:
    - Principal atividade ou setor da empresa do visitante. Devolver null se não declarado. Não inferir através do nome da empresa ou do URL do website.
 
-10. target_audience:
+11. target_audience:
    - Principais clientes, mercado ou público-alvo explicitamente descritos pelo visitante. Devolver null se não declarado.
 
-11. website_url:
+12. website_url:
    - URL do website atual da empresa do visitante. Devolver null se não declared, inválido ou se o visitante indicar que não tem website.
 
-12. stated_budget_raw:
+13. stated_budget_raw:
     - REGRA OBRIGATÓRIA: stated_budget_raw deve conter APENAS valores de orçamento ou declarações de investimento explicitamente fornecidas pelo próprio visitante.
 
-13. decision_involvement:
+14. decision_involvement:
     - Papel do visitante na decisão. Devolver null se não declarado.
 
-14. meeting_intent_signal:
+15. meeting_intent_signal:
     - "accepted", "considering", "declined", "human_contact_requested" ou null.
 
-15. has_existing_website:
+16. has_existing_website:
     - false: Atribuir false quando o visitante afirmar explicitamente que não tem website.
     - true: Atribuir true quando o visitante afirmar que já tem website OU fornecer um URL de website.
     - null: Devolver null se a mensagem atual não fornecer informação nova.
 
-16. turn_intent:
+17. turn_intent:
     - "direct_question": O visitante faz uma pergunta informativa/exploratória a pedir explicação à Lumyo (ex: "Qual é a diferença entre automação e IA?").
     - "correction": O visitante está a corrigir ou atualizar explicitamente uma informação anterior (ex: "Na realidade, já tenho website").
     - "scope_change": O visitante está a modificar/expandir o âmbito do mesmo projeto (ex: "Também quero loja online no site").
