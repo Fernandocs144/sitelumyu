@@ -341,6 +341,7 @@ const mockPayloads = [
   { code: 'second_phase_output_missing', status: 'completed', outputType: 'undefined', outputLength: 0 },
   { code: 'second_phase_reply_missing', parsedType: 'object', hasReply: false, replyLength: 0 },
   { code: 'reply_parse_failed', status: 'completed', outputType: 'string', outputLength: 12 },
+  { code: 'second_phase_composer_rejected', goal: 'answer_turn_intent', validationReason: 'model_contained_multiple_questions', generatedReplyLength: 45 },
 ];
 
 const forbiddenFields = ['prompt', 'instructions', 'api_key', 'user_text', 'visitor', 'email', 'name', 'auth_token', 'cookie', 'stack', 'headers'];
@@ -350,6 +351,31 @@ mockPayloads.forEach((payload) => {
     assert(!payloadKeys.includes(field), `DIAGNÓSTICO 2: Payload ${payload.code} expõe campo proibido ${field}`);
   });
 });
-console.log('TESTES DE DIAGNÓSTICO SILENCIOSO E FALLBACK SEGURO PASSARAM COM SUCESSO.');
+// 3. Validação de perguntas no compositor comercial (COMPOSER FIX):
+// A. answer_turn_intent com 1 pergunta contextual é aceite
+const validQuestionReply = composeCommercialReply({
+  generatedReply: 'Sim, fazemos gestão de redes sociais. Procuras uma gestão completa ou apenas apoio na criação?',
+  deterministicReply: null,
+  goalMessage: goalMsgAnswerPT,
+});
+assert(validQuestionReply.source === 'model' && validQuestionReply.validationReason === 'valid_model_reply', 'COMPOSER 1: 1 pergunta contextual em answer_turn_intent é aceite');
+
+// B. answer_turn_intent com mais de 1 pergunta é rejeitado
+const multipleQuestionReply = composeCommercialReply({
+  generatedReply: 'Qual é a tua empresa? E qual é o teu orçamento?',
+  deterministicReply: null,
+  goalMessage: goalMsgAnswerPT,
+});
+assert(multipleQuestionReply.source === 'fallback' && multipleQuestionReply.validationReason === 'model_contained_multiple_questions', 'COMPOSER 2: Múltiplas perguntas em answer_turn_intent rejeitadas');
+
+// C. show_booking com pergunta continua a ser rejeitado
+const unauthorizedShowBookingReply = composeCommercialReply({
+  generatedReply: 'Queres agendar uma reunião?',
+  deterministicReply: null,
+  goalMessage: goalMsgShowBooking,
+});
+assert(unauthorizedShowBookingReply.source === 'fallback' && unauthorizedShowBookingReply.validationReason === 'model_contained_unauthorized_question', 'COMPOSER 3: Pergunta em show_booking continua rejeitada');
+
+console.log('TESTES DO COMPOSITOR COMERCIAL PASSARAM COM SUCESSO.');
 
 console.log('\n=== TODOS OS TESTES PERSISTENTES PASSARAM COM SUCESSO ===');

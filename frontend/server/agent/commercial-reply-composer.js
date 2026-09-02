@@ -251,11 +251,22 @@ export function composeCommercialReply({ generatedReply, deterministicReply, goa
   }
 
   // 5. GOALS SEM REQUIRED CLOSING
-  if (hasQuestion) {
+  const allowsQuestion = goalMessage.goal === 'answer_turn_intent';
+  const questionMatches = rawTrimmed.match(/\?|？/g) || [];
+
+  if (!allowsQuestion && hasQuestion) {
     return {
       reply: fallbackText,
       source: 'fallback',
       validationReason: 'model_contained_unauthorized_question',
+    };
+  }
+
+  if (allowsQuestion && questionMatches.length > 1) {
+    return {
+      reply: fallbackText,
+      source: 'fallback',
+      validationReason: 'model_contained_multiple_questions',
     };
   }
 

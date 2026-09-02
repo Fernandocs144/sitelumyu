@@ -1597,6 +1597,15 @@ async function handleRequest(request) {
         goalMessage,
       });
 
+      if (composerRes?.source === 'fallback' && typeof generatedSecondPhaseReply === 'string' && generatedSecondPhaseReply.trim().length > 0) {
+        console.warn('OpenAI second phase reply rejected by composer', {
+          code: 'second_phase_composer_rejected',
+          goal: safeDiagnosticString(goalMessage?.goal),
+          validationReason: safeDiagnosticString(composerRes?.validationReason),
+          generatedReplyLength: generatedSecondPhaseReply.length,
+        });
+      }
+
       finalReplyText = composerRes.reply;
     }
 
