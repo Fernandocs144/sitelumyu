@@ -88,6 +88,78 @@ export function getCommercialGoalMessage(goal, language) {
         action: 'none',
       };
 
+    case 'ask_company_context':
+      return {
+        goal: 'ask_company_context',
+        language: lang,
+        modelInstruction: lang === 'en'
+          ? 'Acknowledge only facts already provided. Do not invent company details, do not mention prices or meetings, and do not ask additional questions. The system will append the company context question.'
+          : 'Reconheça apenas os factos já fornecidos. Não invente dados da empresa, não mencione preços nem reuniões e não faça perguntas adicionais. O sistema adicionará a pergunta sobre o contexto da empresa.',
+        requiredClosing: lang === 'en'
+          ? 'What is the name of your company and what is its main business activity?'
+          : 'Qual é o nome da sua empresa e qual é a sua principal atividade?',
+        fallbackReply: lang === 'en'
+          ? 'What is the name of your company and what is its main business activity?'
+          : 'Qual é o nome da sua empresa e qual é a sua principal atividade?',
+        action: 'none',
+      };
+
+    case 'ask_target_audience':
+      return {
+        goal: 'ask_target_audience',
+        language: lang,
+        modelInstruction: lang === 'en'
+          ? 'Acknowledge the company context concisely. Do not invent customer segments, do not mention prices or meetings, and do not ask additional questions. The system will append the target audience question.'
+          : 'Reconheça sucintamente o contexto da empresa. Não invente segmentos de clientes, não mencione preços nem reuniões e não faça perguntas adicionais. O sistema adicionará a pergunta sobre o público-alvo.',
+        requiredClosing: lang === 'en'
+          ? 'Who are the main customers or target audience of your company?'
+          : 'Quem são os principais clientes ou o público-alvo da sua empresa?',
+        fallbackReply: lang === 'en'
+          ? 'Who are the main customers or target audience of your company?'
+          : 'Quem são os principais clientes ou o público-alvo da sua empresa?',
+        action: 'none',
+      };
+
+    case 'ask_company_name':
+      return {
+        goal: 'ask_company_name',
+        language: lang,
+        modelInstruction: lang === 'en'
+          ? 'Acknowledge the business activity already provided. Do not invent company details, mention prices or meetings, or ask additional questions. The system will append the company name question.'
+          : 'Reconheça a atividade já indicada. Não invente dados da empresa, não mencione preços nem reuniões e não faça perguntas adicionais. O sistema adicionará a pergunta sobre o nome da empresa.',
+        requiredClosing: lang === 'en' ? 'What is the name of your company?' : 'Qual é o nome da sua empresa?',
+        fallbackReply: lang === 'en' ? 'What is the name of your company?' : 'Qual é o nome da sua empresa?',
+        action: 'none',
+      };
+
+    case 'ask_company_activity':
+      return {
+        goal: 'ask_company_activity',
+        language: lang,
+        modelInstruction: lang === 'en'
+          ? 'Acknowledge the company name already provided. Do not invent company details, mention prices or meetings, or ask additional questions. The system will append the business activity question.'
+          : 'Reconheça o nome da empresa já indicado. Não invente dados empresariais, não mencione preços nem reuniões e não faça perguntas adicionais. O sistema adicionará a pergunta sobre a atividade.',
+        requiredClosing: lang === 'en' ? 'What is the main business activity of your company?' : 'Qual é a principal atividade da sua empresa?',
+        fallbackReply: lang === 'en' ? 'What is the main business activity of your company?' : 'Qual é a principal atividade da sua empresa?',
+        action: 'none',
+      };
+
+    case 'ask_operational_impact':
+      return {
+        goal: 'ask_operational_impact',
+        language: lang,
+        modelInstruction: lang === 'en'
+          ? 'Acknowledge the target audience concisely. Do not invent business impact, do not mention prices or meetings, and do not ask additional questions. The system will append the business result question.'
+          : 'Reconheça sucintamente o público-alvo indicado. Não invente impacto empresarial, não mencione preços nem reuniões e não faça perguntas adicionais. O sistema adicionará a pergunta sobre o resultado de negócio.',
+        requiredClosing: lang === 'en'
+          ? 'What current problem should this project solve, or what business result do you want it to achieve?'
+          : 'Que problema atual deve este projeto resolver ou que resultado pretende alcançar para a empresa?',
+        fallbackReply: lang === 'en'
+          ? 'What current problem should this project solve, or what business result do you want it to achieve?'
+          : 'Que problema atual deve este projeto resolver ou que resultado pretende alcançar para a empresa?',
+        action: 'none',
+      };
+
     case 'ask_contact':
       return {
         goal: 'ask_contact',

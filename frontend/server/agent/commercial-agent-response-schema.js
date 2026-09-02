@@ -36,6 +36,14 @@ function createQualificationSchema() {
         type: ['string', 'null'],
         description: 'Visitor company or organization name if explicitly stated by visitor.',
       },
+      company_activity: {
+        type: ['string', 'null'],
+        description: 'Main business activity or sector of the visitor company if explicitly stated by visitor.',
+      },
+      target_audience: {
+        type: ['string', 'null'],
+        description: 'Main customer profile, market, or target audience explicitly stated by visitor.',
+      },
       website_url: {
         type: ['string', 'null'],
         description: 'Visitor current website URL if explicitly stated by visitor.',
@@ -88,6 +96,8 @@ function createQualificationSchema() {
       'name',
       'email',
       'company_name',
+      'company_activity',
+      'target_audience',
       'website_url',
       'need_description',
       'operational_impact',

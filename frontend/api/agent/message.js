@@ -307,6 +307,8 @@ export function sanitizeQualification(qual, recentText = null) {
   }
 
   const companyName = sanitizeString(qual.company_name, 120);
+  const companyActivity = sanitizeString(qual.company_activity, 300);
+  const targetAudience = sanitizeString(qual.target_audience, 500);
 
   let websiteUrl = null;
   if (typeof qual.website_url === 'string') {
@@ -356,6 +358,8 @@ export function sanitizeQualification(qual, recentText = null) {
     name,
     email,
     company_name: companyName,
+    company_activity: companyActivity,
+    target_audience: targetAudience,
     website_url: websiteUrl,
     need_description: needDescription,
     operational_impact: operationalImpact,
@@ -409,6 +413,8 @@ export function filterQualificationForPersistence({
     name: currentLead.name || null,
     email: currentLead.email || null,
     company_name: currentLead.company_name || null,
+    company_activity: currentLead.company_activity || null,
+    target_audience: currentLead.target_audience || null,
     website_url: currentLead.website_url || null,
     decision_involvement: currentLead.decision_involvement || null,
     meeting_intent_signal: currentLead.meeting_intent_signal || null,
@@ -462,6 +468,8 @@ export function filterQualificationForPersistence({
     if (cleanQualification.timeline) allowed.timeline = cleanQualification.timeline;
     if (cleanQualification.stated_budget_raw) allowed.stated_budget_raw = cleanQualification.stated_budget_raw;
     if (cleanQualification.company_name) allowed.company_name = cleanQualification.company_name;
+    if (cleanQualification.company_activity) allowed.company_activity = cleanQualification.company_activity;
+    if (cleanQualification.target_audience) allowed.target_audience = cleanQualification.target_audience;
     if (cleanQualification.decision_involvement) allowed.decision_involvement = cleanQualification.decision_involvement;
 
     resolveWebsitePersistence(true);
@@ -477,6 +485,8 @@ export function filterQualificationForPersistence({
     if (cleanQualification.timeline) allowed.timeline = cleanQualification.timeline;
     if (cleanQualification.stated_budget_raw) allowed.stated_budget_raw = cleanQualification.stated_budget_raw;
     if (cleanQualification.company_name) allowed.company_name = cleanQualification.company_name;
+    if (cleanQualification.company_activity) allowed.company_activity = cleanQualification.company_activity;
+    if (cleanQualification.target_audience) allowed.target_audience = cleanQualification.target_audience;
     if (cleanQualification.decision_involvement) allowed.decision_involvement = cleanQualification.decision_involvement;
 
     resolveWebsitePersistence(false);
@@ -551,6 +561,8 @@ async function updateExistingLead(supabase, leadId, activeLanguage, cleanQualifi
   if (qualToPersist.name && qualToPersist.name !== currentLead.name) updatePayload.name = qualToPersist.name;
   if (qualToPersist.email && qualToPersist.email !== currentLead.email) updatePayload.email = qualToPersist.email;
   if (qualToPersist.company_name && qualToPersist.company_name !== currentLead.company_name) updatePayload.company_name = qualToPersist.company_name;
+  if (qualToPersist.company_activity && qualToPersist.company_activity !== currentLead.company_activity) updatePayload.company_activity = qualToPersist.company_activity;
+  if (qualToPersist.target_audience && qualToPersist.target_audience !== currentLead.target_audience) updatePayload.target_audience = qualToPersist.target_audience;
 
   if (typeof qualToPersist.has_existing_website === 'boolean' && qualToPersist.has_existing_website !== currentLead.has_existing_website) {
     updatePayload.has_existing_website = qualToPersist.has_existing_website;
@@ -729,6 +741,8 @@ async function processLeadQualification(supabase, sessionData, conversationId, a
       Boolean(cleanQualification.timeline) ||
       Boolean(cleanQualification.stated_budget_raw) ||
       Boolean(cleanQualification.company_name) ||
+      Boolean(cleanQualification.company_activity) ||
+      Boolean(cleanQualification.target_audience) ||
       Boolean(cleanQualification.email) ||
       Boolean(cleanQualification.website_url) ||
       typeof cleanQualification.has_existing_website === 'boolean';
@@ -749,6 +763,8 @@ async function processLeadQualification(supabase, sessionData, conversationId, a
       ...(cleanQualification.name ? { name: cleanQualification.name } : {}),
       ...(cleanQualification.email ? { email: cleanQualification.email } : {}),
       ...(cleanQualification.company_name ? { company_name: cleanQualification.company_name } : {}),
+      ...(cleanQualification.company_activity ? { company_activity: cleanQualification.company_activity } : {}),
+      ...(cleanQualification.target_audience ? { target_audience: cleanQualification.target_audience } : {}),
       ...(cleanQualification.website_url
         ? { website_url: cleanQualification.website_url, has_existing_website: true }
         : typeof cleanQualification.has_existing_website === 'boolean'
@@ -1444,6 +1460,9 @@ async function handleRequest(request) {
       name: cleanQualification?.name || null,
       email: cleanQualification?.email || null,
       company_name: cleanQualification?.company_name || null,
+      company_activity: cleanQualification?.company_activity || null,
+      target_audience: cleanQualification?.target_audience || null,
+      operational_impact: cleanQualification?.operational_impact || null,
       website_url: cleanQualification?.website_url || null,
       stated_budget_raw: cleanQualification?.stated_budget_raw || null,
       financial_alignment_status: null,

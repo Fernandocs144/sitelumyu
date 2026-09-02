@@ -18,6 +18,10 @@ const currentLeadA = {
   service_variant: 'institutional_website',
   has_existing_website: false,
   need_description: 'Site para apresentar a empresa',
+  company_name: 'Empresa Exemplo',
+  company_activity: 'Consultoria empresarial',
+  target_audience: 'Pequenas e médias empresas',
+  operational_impact: 'Aumentar a credibilidade e gerar contactos comerciais',
   timeline: '1 mes',
   stated_budget_raw: '1000',
   name: 'Ana',
@@ -80,6 +84,10 @@ const currentLeadB = {
   service_variant: 'institutional_website',
   has_existing_website: false,
   need_description: 'Criar website institucional',
+  company_name: 'Empresa Carlos',
+  company_activity: 'Serviços automóveis',
+  target_audience: 'Condutores particulares e empresas',
+  operational_impact: 'Apresentar os serviços e gerar pedidos de contacto',
   timeline: '2 semanas',
   stated_budget_raw: '1500',
   name: 'Carlos',
@@ -134,6 +142,20 @@ const leadBookingPendingD = {
 const goalD = calculateNextCommercialGoal(leadBookingPendingD, { turnIntent: 'direct_question' });
 assert(goalD.goal === 'answer_turn_intent', 'CASO D: Goal deve ser answer_turn_intent');
 
+const legacyBookingLeadD = {
+  primary_service: 'websites',
+  service_variant: 'institutional_website',
+  has_existing_website: false,
+  need_description: 'Criar website institucional',
+  timeline: '1 mês',
+  stated_budget_raw: '1000',
+  name: 'Lead antiga',
+  email: 'lead.antiga@example.com',
+  next_step: 'booking_pending',
+};
+const legacyDirectQuestionGoalD = calculateNextCommercialGoal(legacyBookingLeadD, { turnIntent: 'direct_question' });
+assert(legacyDirectQuestionGoalD.goal === 'answer_turn_intent', 'CASO D: Lead antiga em booking_pending continua a receber resposta direta');
+
 const resultD = filterQualificationForPersistence({
   cleanQualification: { turn_intent: 'direct_question' },
   currentLead: leadBookingPendingD,
@@ -173,6 +195,10 @@ console.log('F. CASO F PASSOU: Falha da 2ª fase tem fallback seguro e preserva 
 const qualNewG = {
   primary_service: 'ai',
   need_description: 'Assistente virtual para clientes',
+  company_name: 'Empresa Maria',
+  company_activity: 'Comércio eletrónico',
+  target_audience: 'Consumidores finais',
+  operational_impact: 'Reduzir o tempo de resposta ao cliente',
   timeline: '3 semanas',
   name: 'Maria',
   email: 'maria@empresa.com',
@@ -187,7 +213,61 @@ const resultG = filterQualificationForPersistence({
 });
 assert(resultG.primary_service === 'ai', 'CASO G: Lead nova persiste primary_service');
 assert(resultG.need_description === 'Assistente virtual para clientes', 'CASO G: Lead nova persiste necessidade');
+assert(resultG.company_activity === 'Comércio eletrónico', 'CASO G: Lead nova persiste atividade da empresa');
+assert(resultG.target_audience === 'Consumidores finais', 'CASO G: Lead nova persiste público-alvo');
 console.log('G. CASO G PASSOU: Criação e qualificação de lead nova persiste dados normalmente.');
+
+// I. CASO I: Sequência determinística de qualificação empresarial
+const baseCompanyFlow = {
+  primary_service: 'automation',
+  need_description: 'Automatizar o tratamento de faturas',
+};
+
+const goalCompanyContext = calculateNextCommercialGoal(baseCompanyFlow);
+assert(goalCompanyContext.goal === 'ask_company_context', 'CASO I.1: Deve pedir nome e atividade da empresa');
+
+const goalTargetAudience = calculateNextCommercialGoal({
+  ...baseCompanyFlow,
+  company_name: 'Fatura Certa',
+  company_activity: 'Contabilidade para empresas',
+});
+assert(goalTargetAudience.goal === 'ask_target_audience', 'CASO I.2: Deve pedir público-alvo');
+
+assert(
+  calculateNextCommercialGoal({ ...baseCompanyFlow, company_name: 'Fatura Certa' }).goal === 'ask_company_activity',
+  'CASO I.2A: Se já existir nome, deve pedir apenas a atividade'
+);
+assert(
+  calculateNextCommercialGoal({ ...baseCompanyFlow, company_activity: 'Contabilidade para empresas' }).goal === 'ask_company_name',
+  'CASO I.2B: Se já existir atividade, deve pedir apenas o nome'
+);
+
+const goalOperationalImpact = calculateNextCommercialGoal({
+  ...baseCompanyFlow,
+  company_name: 'Fatura Certa',
+  company_activity: 'Contabilidade para empresas',
+  target_audience: 'PME portuguesas',
+});
+assert(goalOperationalImpact.goal === 'ask_operational_impact', 'CASO I.3: Deve pedir problema ou resultado empresarial');
+
+const goalTimelineAfterCompany = calculateNextCommercialGoal({
+  ...baseCompanyFlow,
+  company_name: 'Fatura Certa',
+  company_activity: 'Contabilidade para empresas',
+  target_audience: 'PME portuguesas',
+  operational_impact: 'Reduzir cinco horas semanais de trabalho manual',
+});
+assert(goalTimelineAfterCompany.goal === 'ask_timeline', 'CASO I.4: Só deve pedir prazo após qualificar a empresa');
+
+assert(
+  getCommercialGoalMessage('ask_company_context', 'pt').requiredClosing.includes('nome da sua empresa'),
+  'CASO I.5: Pergunta empresarial PT disponível'
+);
+assert(
+  getCommercialGoalMessage('ask_target_audience', 'en').requiredClosing.includes('target audience'),
+  'CASO I.6: Pergunta de público-alvo EN disponível'
+);
+console.log('I. CASO I PASSOU: Qualificação empresarial antecede prazo, contacto, orçamento e reunião.');
 
 // H. CASO H: Suporte PT e EN para Pergunta Direta e Correção
 const goalMsgH_PT = getCommercialGoalMessage('answer_turn_intent', 'pt');

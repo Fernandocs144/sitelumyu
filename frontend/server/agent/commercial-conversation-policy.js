@@ -52,6 +52,14 @@ export function isLeadQualificationComplete(leadData) {
     return false;
   }
 
+  const companyName = typeof leadData.company_name === 'string' ? leadData.company_name.trim() : '';
+  const companyActivity = typeof leadData.company_activity === 'string' ? leadData.company_activity.trim() : '';
+  const targetAudience = typeof leadData.target_audience === 'string' ? leadData.target_audience.trim() : '';
+  const operationalImpact = typeof leadData.operational_impact === 'string' ? leadData.operational_impact.trim() : '';
+  if (!companyName || !companyActivity || !targetAudience || !operationalImpact) {
+    return false;
+  }
+
   if (primaryService === 'websites') {
     const serviceVariant = typeof leadData.service_variant === 'string' ? leadData.service_variant : null;
     if (!serviceVariant || !ALLOWED_WEBSITE_VARIANTS.includes(serviceVariant)) {
@@ -111,21 +119,21 @@ export function calculateNextCommercialGoal(leadData, options = {}) {
   }
 
   if (nextStep === 'booking_pending') {
+    const turnIntentRequiresResponse = [
+      'direct_question',
+      'correction',
+      'scope_change',
+      'possible_new_project',
+    ].includes(turnIntent);
+
+    if (turnIntentRequiresResponse) {
+      return {
+        goal: 'answer_turn_intent',
+        reason: 'booking_pending_requires_response',
+      };
+    }
+
     if (isLeadQualificationComplete(data)) {
-      const turnIntentRequiresResponse = [
-        'direct_question',
-        'correction',
-        'scope_change',
-        'possible_new_project',
-      ].includes(turnIntent);
-
-      if (turnIntentRequiresResponse) {
-        return {
-          goal: 'answer_turn_intent',
-          reason: 'booking_pending_requires_response',
-        };
-      }
-
       return {
         goal: 'show_booking',
         reason: 'booking_pending',
@@ -184,7 +192,45 @@ export function calculateNextCommercialGoal(leadData, options = {}) {
     }
   }
 
-  // 5. PRAZO DE LANÇAMENTO
+  // 5. CONTEXTO DA EMPRESA E RESULTADO DE NEGÓCIO
+  const companyName = typeof data.company_name === 'string' ? data.company_name.trim() : '';
+  const companyActivity = typeof data.company_activity === 'string' ? data.company_activity.trim() : '';
+  if (!companyName && !companyActivity) {
+    return {
+      goal: 'ask_company_context',
+      reason: 'company_name_and_activity_missing',
+    };
+  }
+  if (!companyName) {
+    return {
+      goal: 'ask_company_name',
+      reason: 'company_name_missing',
+    };
+  }
+  if (!companyActivity) {
+    return {
+      goal: 'ask_company_activity',
+      reason: 'company_activity_missing',
+    };
+  }
+
+  const targetAudience = typeof data.target_audience === 'string' ? data.target_audience.trim() : '';
+  if (!targetAudience) {
+    return {
+      goal: 'ask_target_audience',
+      reason: 'target_audience_missing',
+    };
+  }
+
+  const operationalImpact = typeof data.operational_impact === 'string' ? data.operational_impact.trim() : '';
+  if (!operationalImpact) {
+    return {
+      goal: 'ask_operational_impact',
+      reason: 'operational_impact_missing',
+    };
+  }
+
+  // 6. PRAZO DE LANÇAMENTO
   const timeline = typeof data.timeline === 'string' ? data.timeline.trim() : '';
   if (!timeline) {
     return {
@@ -193,7 +239,7 @@ export function calculateNextCommercialGoal(leadData, options = {}) {
     };
   }
 
-  // 6. CONTACTO (NOME E EMAIL)
+  // 7. CONTACTO (NOME E EMAIL)
   const hasName = isValidName(data.name);
   const hasEmail = isValidEmail(data.email);
 
@@ -218,7 +264,7 @@ export function calculateNextCommercialGoal(leadData, options = {}) {
     };
   }
 
-  // 7. ORÇAMENTO INDICATIVO
+  // 8. ORÇAMENTO INDICATIVO
   const statedBudgetRaw = typeof data.stated_budget_raw === 'string' ? data.stated_budget_raw.trim() : '';
   if (!statedBudgetRaw) {
     return {
@@ -227,7 +273,7 @@ export function calculateNextCommercialGoal(leadData, options = {}) {
     };
   }
 
-  // 8. PROPOSTA DE REUNIÃO DE DIAGNÓSTICO OU EXIBIÇÃO DE AGENDAMENTO
+  // 9. PROPOSTA DE REUNIÃO DE DIAGNÓSTICO OU EXIBIÇÃO DE AGENDAMENTO
   if (nextStep === 'booking_pending') {
     return {
       goal: 'show_booking',
