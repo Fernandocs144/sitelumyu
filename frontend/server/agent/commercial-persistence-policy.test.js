@@ -1,4 +1,4 @@
-import { filterQualificationForPersistence, isBudgetProvidedInCurrentTurn } from '../../api/agent/message.js';
+import { filterQualificationForPersistence, isBudgetProvidedInCurrentTurn, isPricingRequestedInCurrentTurn } from '../../api/agent/message.js';
 import { calculateNextCommercialGoal, isLeadQualificationComplete } from './commercial-conversation-policy.js';
 import { composeCommercialReply } from './commercial-reply-composer.js';
 import { getCommercialGoalMessage } from './commercial-goal-messages.js';
@@ -466,6 +466,49 @@ const unauthorizedShowBookingReply = composeCommercialReply({
 });
 assert(unauthorizedShowBookingReply.source === 'fallback' && unauthorizedShowBookingReply.validationReason === 'model_contained_unauthorized_question', 'COMPOSER 3: Pergunta em show_booking continua rejeitada');
 
+// 4. Preços antes da resposta ao orçamento:
+// A. O pedido explícito de preço é reconhecido apenas numa pergunta direta
+assert(isPricingRequestedInCurrentTurn('Quanto custa uma solução de IA?', 'direct_question') === true, 'PREÇO 1: Pedido explícito de preço em PT é reconhecido');
+assert(isPricingRequestedInCurrentTurn('What is the price of an AI solution?', 'direct_question') === true, 'PREÇO 2: Pedido explícito de preço em EN é reconhecido');
+assert(isPricingRequestedInCurrentTurn('fernando hj@gmail.com', 'qualification_answer') === false, 'PREÇO 3: Resposta de contacto não é confundida com pedido de preço');
+assert(isPricingRequestedInCurrentTurn('Qual é o prazo?', 'direct_question') === false, 'PREÇO 4: Pergunta não financeira não é confundida com pedido de preço');
+
+// B. O compositor bloqueia preços antecipados quando vai perguntar o orçamento
+const prematurePricingPT = composeCommercialReply({
+  generatedReply: 'Obrigado, Fernando. A referência indicativa para uma solução de IA situa-se entre 1.500 € e 6.000 €.',
+  deterministicReply: null,
+  goalMessage: goalMsgAskBudget,
+  pricingRequestedThisTurn: false,
+});
+assert(prematurePricingPT.source === 'fallback' && prematurePricingPT.validationReason === 'model_contained_unauthorized_pricing', 'PREÇO 5: Preço antecipado em PT é bloqueado');
+
+const prematurePricingEN = composeCommercialReply({
+  generatedReply: 'The indicative pricing range for an AI solution is $1,500 to $6,000.',
+  deterministicReply: null,
+  goalMessage: goalMsgAskBudgetEN,
+  pricingRequestedThisTurn: false,
+});
+assert(prematurePricingEN.source === 'fallback' && prematurePricingEN.validationReason === 'model_contained_unauthorized_pricing', 'PREÇO 6: Preço antecipado em EN é bloqueado');
+
+// C. Um preço pedido explicitamente continua autorizado
+const explicitlyRequestedPricing = composeCommercialReply({
+  generatedReply: 'A referência indicativa para uma solução de IA situa-se entre 1.500 € e 6.000 €.',
+  deterministicReply: null,
+  goalMessage: goalMsgAskBudget,
+  pricingRequestedThisTurn: true,
+});
+assert(explicitlyRequestedPricing.source === 'model_with_closing' && explicitlyRequestedPricing.validationReason === 'valid_model_with_closing', 'PREÇO 7: Preço explicitamente pedido continua autorizado');
+
+// D. Uma resposta neutra antes da pergunta de orçamento continua aceite
+const neutralPreBudgetReply = composeCommercialReply({
+  generatedReply: 'Obrigado, Fernando. Com esta informação já podemos enquadrar melhor a solução.',
+  deterministicReply: null,
+  goalMessage: goalMsgAskBudget,
+  pricingRequestedThisTurn: false,
+});
+assert(neutralPreBudgetReply.source === 'model_with_closing' && neutralPreBudgetReply.validationReason === 'valid_model_with_closing', 'PREÇO 8: Resposta neutra antes do orçamento continua aceite');
+
 console.log('TESTES DO COMPOSITOR COMERCIAL PASSARAM COM SUCESSO.');
+console.log('TESTES DE PROTEÇÃO CONTRA PREÇOS ANTECIPADOS PASSARAM COM SUCESSO.');
 
 console.log('\n=== TODOS OS TESTES PERSISTENTES PASSARAM COM SUCESSO ===');

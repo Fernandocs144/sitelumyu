@@ -260,6 +260,30 @@ export function isBudgetProvidedInCurrentTurn(cleanQualification) {
   );
 }
 
+export function isPricingRequestedInCurrentTurn(messageText, turnIntent) {
+  if (turnIntent !== 'direct_question' || typeof messageText !== 'string') {
+    return false;
+  }
+
+  const normalized = messageText
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+
+  if (!normalized) return false;
+
+  const pricingQuestionPatterns = [
+    /\bquanto\s+(?:custa|custam|fica|ficam)\b/,
+    /\bqual\s+(?:e\s+)?(?:o\s+)?(?:preco|custo|valor|investimento|orcamento)\b/,
+    /\b(?:preco|precos|pricing|price|prices|cost|costs|quote|quotation)\b/,
+    /\bhow\s+much\b/,
+    /\bwhat(?:'s|\s+is)?\s+the\s+(?:price|cost|investment|budget)\b/,
+  ];
+
+  return pricingQuestionPatterns.some((pattern) => pattern.test(normalized));
+}
+
 export function sanitizeQualification(qual, recentText = null) {
   if (!qual || typeof qual !== 'object') return null;
 
@@ -1478,6 +1502,10 @@ async function handleRequest(request) {
       turnIntent: cleanQualification?.turn_intent || null,
     });
     const goalMessage = getCommercialGoalMessage(commercialGoal.goal, activeLanguage);
+    const pricingRequestedThisTurn = isPricingRequestedInCurrentTurn(
+      cleanMessage,
+      cleanQualification?.turn_intent || null
+    );
 
     const turnIntentRequiresResponse = [
       'direct_question',
@@ -1614,6 +1642,7 @@ async function handleRequest(request) {
         generatedReply: generatedSecondPhaseReply,
         deterministicReply: null,
         goalMessage,
+        pricingRequestedThisTurn,
       });
 
       if (composerRes?.source === 'fallback' && typeof generatedSecondPhaseReply === 'string' && generatedSecondPhaseReply.trim().length > 0) {

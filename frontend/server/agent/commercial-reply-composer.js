@@ -102,6 +102,17 @@ function containsProhibitedQualificationClaims(text) {
   return prohibitedPhrases.some((phrase) => lower.includes(phrase));
 }
 
+function containsPricingReference(text) {
+  if (typeof text !== 'string') return false;
+
+  return (
+    /(?:€|\$|£)\s*\d/i.test(text) ||
+    /\d[\d\s.,]*\s*(?:€|eur(?:os?)?|usd|dollars?|d[oó]lares?|pounds?|libras?)\b/i.test(text) ||
+    /\b(?:refer[eê]ncia|intervalo)\s+indicativ[oa]\b/i.test(text) ||
+    /\bindicative\s+(?:pricing\s+)?(?:reference|range)\b/i.test(text)
+  );
+}
+
 /**
  * Compõe com segurança a resposta comercial final.
  *
@@ -109,9 +120,10 @@ function containsProhibitedQualificationClaims(text) {
  * @param {string|null|undefined} params.generatedReply Texto gerado pelo LLM de 2ª fase.
  * @param {string|null|undefined} params.deterministicReply Corpo financeiro determinístico gerado internamente.
  * @param {Object|null|undefined} params.goalMessage Objeto retornado por getCommercialGoalMessage.
+ * @param {boolean|undefined} params.pricingRequestedThisTurn Indica se o visitante pediu preços explicitamente neste turno.
  * @returns {{ reply: string, source: "model" | "model_with_closing" | "deterministic" | "deterministic_with_closing" | "fallback", validationReason: string }}
  */
-export function composeCommercialReply({ generatedReply, deterministicReply, goalMessage } = {}) {
+export function composeCommercialReply({ generatedReply, deterministicReply, goalMessage, pricingRequestedThisTurn = false } = {}) {
   // 1. Validar goalMessage
   if (
     !goalMessage ||
@@ -232,7 +244,20 @@ export function composeCommercialReply({ generatedReply, deterministicReply, goa
       };
     }
 
-    // 3) Verificar se contém afirmações proibidas de contacto ou qualificação
+    // 3) Não antecipar preços ao pedir orçamento, exceto quando o visitante os pediu explicitamente.
+    if (
+      goalMessage.goal === 'ask_budget' &&
+      pricingRequestedThisTurn !== true &&
+      containsPricingReference(rawTrimmed)
+    ) {
+      return {
+        reply: fallbackText,
+        source: 'fallback',
+        validationReason: 'model_contained_unauthorized_pricing',
+      };
+    }
+
+    // 4) Verificar se contém afirmações proibidas de contacto ou qualificação
     if (goalMessage.action !== 'human_contact' && containsProhibitedQualificationClaims(rawTrimmed)) {
       return {
         reply: fallbackText,
