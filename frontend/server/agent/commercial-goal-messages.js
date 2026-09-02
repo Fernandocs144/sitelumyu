@@ -187,12 +187,12 @@ export function getCommercialGoalMessage(goal, language) {
         goal: 'answer_turn_intent',
         language: lang,
         modelInstruction: lang === 'en'
-          ? "First respond concisely and directly to the visitor's current message (question, correction, scope change, or potential new project). Do not invent unapproved facts or prices. Conclude naturally by indicating that the meeting booking remains available below. Do not ask unauthorized questions."
-          : 'Responda primeiro de forma concisa e direta à mensagem atual do visitante (dúvida, correção, alteração de âmbito ou possível novo projeto). Não invente factos nem preços não autorizados. Conclua naturalmente indicando que o agendamento da reunião continua disponível abaixo. Não faça perguntas não autorizadas.',
+          ? "Respond concisely and directly to the visitor's most recent message. Use at most two short sentences. Do not repeat budget, project summary, or previously collected data. You may end with at most ONE short contextual question if it helps clarify their doubt or new requirement. Do NOT mention meetings, links, buttons, or scheduling, and do NOT restart qualification."
+          : 'Responda de forma concisa e direta à mensagem mais recente do visitante. Utilize no máximo duas frases curtas. Não repita orçamento, resumo do projeto nem dados já recolhidos. Pode terminar com no máximo UMA pergunta contextual curta se esta ajudar a esclarecer a dúvida ou nova necessidade. NÃO mencione reuniões, links, botões nem agendamento, e NÃO reinicie a qualificação.',
         requiredClosing: null,
         fallbackReply: lang === 'en'
-          ? 'You can choose an available time for the diagnostic meeting below.'
-          : 'Pode escolher um horário disponível para a reunião de diagnóstico abaixo.',
+          ? 'I can help clarify that need.'
+          : 'Posso ajudar a esclarecer essa necessidade.',
         action: 'booking',
       };
 

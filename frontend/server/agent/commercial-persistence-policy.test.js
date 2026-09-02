@@ -2,6 +2,7 @@ import { filterQualificationForPersistence, isBudgetProvidedInCurrentTurn } from
 import { calculateNextCommercialGoal, isLeadQualificationComplete } from './commercial-conversation-policy.js';
 import { composeCommercialReply } from './commercial-reply-composer.js';
 import { getCommercialGoalMessage } from './commercial-goal-messages.js';
+import { buildSecondPhaseInstructions } from './commercial-agent-prompt.js';
 import { buildDeterministicFinancialReply } from './commercial-financial-reply.js';
 
 function assert(cond, msg) {
@@ -191,8 +192,8 @@ console.log('G. CASO G PASSOU: Criação e qualificação de lead nova persiste 
 // H. CASO H: Suporte PT e EN para Pergunta Direta e Correção
 const goalMsgH_PT = getCommercialGoalMessage('answer_turn_intent', 'pt');
 const goalMsgH_EN = getCommercialGoalMessage('answer_turn_intent', 'en');
-assert(goalMsgH_PT.fallbackReply.includes('reunião'), 'CASO H: Mensagem PT válida');
-assert(goalMsgH_EN.fallbackReply.includes('meeting'), 'CASO H: Mensagem EN válida');
+assert(goalMsgH_PT.fallbackReply.includes('necessidade'), 'CASO H: Mensagem PT válida');
+assert(goalMsgH_EN.fallbackReply.includes('need'), 'CASO H: Mensagem EN válida');
 console.log('H. CASO H PASSOU: PT e EN suportados para pergunta direta e correção.');
 
 // TESTES DE REGRESSÃO DE ACTIVAÇÃO DE RESPOSTA FINANCEIRA (A-F):
@@ -263,5 +264,65 @@ const deterministicFinancialReplyF = budgetProvidedThisTurnF
   : null;
 assert(typeof deterministicFinancialReplyF === 'string' && deterministicFinancialReplyF.length > 0, 'TESTE FINANCEIRO F: Avaliação financeira gerada com sucesso');
 console.log('TESTE FINANCEIRO F PASSOU: Resposta de orçamento normal gera avaliação financeira com sucesso.');
+
+// TESTES DE COMUNICAÇÃO PÓS-AGENDAMENTO (1-11):
+const goalMsgAnswerPT = getCommercialGoalMessage('answer_turn_intent', 'pt');
+const goalMsgAnswerEN = getCommercialGoalMessage('answer_turn_intent', 'en');
+const goalMsgShowBooking = getCommercialGoalMessage('show_booking', 'pt');
+const goalMsgAskBudget = getCommercialGoalMessage('ask_budget', 'pt');
+
+// 1. answer_turn_intent mantém action === 'booking'
+assert(goalMsgAnswerPT.action === 'booking', 'COMUNICAÇÃO 1: answer_turn_intent mantém action === booking');
+
+// 2. answer_turn_intent.requiredClosing === null
+assert(goalMsgAnswerPT.requiredClosing === null, 'COMUNICAÇÃO 2: answer_turn_intent.requiredClosing é null');
+
+// 3. A instrução de answer_turn_intent não obriga a mencionar agendamento
+assert(!goalMsgAnswerPT.modelInstruction.includes('continua disponível'), 'COMUNICAÇÃO 3: Instrução não obriga a mencionar agendamento');
+
+// 4. A instrução permite no máximo uma pergunta contextual quando requiredClosing === null
+const promptAnswerPT = buildSecondPhaseInstructions({ language: 'pt', goalMessage: goalMsgAnswerPT, effectiveLeadState: leadPendingE, turnIntent: 'direct_question' });
+assert(promptAnswerPT.includes('no máximo UMA pergunta contextual'), 'COMUNICAÇÃO 4: Instrução de 2ª fase permite no máximo uma pergunta contextual');
+
+// 5. Uma direct_question pode receber resposta e pergunta contextual
+assert(promptAnswerPT.includes('"direct_question": Responde diretamente e, se útil, faz UMA pergunta contextual curta'), 'COMUNICAÇÃO 5: direct_question instrui resposta e pergunta contextual útil');
+
+// 6. Uma correction não gera pergunta desnecessária
+assert(promptAnswerPT.includes('"correction": Reconhece a correção. Só faz pergunta se existir ambiguidade real'), 'COMUNICAÇÃO 6: correction não gera pergunta desnecessária');
+
+// 7. Um possible_new_project pede esclarecimento entre projeto atual e projeto separado
+assert(promptAnswerPT.includes('"possible_new_project": Pergunta se a nova necessidade pertence ao projeto atual ou se deve ser considerada um projeto separado'), 'COMUNICAÇÃO 7: possible_new_project pede esclarecimento de escopo');
+
+// 8. Os restantes objetivos continuam a proibir perguntas inventadas pelo modelo
+const promptNormalPT = buildSecondPhaseInstructions({ language: 'pt', goalMessage: goalMsgAskBudget, effectiveLeadState: currentLeadA, turnIntent: 'qualification_answer' });
+assert(promptNormalPT.includes('NÃO inventes nem acrescentes nenhuma pergunta'), 'COMUNICAÇÃO 8: Objetivos normais continuam a proibir perguntas inventadas pelo modelo');
+
+// 9. show_booking permanece inalterado
+assert(goalMsgShowBooking.action === 'booking' && goalMsgShowBooking.requiredClosing === null && goalMsgShowBooking.fallbackReply.includes('Pode agora escolher'), 'COMUNICAÇÃO 9: show_booking permanece inalterado');
+
+// 10. Não existe qualquer alteração à persistência no Supabase nem ao cálculo financeiro
+assert(leadPendingE.primary_service === 'websites' && deterministicFinancialReplyE === null, 'COMUNICAÇÃO 10: Sem alteração à persistência nem ao cálculo financeiro');
+
+// 11. Existe paridade PT/EN
+const promptAnswerEN = buildSecondPhaseInstructions({ language: 'en', goalMessage: goalMsgAnswerEN, effectiveLeadState: leadPendingE, turnIntent: 'direct_question' });
+const goalMsgAskBudgetEN = getCommercialGoalMessage('ask_budget', 'en');
+const promptNormalEN = buildSecondPhaseInstructions({ language: 'en', goalMessage: goalMsgAskBudgetEN, effectiveLeadState: currentLeadA, turnIntent: 'qualification_answer' });
+assert(goalMsgAnswerEN.action === 'booking' && goalMsgAnswerEN.requiredClosing === null && promptAnswerEN.includes('AT MOST ONE short contextual question'), 'COMUNICAÇÃO 11: Paridade PT/EN validada');
+console.log('COMUNICAÇÃO PÓS-AGENDAMENTO (1-11) PASSOU COM SUCESSO.');
+
+// TESTES DE CONCISÃO CONDICIONAL (CONCISE RULE PT/EN):
+// 1. answer_turn_intent não contém afirmação de pergunta canónica do backend
+assert(!promptAnswerPT.includes('antes da pergunta canónica acrescentada pelo backend'), 'CONCISÃO 1: answer_turn_intent não afirma que o backend acrescenta pergunta canónica');
+
+// 2. answer_turn_intent limita resposta completa a duas frases incluindo pergunta contextual
+assert(promptAnswerPT.includes('Manter a resposta completa em no máximo DUAS frases curtas, incluindo qualquer pergunta contextual.'), 'CONCISÃO 2: answer_turn_intent limita resposta a duas frases incluindo pergunta contextual');
+
+// 3. Objetivos normais continuam a indicar que o backend acrescenta pergunta canónica
+assert(promptNormalPT.includes('Manter as respostas concisas (no máximo DUAS frases curtas antes da pergunta canónica acrescentada pelo backend).'), 'CONCISÃO 3: Objetivos normais mantêm indicação da pergunta canónica');
+
+// 4. Paridade PT/EN da regra de concisão
+assert(promptAnswerEN.includes('Keep the complete response to at most TWO short sentences, including any contextual question.'), 'CONCISÃO 4: EN answer_turn_intent usa regra estrita sem pergunta canónica');
+assert(promptNormalEN.includes('Keep responses concise (at most TWO short sentences before the canonical question appended by the backend).'), 'CONCISÃO 4: EN objetivos normais mantêm indicação da pergunta canónica');
+console.log('TESTES DE CONCISÃO CONDICIONAL PASSARAM COM SUCESSO.');
 
 console.log('\n=== TODOS OS TESTES PERSISTENTES PASSARAM COM SUCESSO ===');

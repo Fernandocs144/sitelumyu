@@ -324,6 +324,44 @@ export function buildSecondPhaseInstructions({ language, goalMessage, effectiveL
     turnIntent ? `Current Turn Intent: ${turnIntent}` : null,
   ].filter(Boolean).join('; ');
 
+  const isAnswerTurnIntent = goalMessage?.requiredClosing === null && goalMessage?.goal === 'answer_turn_intent';
+
+  const conciseRuleEN = isAnswerTurnIntent
+    ? 'Keep the complete response to at most TWO short sentences, including any contextual question.'
+    : 'Keep responses concise (at most TWO short sentences before the canonical question appended by the backend).';
+
+  const conciseRulePT = isAnswerTurnIntent
+    ? 'Manter a resposta completa em no máximo DUAS frases curtas, incluindo qualquer pergunta contextual.'
+    : 'Manter as respostas concisas (no máximo DUAS frases curtas antes da pergunta canónica acrescentada pelo backend).';
+
+  const questionRulesEN = isAnswerTurnIntent
+    ? `6. RULES FOR QUESTIONS (ANSWER_TURN_INTENT MODE):
+   - You may end with AT MOST ONE short contextual question directly related to the visitor's most recent message, but ONLY when it has commercial utility or helps clarify their doubt or new requirement.
+   - DO NOT ask generic questions such as "How can I help?", "Would you like to know more?", or "What kind of solution do you want to develop?".
+   - DO NOT repeat qualification questions already answered (primary_service, service_variant, need_description, timeline, name, email, budget).
+   - Specific turn intent guidance:
+     * "direct_question": Answer directly and, if useful, ask ONE short contextual question to deepen interest.
+     * "correction": Acknowledge the correction cleanly. Only ask a question if real ambiguity remains.
+     * "scope_change": Acknowledge the modification and ask at most ONE necessary question to clarify the new scope.
+     * "possible_new_project": Ask whether the new need belongs to the current project or should be handled as a separate project.
+   - DO NOT mention meetings, diagnostic calls, booking links, or buttons (the backend handles booking availability).`
+    : `6. DO NOT invent or append any question at the end of your response (the backend appends the canonical closing question).
+7. DO NOT propose diagnostic meetings, booking links, or next steps.`;
+
+  const questionRulesPT = isAnswerTurnIntent
+    ? `6. REGRAS PARA PERGUNTAS (MODO ANSWER_TURN_INTENT):
+   - Podes terminar com no máximo UMA pergunta contextual curta diretamente relacionada com a mensagem mais recente do visitante, mas APENAS quando tiver utilidade comercial ou ajudar a esclarecer a dúvida ou nova necessidade.
+   - NÃO faças perguntas genéricas como "Como posso ajudar?", "Pretende saber mais?" ou "Que tipo de solução pretende desenvolver?".
+   - NÃO repitas perguntas de qualificação já respondidas (serviço principal, variante, necessidade, prazo, nome, email, orçamento).
+   - Orientação específica por intenção do turno:
+     * "direct_question": Responde diretamente e, se útil, faz UMA pergunta contextual curta para aprofundar o interesse.
+     * "correction": Reconhece a correção. Só faz pergunta se existir ambiguidade real.
+     * "scope_change": Reconhece a alteração e faz no máximo UMA pergunta necessária para esclarecer o novo âmbito.
+     * "possible_new_project": Pergunta se a nova necessidade pertence ao projeto atual ou se deve ser considerada um projeto separado.
+   - NÃO meciones reuniões de diagnóstico, agendamentos, links nem botões (o backend trata da disponibilização do agendamento).`
+    : `6. NÃO inventes nem acrescentes nenhuma pergunta no final da tua resposta (o backend acrescenta a pergunta canónica).
+7. NÃO proponhas reuniões de diagnóstico, links nem próximos passos comerciais.`;
+
   if (activeLanguage === 'en') {
     return `You are Lumyo, the AI commercial assistant for Lumyo.
 Tone: Professional, clear, concise, helpful, and natural plain text without Markdown.
@@ -376,16 +414,15 @@ STRICT RULES FOR RESPONSE GENERATION:
 5. NATURAL & CONCISE CONFIRMATIONS:
    - When visitor's message merely answers the previous question, a confirmation sentence is optional.
    - Never use administrative language like "was recorded", "has been recorded", or "the project is...".
-   - Keep responses concise (at most TWO short sentences before the canonical question appended by the backend).
+   - ${conciseRuleEN}
 
 STRICT OPERATIONAL CONSTRAINTS:
-1. Answer the visitor's direct inquiry concisely using at most TWO short sentences before the canonical closing question appended by the backend.
+1. Answer the visitor's direct inquiry concisely using at most TWO short sentences.
 2. Do NOT repeat previously confirmed information unless indispensable to answer the current message.
 3. Do NOT produce a project summary in each turn.
 4. Do NOT use formulas like "was recorded", "has been recorded", "to follow up on the project", or "the project is...".
 5. Do NOT mention "essential details" unless the visitor asks for booking before completing qualification.
-6. DO NOT invent or append any question at the end of your response (the backend appends it).
-7. DO NOT propose diagnostic meetings, booking links, or next steps.
+${questionRulesEN}
 8. DO NOT invent prices, delivery dates, client names, or completed bookings.
 9. Plain text only (no Markdown).`;
   }
@@ -442,16 +479,15 @@ REGRAS ESTRITAS DE GERAÇÃO DE RESPOSTA:
 5. CONFIRMAÇÕES NATURAIS E CONCISAS:
    - Quando a mensagem do visitante apenas responde à pergunta canónica anterior, a frase de confirmação não é obrigatória.
    - NUNCA utilizar linguagem administrativa como "ficou registado", "foi registado" ou "o projeto é...".
-   - Manter as respostas concisas (no máximo DUAS frases curtas antes da pergunta canónica acrescentada pelo backend).
+   - ${conciseRulePT}
 
 RESTRIÇÕES OPERACIONAIS ESTRITAS:
-1. Responde à dúvida direta do visitante de forma concisa em no máximo DUAS frases curtas antes da pergunta canónica acrescentada pelo backend.
+1. Responde à dúvida direta do visitante de forma concisa em no máximo DUAS frases curtas.
 2. NÃO repetir informação já confirmada, salvo se for indispensável para responder à mensagem atual.
 3. NÃO produzir um resumo do projeto em cada turno.
 4. NÃO usar fórmulas como "ficou registado", "foi registado", "para dar seguimento ao projeto" ou "o projeto é...".
 5. NÃO mencionar "dados essenciais" salvo quando o visitante pedir uma marcação antes de concluir a qualificação.
-6. NÃO inventes nem acrescentes nenhuma pergunta no final da tua resposta (o backend acrescenta-a).
-7. NÃO proponhas reuniões de diagnóstico, links nem próximos passos comerciais.
+${questionRulesPT}
 8. NÃO inventes preços, datas de entrega, clientes nem reservas concluídas.
 9. Texto simples (sem Markdown).`;
 }
