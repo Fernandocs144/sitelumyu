@@ -246,6 +246,12 @@ export function extractFallbackContact(recentText) {
   };
 }
 
+export function safeDiagnosticString(value, maxLength = 500) {
+  return typeof value === 'string'
+    ? value.slice(0, maxLength)
+    : null;
+}
+
 export function isBudgetProvidedInCurrentTurn(cleanQualification) {
   return (
     cleanQualification?.turn_intent === 'qualification_answer' &&
@@ -1305,7 +1311,15 @@ async function handleRequest(request) {
       history[history.length - 1].role === 'user' &&
       !history.some((msg) => msg.role !== 'user' && msg.role !== 'assistant');
 
-    if (isHistoryValid) {
+    if (!isHistoryValid) {
+      console.warn('OpenAI extraction skipped: invalid history', {
+        code: 'extraction_history_invalid',
+        isHistoryValid: false,
+        historyLength: history.length,
+        firstRole: history[0]?.role || null,
+        lastRole: history[history.length - 1]?.role || null,
+      });
+    } else {
       try {
         const openai = new OpenAI({
           apiKey: process.env.OPENAI_API_KEY,
@@ -1333,7 +1347,26 @@ async function handleRequest(request) {
           store: false,
         });
 
-        if (extractionResponse?.status === 'completed' && typeof extractionResponse?.output_text === 'string') {
+        if (!extractionResponse) {
+          console.error('OpenAI extraction returned empty response', {
+            code: 'extraction_response_missing',
+          });
+        } else if (extractionResponse.status !== 'completed') {
+          console.error('OpenAI extraction response status not completed', {
+            code: 'extraction_not_completed',
+            status: safeDiagnosticString(extractionResponse.status),
+            incompleteReason: safeDiagnosticString(extractionResponse?.incomplete_details?.reason),
+            hasError: !!extractionResponse?.error,
+            errorCode: safeDiagnosticString(extractionResponse?.error?.code),
+          });
+        } else if (typeof extractionResponse.output_text !== 'string' || extractionResponse.output_text.trim().length === 0) {
+          console.error('OpenAI extraction output_text missing or empty', {
+            code: 'extraction_output_missing',
+            status: safeDiagnosticString(extractionResponse.status),
+            outputType: typeof extractionResponse.output_text,
+            outputLength: typeof extractionResponse.output_text === 'string' ? extractionResponse.output_text.length : 0,
+          });
+        } else {
           try {
             const parsedExtraction = JSON.parse(extractionResponse.output_text);
             if (parsedExtraction && typeof parsedExtraction === 'object') {
@@ -1348,24 +1381,32 @@ async function handleRequest(request) {
               }
               if (parsedExtraction.qualification && typeof parsedExtraction.qualification === 'object') {
                 rawQualification = parsedExtraction.qualification;
+              } else {
+                console.error('OpenAI extraction qualification missing in JSON', {
+                  code: 'extraction_qualification_missing',
+                  parsedType: typeof parsedExtraction,
+                  hasQualification: typeof parsedExtraction?.qualification === 'object',
+                });
               }
             }
           } catch (parseErr) {
             console.error('Failed to parse OpenAI Extraction Structured Output', {
               code: 'extraction_parse_failed',
+              status: safeDiagnosticString(extractionResponse.status),
+              outputType: typeof extractionResponse.output_text,
+              outputLength: extractionResponse.output_text.length,
             });
           }
         }
       } catch (error) {
-        const safeString = (val) => (typeof val === 'string' ? val.slice(0, 500) : null);
         console.error('OpenAI extraction failure', {
           code: 'extraction_request_failed',
-          name: safeString(error?.name),
-          status: typeof error?.status === 'number' ? error.status : safeString(error?.status),
-          errorCode: safeString(error?.code),
-          type: safeString(error?.type),
-          param: safeString(error?.param),
-          message: safeString(error?.message),
+          name: safeDiagnosticString(error?.name),
+          status: typeof error?.status === 'number' ? error.status : safeDiagnosticString(error?.status),
+          errorCode: safeDiagnosticString(error?.code),
+          type: safeDiagnosticString(error?.type),
+          param: safeDiagnosticString(error?.param),
+          message: safeDiagnosticString(error?.message),
         });
       }
     }
@@ -1455,7 +1496,15 @@ async function handleRequest(request) {
     } else {
       // CHAMAR O SEGUNDO MODELO COM commercialAgentReplySchema
       let generatedSecondPhaseReply = null;
-      if (isHistoryValid) {
+      if (!isHistoryValid) {
+        console.warn('OpenAI second phase skipped: invalid history', {
+          code: 'second_phase_history_invalid',
+          isHistoryValid: false,
+          historyLength: history.length,
+          firstRole: history[0]?.role || null,
+          lastRole: history[history.length - 1]?.role || null,
+        });
+      } else {
         try {
           const openai = new OpenAI({
             apiKey: process.env.OPENAI_API_KEY,
@@ -1488,28 +1537,56 @@ async function handleRequest(request) {
             store: false,
           });
 
-          if (secondPhaseResponse?.status === 'completed' && typeof secondPhaseResponse?.output_text === 'string') {
+          if (!secondPhaseResponse) {
+            console.error('OpenAI second phase returned empty response', {
+              code: 'second_phase_response_missing',
+            });
+          } else if (secondPhaseResponse.status !== 'completed') {
+            console.error('OpenAI second phase response status not completed', {
+              code: 'second_phase_not_completed',
+              status: safeDiagnosticString(secondPhaseResponse.status),
+              incompleteReason: safeDiagnosticString(secondPhaseResponse?.incomplete_details?.reason),
+              hasError: !!secondPhaseResponse?.error,
+              errorCode: safeDiagnosticString(secondPhaseResponse?.error?.code),
+            });
+          } else if (typeof secondPhaseResponse.output_text !== 'string' || secondPhaseResponse.output_text.trim().length === 0) {
+            console.error('OpenAI second phase output_text missing or empty', {
+              code: 'second_phase_output_missing',
+              status: safeDiagnosticString(secondPhaseResponse.status),
+              outputType: typeof secondPhaseResponse.output_text,
+              outputLength: typeof secondPhaseResponse.output_text === 'string' ? secondPhaseResponse.output_text.length : 0,
+            });
+          } else {
             try {
               const parsedReplyObj = JSON.parse(secondPhaseResponse.output_text);
-              if (parsedReplyObj && typeof parsedReplyObj.reply === 'string') {
+              if (parsedReplyObj && typeof parsedReplyObj.reply === 'string' && parsedReplyObj.reply.trim().length > 0) {
                 generatedSecondPhaseReply = parsedReplyObj.reply;
+              } else {
+                console.error('OpenAI second phase reply field missing or empty in JSON', {
+                  code: 'second_phase_reply_missing',
+                  parsedType: typeof parsedReplyObj,
+                  hasReply: typeof parsedReplyObj?.reply === 'string',
+                  replyLength: typeof parsedReplyObj?.reply === 'string' ? parsedReplyObj.reply.length : 0,
+                });
               }
             } catch (parseErr) {
               console.error('Failed to parse OpenAI Reply Structured Output', {
                 code: 'reply_parse_failed',
+                status: safeDiagnosticString(secondPhaseResponse.status),
+                outputType: typeof secondPhaseResponse.output_text,
+                outputLength: secondPhaseResponse.output_text.length,
               });
             }
           }
         } catch (err) {
-          const safeString = (val) => (typeof val === 'string' ? val.slice(0, 500) : null);
           console.error('OpenAI second phase reply failure', {
             code: 'commercial_reply_generation_failed',
-            name: safeString(err?.name),
-            status: typeof err?.status === 'number' ? err.status : safeString(err?.status),
-            errorCode: safeString(err?.code),
-            type: safeString(err?.type),
-            param: safeString(err?.param),
-            message: safeString(err?.message),
+            name: safeDiagnosticString(err?.name),
+            status: typeof err?.status === 'number' ? err.status : safeDiagnosticString(err?.status),
+            errorCode: safeDiagnosticString(err?.code),
+            type: safeDiagnosticString(err?.type),
+            param: safeDiagnosticString(err?.param),
+            message: safeDiagnosticString(err?.message),
           });
         }
       }

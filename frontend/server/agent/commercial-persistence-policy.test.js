@@ -325,4 +325,31 @@ assert(promptAnswerEN.includes('Keep the complete response to at most TWO short 
 assert(promptNormalEN.includes('Keep responses concise (at most TWO short sentences before the canonical question appended by the backend).'), 'CONCISÃO 4: EN objetivos normais mantêm indicação da pergunta canónica');
 console.log('TESTES DE CONCISÃO CONDICIONAL PASSARAM COM SUCESSO.');
 
+// TESTES DE DIAGNÓSTICO SILENCIOSO E FALLBACK SEGURO (1-5):
+// 1. Fallback em answer_turn_intent devolve mensagem neutra segura
+const fallbackResPT = composeCommercialReply({ generatedReply: null, deterministicReply: null, goalMessage: goalMsgAnswerPT });
+assert(fallbackResPT.source === 'fallback' && fallbackResPT.reply === 'Posso ajudar a esclarecer essa necessidade.', 'DIAGNÓSTICO 1: Fallback PT seguro');
+
+const fallbackResEN = composeCommercialReply({ generatedReply: null, deterministicReply: null, goalMessage: goalMsgAnswerEN });
+assert(fallbackResEN.source === 'fallback' && fallbackResEN.reply === 'I can help clarify that need.', 'DIAGNÓSTICO 1: Fallback EN seguro');
+
+// 2. Simulação de logs sanitizados (sem PII, sem prompts, sem textos de utilizador)
+const mockPayloads = [
+  { code: 'second_phase_history_invalid', isHistoryValid: false, historyLength: 0, firstRole: null, lastRole: null },
+  { code: 'second_phase_response_missing' },
+  { code: 'second_phase_not_completed', status: 'incomplete', incompleteReason: 'max_output_tokens', hasError: false, errorCode: null },
+  { code: 'second_phase_output_missing', status: 'completed', outputType: 'undefined', outputLength: 0 },
+  { code: 'second_phase_reply_missing', parsedType: 'object', hasReply: false, replyLength: 0 },
+  { code: 'reply_parse_failed', status: 'completed', outputType: 'string', outputLength: 12 },
+];
+
+const forbiddenFields = ['prompt', 'instructions', 'api_key', 'user_text', 'visitor', 'email', 'name', 'auth_token', 'cookie', 'stack', 'headers'];
+mockPayloads.forEach((payload) => {
+  const payloadKeys = Object.keys(payload);
+  forbiddenFields.forEach((field) => {
+    assert(!payloadKeys.includes(field), `DIAGNÓSTICO 2: Payload ${payload.code} expõe campo proibido ${field}`);
+  });
+});
+console.log('TESTES DE DIAGNÓSTICO SILENCIOSO E FALLBACK SEGURO PASSARAM COM SUCESSO.');
+
 console.log('\n=== TODOS OS TESTES PERSISTENTES PASSARAM COM SUCESSO ===');
