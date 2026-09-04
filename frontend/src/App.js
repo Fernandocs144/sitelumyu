@@ -12,6 +12,7 @@ import { LanguageProvider } from './i18n';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import CommercialAgentWidget from './components/CommercialAgentWidget';
+import CookieConsent from './components/CookieConsent';
 
 import Home from './pages/Home';
 
@@ -128,6 +129,7 @@ function AppContent() {
       <ConditionalFooter />
 
       <CommercialAgentWidget />
+      <CookieConsent />
     </div>
   );
 }

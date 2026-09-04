@@ -6,6 +6,7 @@ import React, {
 } from 'react';
 import { useLang } from '../i18n';
 import './CommercialAgentWidget.css';
+import { trackClarityEvent } from '../analytics/clarity';
 
 /**
  * LumyoRobotIcon — Ícone de robô futurista em SVG inline.
@@ -228,6 +229,7 @@ export default function CommercialAgentWidget() {
     setIsOpen((prev) => {
       const next = !prev;
       if (next) {
+        trackClarityEvent('commercial_agent_opened');
         if (sessionStatus === 'idle' || sessionStatus === 'error') {
           initSession();
         }
@@ -453,6 +455,7 @@ export default function CommercialAgentWidget() {
         <div
           ref={panelRef}
           className="lumyo-chat-panel"
+          data-clarity-mask="true"
           role="dialog"
           aria-modal={isMobile ? 'true' : undefined}
           aria-labelledby="lumyo-agent-title"
@@ -561,6 +564,7 @@ export default function CommercialAgentWidget() {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="lumyo-chat-booking-btn"
+                        onClick={() => trackClarityEvent('diagnostic_booking_clicked')}
                       >
                         <span>
                           {m.bookingAction.label ||
