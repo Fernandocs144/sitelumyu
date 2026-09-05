@@ -1,4 +1,4 @@
-import { filterQualificationForPersistence, isBudgetProvidedInCurrentTurn, isPricingRequestedInCurrentTurn } from '../../api/agent/message.js';
+import { filterQualificationForPersistence, inferShortBusinessGoalAnswer, isBudgetProvidedInCurrentTurn, isPricingRequestedInCurrentTurn } from '../../api/agent/message.js';
 import { calculateNextCommercialGoal, isLeadQualificationComplete } from './commercial-conversation-policy.js';
 import { composeCommercialReply } from './commercial-reply-composer.js';
 import { getCommercialGoalMessage } from './commercial-goal-messages.js';
@@ -599,5 +599,27 @@ assert(isCommercialRequestLimitCode('conversation_limit_reached') === true, 'LIM
 assert(isCommercialRequestLimitCode('post_qualification_limit_reached') === true, 'LIMITE 10: Código de encerramento pós-qualificação deve ser reconhecido');
 assert(isCommercialRequestLimitCode('invalid_session') === false, 'LIMITE 11: Código interno não deve ser exposto como limite comercial');
 console.log('TESTES DE LIMITES DE PEDIDOS PASSARAM COM SUCESSO.');
+
+assert(inferShortBusinessGoalAnswer(
+  'notoriedade da marca',
+  'Qual é a principal necessidade ou resultado que pretende alcançar com este projeto?'
+) === 'notoriedade da marca', 'OBJETIVO CURTO 1: Notoriedade da marca deve ser aceite');
+assert(inferShortBusinessGoalAnswer(
+  'reduzir erros',
+  'Que problema atual deve este projeto resolver ou que resultado pretende alcançar para a empresa?'
+) === 'reduzir erros', 'OBJETIVO CURTO 2: Reduzir erros deve ser aceite');
+assert(inferShortBusinessGoalAnswer(
+  'increase sales',
+  'What is the main need or result you want to achieve with this project?'
+) === 'increase sales', 'OBJETIVO CURTO 3: Resposta curta em inglês deve ser aceite');
+assert(inferShortBusinessGoalAnswer(
+  'não sei',
+  'Qual é a principal necessidade ou resultado que pretende alcançar com este projeto?'
+) === null, 'OBJETIVO CURTO 4: Resposta vaga não deve ser aceite');
+assert(inferShortBusinessGoalAnswer(
+  'notoriedade da marca',
+  'Qual é o prazo previsto para lançar o projeto?'
+) === null, 'OBJETIVO CURTO 5: Não inferir objetivo fora da pergunta correta');
+console.log('TESTES DE OBJETIVOS DE NEGÓCIO CURTOS PASSARAM COM SUCESSO.');
 
 console.log('\n=== TODOS OS TESTES PERSISTENTES PASSARAM COM SUCESSO ===');

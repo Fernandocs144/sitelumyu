@@ -130,6 +130,53 @@ function cleanTrimmedString(val) {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+function normalizeIntentText(value) {
+  if (typeof value !== 'string') return '';
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+export function inferShortBusinessGoalAnswer(visitorMessage, previousAgentMessage) {
+  const answer = cleanTrimmedString(visitorMessage);
+  const previousAgent = normalizeIntentText(previousAgentMessage);
+  const normalizedAnswer = normalizeIntentText(answer);
+
+  if (!answer || answer.length > 300 || answer.includes('?')) return null;
+
+  const askedForBusinessGoal = [
+    'principal necessidade ou resultado',
+    'problema atual deve este projeto resolver',
+    'resultado pretende alcancar',
+    'main need or result',
+    'current problem should this project solve',
+    'result do you want to achieve',
+  ].some((fragment) => previousAgent.includes(fragment));
+
+  if (!askedForBusinessGoal) return null;
+
+  const vagueAnswers = new Set([
+    'sim',
+    'nao',
+    'nao sei',
+    'talvez',
+    'qualquer coisa',
+    'yes',
+    'no',
+    'i dont know',
+    'not sure',
+    'anything',
+  ]);
+  if (vagueAnswers.has(normalizedAnswer)) return null;
+
+  const businessGoalPattern = /\b(notoriedade|visibilidade|presenca|vendas?|clientes?|contactos?|credibilidade|conversao|tempo|erros?|custos?|manual|respostas?|organiz|automat|simplif|melhor|crescer|crescimento|reduzir|aumentar|poupar|awareness|visibility|presence|sales?|customers?|clients?|leads?|credibility|conversion|time|errors?|costs?|manual|responses?|organi[sz]|automat|simplif|improv|growth|grow|reduce|increase|save)\b/i;
+
+  return businessGoalPattern.test(normalizedAnswer) ? answer : null;
+}
+
 function cleanEmail(val) {
   if (typeof val !== 'string') return null;
   const trimmed = val.trim().toLowerCase();
@@ -1533,6 +1580,25 @@ async function handleRequest(request) {
     if (rawQualification || cleanMessage) {
       cleanQualification = sanitizeQualification(rawQualification || {}, cleanMessage);
       if (cleanQualification) {
+        const previousAgentMessage = [...history]
+          .slice(0, -1)
+          .reverse()
+          .find((entry) => entry.role === 'assistant')?.content;
+        const inferredBusinessGoal = inferShortBusinessGoalAnswer(
+          cleanMessage,
+          previousAgentMessage
+        );
+
+        if (inferredBusinessGoal) {
+          cleanQualification = {
+            ...cleanQualification,
+            need_description:
+              cleanQualification.need_description || inferredBusinessGoal,
+            operational_impact:
+              cleanQualification.operational_impact || inferredBusinessGoal,
+          };
+        }
+
         consolidatedLead = await processLeadQualification(
           supabase,
           sessionData,

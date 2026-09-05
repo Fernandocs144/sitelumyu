@@ -50,11 +50,11 @@ function createQualificationSchema() {
       },
       need_description: {
         type: ['string', 'null'],
-        description: 'Description of specific business needs, problem, or project scope stated by visitor.',
+        description: 'Specific business need, result, problem, or project scope stated by visitor. Short meaningful goal phrases are valid.',
       },
       operational_impact: {
         type: ['string', 'null'],
-        description: 'Impact on operations, workflow, or pain point described by visitor. For automation, it must be directly related to the process being automated; return null for an unrelated generic business objective.',
+        description: 'Business result, operational impact, workflow issue, or pain point described by visitor. Short meaningful outcome phrases are valid. For automation, it must remain directly related to the process being automated; return null for an unrelated generic business objective.',
       },
       timeline: {
         type: ['string', 'null'],

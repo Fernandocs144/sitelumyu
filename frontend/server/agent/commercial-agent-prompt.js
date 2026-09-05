@@ -181,6 +181,7 @@ STRICT FIELD-BY-FIELD EXTRACTION RULES:
 
 4. need_description:
    - Specific project goals, requirements, or problem description stated by visitor. Return null if unstated.
+   - A short but meaningful answer to the agent's need/result question is valid and MUST be extracted (e.g. "brand awareness", "more sales", "save time", "reduce errors"). Do not require a complete sentence or ask the visitor to reformulate it.
 
 5. operational_impact:
    - Current business problem, operational pain, or measurable business result the visitor wants the project to solve or achieve. Return null if unstated.
@@ -188,6 +189,7 @@ STRICT FIELD-BY-FIELD EXTRACTION RULES:
    - Do not duplicate a generic solution description already stored in need_description.
    - For primary_service = "automation", extract operational_impact ONLY when it is directly related to the process described in need_description or to the current automation scope. A generic business objective with no stated connection to that process is not a valid operational impact: return null.
    - Example: if need_description is invoice reception, classification, and filing, an answer such as "attract customers and increase sales" is unrelated and operational_impact MUST be null. Valid answers include reducing manual processing time, preventing classification errors, avoiding lost invoices, or shortening accounting delays.
+   - Except for an unrelated automation objective covered by the rule above, a short answer to a combined need/result question may validly populate both need_description and operational_impact.
 
 6. timeline:
    - Expected timeframe or launch deadline stated by visitor (e.g. "1 month", "ASAP", "in 2 weeks"). Return null if unstated.
@@ -272,6 +274,7 @@ REGRAS ESTRITAS DE EXTRAÇÃO CAMPO A CAMPO:
 
 4. need_description:
    - Objetivos do projeto, requisitos ou descrição da necessidade declarados pelo visitante. Devolver null se não declarado.
+   - Uma resposta curta mas com significado à pergunta sobre necessidade/resultado é válida e TEM DE ser extraída (ex: "notoriedade da marca", "mais vendas", "poupar tempo", "reduzir erros"). Não exigir uma frase completa nem obrigar o visitante a reformular.
 
 5. operational_impact:
    - Problema empresarial atual, dificuldade operacional ou resultado de negócio mensurável que o visitante pretende resolver ou alcançar com o projeto. Devolver null se não declarado.
@@ -279,6 +282,7 @@ REGRAS ESTRITAS DE EXTRAÇÃO CAMPO A CAMPO:
    - Não duplicar uma descrição genérica da solução já guardada em need_description.
    - Para primary_service = "automation", extrair operational_impact APENAS quando estiver diretamente relacionado com o processo descrito em need_description ou com o âmbito atual da automação. Um objetivo empresarial genérico sem ligação declarada a esse processo não é um impacto operacional válido: devolver null.
    - Exemplo: se need_description for receção, classificação e arquivo de faturas, uma resposta como "atrair clientes e aumentar as vendas" não está relacionada e operational_impact DEVE ser null. São respostas válidas reduzir tempo de tratamento manual, evitar erros de classificação, impedir a perda de faturas ou diminuir atrasos contabilísticos.
+   - Exceto perante um objetivo de automação incoerente abrangido pela regra anterior, uma resposta curta a uma pergunta combinada sobre necessidade/resultado pode preencher validamente need_description e operational_impact.
 
 6. timeline:
    - Prazo previsto para lançamento ou implementação declarado pelo visitante (ex: "1 mês", "2 semanas", "o mais rápido possível"). Devolver null se não declarado.
