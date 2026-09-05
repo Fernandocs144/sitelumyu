@@ -160,6 +160,22 @@ export function getCommercialGoalMessage(goal, language) {
         action: 'none',
       };
 
+    case 'ask_automation_context':
+      return {
+        goal: 'ask_automation_context',
+        language: lang,
+        modelInstruction: lang === 'en'
+          ? 'Acknowledge only information directly related to the automation process. Do not validate a generic business objective as operational impact when it is unrelated to the process being automated. Do not mention prices or meetings, and do not ask additional questions. The system will append the process context question.'
+          : 'Reconheça apenas informação diretamente relacionada com o processo a automatizar. Não valide um objetivo empresarial genérico como impacto operacional quando não estiver relacionado com esse processo. Não mencione preços nem reuniões e não faça perguntas adicionais. O sistema adicionará a pergunta sobre o contexto do processo.',
+        requiredClosing: lang === 'en'
+          ? 'How does this process currently work: how do the data or documents arrive, what criteria do you use, where are they stored, which tools are involved, and what difficulties do you want to eliminate?'
+          : 'Como funciona atualmente esse processo: como chegam os dados ou documentos, que critérios utiliza, onde são arquivados, que ferramentas estão envolvidas e que dificuldades pretende eliminar?',
+        fallbackReply: lang === 'en'
+          ? 'How does this process currently work: how do the data or documents arrive, what criteria do you use, where are they stored, which tools are involved, and what difficulties do you want to eliminate?'
+          : 'Como funciona atualmente esse processo: como chegam os dados ou documentos, que critérios utiliza, onde são arquivados, que ferramentas estão envolvidas e que dificuldades pretende eliminar?',
+        action: 'none',
+      };
+
     case 'ask_contact':
       return {
         goal: 'ask_contact',

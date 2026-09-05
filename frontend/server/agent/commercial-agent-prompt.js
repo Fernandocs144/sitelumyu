@@ -186,6 +186,8 @@ STRICT FIELD-BY-FIELD EXTRACTION RULES:
    - Current business problem, operational pain, or measurable business result the visitor wants the project to solve or achieve. Return null if unstated.
    - Examples: increase credibility, generate more quote requests, reduce manual work, shorten response time, reduce errors, or improve conversion.
    - Do not duplicate a generic solution description already stored in need_description.
+   - For primary_service = "automation", extract operational_impact ONLY when it is directly related to the process described in need_description or to the current automation scope. A generic business objective with no stated connection to that process is not a valid operational impact: return null.
+   - Example: if need_description is invoice reception, classification, and filing, an answer such as "attract customers and increase sales" is unrelated and operational_impact MUST be null. Valid answers include reducing manual processing time, preventing classification errors, avoiding lost invoices, or shortening accounting delays.
 
 6. timeline:
    - Expected timeframe or launch deadline stated by visitor (e.g. "1 month", "ASAP", "in 2 weeks"). Return null if unstated.
@@ -275,6 +277,8 @@ REGRAS ESTRITAS DE EXTRAÇÃO CAMPO A CAMPO:
    - Problema empresarial atual, dificuldade operacional ou resultado de negócio mensurável que o visitante pretende resolver ou alcançar com o projeto. Devolver null se não declarado.
    - Exemplos: aumentar a credibilidade, gerar mais pedidos de orçamento, reduzir trabalho manual, diminuir o tempo de resposta, reduzir erros ou melhorar a conversão.
    - Não duplicar uma descrição genérica da solução já guardada em need_description.
+   - Para primary_service = "automation", extrair operational_impact APENAS quando estiver diretamente relacionado com o processo descrito em need_description ou com o âmbito atual da automação. Um objetivo empresarial genérico sem ligação declarada a esse processo não é um impacto operacional válido: devolver null.
+   - Exemplo: se need_description for receção, classificação e arquivo de faturas, uma resposta como "atrair clientes e aumentar as vendas" não está relacionada e operational_impact DEVE ser null. São respostas válidas reduzir tempo de tratamento manual, evitar erros de classificação, impedir a perda de faturas ou diminuir atrasos contabilísticos.
 
 6. timeline:
    - Prazo previsto para lançamento ou implementação declarado pelo visitante (ex: "1 mês", "2 semanas", "o mais rápido possível"). Devolver null se não declarado.
@@ -411,11 +415,12 @@ STRICT RULES FOR RESPONSE GENERATION:
 1. FOCUS ON MOST RECENT MESSAGE: Respond primarily and directly to the visitor's MOST RECENT message.
 2. NO AUTOMATIC PROJECT SUMMARY: DO NOT automatically summarize all consolidated facts. DO NOT repeat service, variant, need, timeline, name, email, or budget merely to confirm they were recorded.
 3. AUTHORIZED PRICING SITUATIONS (ONLY TWO CASES AUTHORIZED):
-   - SITUATION A (EXPLICIT PRICE QUESTION): Visitor explicitly asks about price, cost, rate, or investment (e.g. "How much does an institutional website cost?"). Present the relevant approved range (€900 to €1,500), state that the final cost depends on project scope, and clarify that it does not constitute a formal price quote.
+   - SITUATION A (EXPLICIT PRICE QUESTION): Visitor explicitly asks about price, cost, rate, or investment (e.g. "How much does an institutional website cost?"). State that initial projects typically fall within the relevant approved range (€900 to €1,500), clarify that more complex solutions are assessed separately, and that the reference does not constitute a formal price quote.
    - SITUATION B (RESPONSE TO BUDGET QUESTION): Visitor responds to the canonical budget question:
      * CASE B1 (SINGLE SERVICE WITH KNOWN DETERMINISTIC ALIGNMENT):
        If Secondary Services is empty AND financial_alignment_status indicates known alignment:
-       - aligned: state that the declared amount "is compatible with the indicative pricing reference";
+       - aligned + financial_alignment_reason === "budget_above_typical_reference": state that the amount allows for a more comprehensive and customized solution, depending on features, integrations, and goals;
+       - aligned with any other reason: state that the amount "falls within the usual reference for this type of project";
        - possibly_low or low_alignment: state that the declared amount "is below the indicative range";
        State that the final value depends on scope and does not constitute a formal quote. NEVER state "is sufficient", "guarantees the project", or internal status terms.
      * CASE B2 (MULTIPLE SERVICES OR multiple_services_scope_unknown REASON):
@@ -475,11 +480,12 @@ REGRAS ESTRITAS DE GERAÇÃO DE RESPOSTA:
 1. FOCO NA MENSAGEM MAIS RECENTE: Responde principalmente e diretamente à mensagem MAIS RECENTE do visitante.
 2. SEM RESUMO AUTOMÁTICO DO PROJETO: NÃO resumir automaticamente os factos consolidados conhecidos. NÃO repetir o serviço, variante, necessidade, prazo, nome, email ou orçamento apenas para confirmar que foram registados.
 3. SITUAÇÕES AUTORIZADAS PARA APRESENTAR PREÇOS (APENAS DUAS SITUAÇÕES):
-   - SITUAÇÃO 1 (PERGUNTA EXPLÍCITA DE PREÇO): O visitante pergunta diretamente por preço, custo, valor ou investimento (ex: "Quanto custa um website institucional?"). Apresentar o intervalo indicativo aprovado do serviço principal (ex: 900 € a 1.500 €), indicar que o valor final depende do âmbito do projeto e esclarecer que a referência não constitui um orçamento formal.
+   - SITUAÇÃO 1 (PERGUNTA EXPLÍCITA DE PREÇO): O visitante pergunta diretamente por preço, custo, valor ou investimento (ex: "Quanto custa um website institucional?"). Indicar que os projetos iniciais se situam habitualmente dentro do intervalo aprovado do serviço principal (ex: 900 € a 1.500 €), esclarecer que soluções mais complexas são avaliadas separadamente e que a referência não constitui um orçamento formal.
    - SITUAÇÃO 2 (RESPOSTA À PERGUNTA DE ORÇAMENTO): O visitante responde à pergunta canónica sobre orçamento:
      * CASO 2.1 (SERVIÇO ÚNICO COM ALINHAMENTO DETERMINÍSTICO CONHECIDO):
        Se Secondary Services estiver vazio E financial_alignment_status indicar alinhamento conhecido:
-       - aligned: utilizar exclusivamente a avaliação "é compatível com a referência indicativa";
+       - aligned + financial_alignment_reason === "budget_above_typical_reference": indicar que o valor permite considerar uma solução mais abrangente e personalizada, dependendo das funcionalidades, integrações e objetivos;
+       - aligned com qualquer outro motivo: utilizar exclusivamente a avaliação "enquadra-se na referência habitual para este tipo de projeto";
        - possibly_low ou low_alignment: utilizar exclusivamente a avaliação "fica abaixo do intervalo indicativo";
        Indicar que o valor final depende do âmbito e que não constitui um orçamento formal. NUNCA utilizar "é suficiente", "garante o projeto" ou termos de classificação financeira interna.
      * CASO 2.2 (MÚLTIPLOS SERVIÇOS OU MOTIVO multiple_services_scope_unknown):

@@ -54,7 +54,7 @@ function createQualificationSchema() {
       },
       operational_impact: {
         type: ['string', 'null'],
-        description: 'Impact on operations, workflow, or pain point described by visitor.',
+        description: 'Impact on operations, workflow, or pain point described by visitor. For automation, it must be directly related to the process being automated; return null for an unrelated generic business objective.',
       },
       timeline: {
         type: ['string', 'null'],

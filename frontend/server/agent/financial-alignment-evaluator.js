@@ -21,7 +21,7 @@ function normalizeSecondaryServices(secondaryServices, primaryService) {
 
 export function evaluateFinancialAlignment(leadData) {
   const evaluatedAt = new Date().toISOString();
-  const ruleVersion = '1.0';
+  const ruleVersion = '1.1';
 
   if (!leadData || typeof leadData !== 'object') {
     return {
@@ -140,7 +140,19 @@ export function evaluateFinancialAlignment(leadData) {
 
   // 9. Regras de Comparação Financeira
   const referenceMinimum = ref.min;
+  const referenceMaximum = ref.max;
   const lowerTolerance = referenceMinimum * 0.80;
+
+  // Um orçamento cujo limite mínimo já ultrapassa a faixa habitual continua
+  // financeiramente alinhado, mas deve receber uma comunicação comercial própria.
+  if (min > referenceMaximum) {
+    return {
+      status: 'aligned',
+      reason: 'budget_above_typical_reference',
+      ruleVersion,
+      evaluatedAt,
+    };
+  }
 
   if (min >= referenceMinimum) {
     return {

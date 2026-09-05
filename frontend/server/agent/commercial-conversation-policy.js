@@ -224,6 +224,12 @@ export function calculateNextCommercialGoal(leadData, options = {}) {
 
   const operationalImpact = typeof data.operational_impact === 'string' ? data.operational_impact.trim() : '';
   if (!operationalImpact) {
+    if (primaryService === 'automation') {
+      return {
+        goal: 'ask_automation_context',
+        reason: 'automation_context_missing',
+      };
+    }
     return {
       goal: 'ask_operational_impact',
       reason: 'operational_impact_missing',

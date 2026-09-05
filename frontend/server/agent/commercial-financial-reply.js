@@ -133,19 +133,27 @@ export function buildDeterministicFinancialReply(leadData, language) {
   }
 
   const status = leadData.financial_alignment_status;
+  const reason = leadData.financial_alignment_reason;
+
+  if (status === 'aligned' && reason === 'budget_above_typical_reference') {
+    if (isEn) {
+      return `For ${primaryPublicName}, initial projects typically range from ${rangeFormatted}. The amount indicated allows for a more comprehensive and customized solution, depending on the features, integrations, and project goals. The final value is defined after reviewing the scope, and this reference does not constitute a formal quotation.`;
+    }
+    return `Para ${primaryPublicName}, os projetos iniciais situam-se habitualmente na faixa de ${rangeFormatted}. O valor indicado permite considerar uma solução mais abrangente e personalizada, dependendo das funcionalidades, integrações e objetivos do projeto. O valor final é definido após análise do âmbito e esta referência não constitui um orçamento formal.`;
+  }
 
   if (status === 'aligned') {
     if (isEn) {
-      return `For ${primaryPublicName}, the indicative pricing reference is ${rangeFormatted}. The amount indicated is compatible with this reference. The final value depends on the project scope and this reference does not constitute a formal quotation.`;
+      return `For ${primaryPublicName}, initial projects typically range from ${rangeFormatted}. The amount indicated falls within the usual reference for this type of project. The final value depends on the project scope and this reference does not constitute a formal quotation.`;
     }
-    return `Para ${primaryPublicName}, a referência indicativa é de ${rangeFormatted}. O valor indicado é compatível com esta referência. O valor final depende do âmbito do projeto e esta referência não constitui um orçamento formal.`;
+    return `Para ${primaryPublicName}, os projetos iniciais situam-se habitualmente na faixa de ${rangeFormatted}. O valor indicado enquadra-se na referência habitual para este tipo de projeto. O valor final depende do âmbito do projeto e esta referência não constitui um orçamento formal.`;
   }
 
   if (status === 'possibly_low' || status === 'low_alignment') {
     if (isEn) {
-      return `For ${primaryPublicName}, the indicative pricing reference is ${rangeFormatted}. The amount indicated is below the indicative pricing reference. The final value depends on the project scope and this reference does not constitute a formal quotation.`;
+      return `For ${primaryPublicName}, initial projects typically range from ${rangeFormatted}. The amount indicated is below the usual reference. We can assess a more focused or phased approach, depending on the priority features. The final value depends on the project scope and this reference does not constitute a formal quotation.`;
     }
-    return `Para ${primaryPublicName}, a referência indicativa é de ${rangeFormatted}. O valor indicado fica abaixo da referência indicativa. O valor final depende do âmbito do projeto e esta referência não constitui um orçamento formal.`;
+    return `Para ${primaryPublicName}, os projetos iniciais situam-se habitualmente na faixa de ${rangeFormatted}. O valor indicado fica abaixo da referência habitual. Poderemos avaliar uma abordagem mais focada ou faseada, dependendo das funcionalidades prioritárias. O valor final depende do âmbito do projeto e esta referência não constitui um orçamento formal.`;
   }
 
   // Serviço único, status unknown ou ausente

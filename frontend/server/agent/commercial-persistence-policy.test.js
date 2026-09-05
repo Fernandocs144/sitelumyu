@@ -4,6 +4,7 @@ import { composeCommercialReply } from './commercial-reply-composer.js';
 import { getCommercialGoalMessage } from './commercial-goal-messages.js';
 import { buildSecondPhaseInstructions, getCommercialAgentExtractionPrompt } from './commercial-agent-prompt.js';
 import { buildDeterministicFinancialReply } from './commercial-financial-reply.js';
+import { evaluateFinancialAlignment } from './financial-alignment-evaluator.js';
 
 function assert(cond, msg) {
   if (!cond) throw new Error(`FALHA NO TESTE: ${msg}`);
@@ -248,7 +249,31 @@ const goalOperationalImpact = calculateNextCommercialGoal({
   company_activity: 'Contabilidade para empresas',
   target_audience: 'PME portuguesas',
 });
-assert(goalOperationalImpact.goal === 'ask_operational_impact', 'CASO I.3: Deve pedir problema ou resultado empresarial');
+assert(goalOperationalImpact.goal === 'ask_automation_context', 'CASO I.3: Automção deve pedir contexto operacional específico');
+
+const automationContextPT = getCommercialGoalMessage('ask_automation_context', 'pt');
+const automationContextEN = getCommercialGoalMessage('ask_automation_context', 'en');
+assert(
+  automationContextPT.requiredClosing.includes('como chegam os dados ou documentos') &&
+    automationContextPT.requiredClosing.includes('que critérios utiliza') &&
+    automationContextPT.requiredClosing.includes('onde são arquivados') &&
+    automationContextPT.requiredClosing.includes('que ferramentas'),
+  'CASO I.3A: Pergunta PT recolhe origem, critérios, destino e ferramentas'
+);
+assert(
+  automationContextEN.requiredClosing.includes('how do the data or documents arrive') &&
+    automationContextEN.requiredClosing.includes('which tools'),
+  'CASO I.3B: Pergunta EN de contexto de automação está disponível'
+);
+
+const genericOperationalImpactGoal = calculateNextCommercialGoal({
+  primary_service: 'ai',
+  need_description: 'Criar um assistente para responder a clientes',
+  company_name: 'Empresa IA',
+  company_activity: 'Comércio eletrónico',
+  target_audience: 'Consumidores finais',
+});
+assert(genericOperationalImpactGoal.goal === 'ask_operational_impact', 'CASO I.3C: Restantes serviços mantêm a pergunta geral de impacto');
 
 const goalTimelineAfterCompany = calculateNextCommercialGoal({
   ...baseCompanyFlow,
@@ -276,6 +301,14 @@ assert(
 assert(
   extractionPromptEN.includes('5. operational_impact:') && extractionPromptEN.includes('increase credibility'),
   'CASO I.8: Extração EN instrui o preenchimento de operational_impact'
+);
+assert(
+  extractionPromptPT.includes('atrair clientes e aumentar as vendas') && extractionPromptPT.includes('operational_impact DEVE ser null'),
+  'CASO I.9: Extração PT rejeita impacto incoerente num processo de faturas'
+);
+assert(
+  extractionPromptEN.includes('attract customers and increase sales') && extractionPromptEN.includes('operational_impact MUST be null'),
+  'CASO I.10: Extração EN rejeita impacto incoerente num processo de faturas'
 );
 console.log('I. CASO I PASSOU: Qualificação empresarial antecede prazo, contacto, orçamento e reunião.');
 
@@ -354,6 +387,45 @@ const deterministicFinancialReplyF = budgetProvidedThisTurnF
   : null;
 assert(typeof deterministicFinancialReplyF === 'string' && deterministicFinancialReplyF.length > 0, 'TESTE FINANCEIRO F: Avaliação financeira gerada com sucesso');
 console.log('TESTE FINANCEIRO F PASSOU: Resposta de orçamento normal gera avaliação financeira com sucesso.');
+
+// Teste Financeiro G: valor acima da faixa habitual mantém aligned, com motivo específico
+const financialBaseG = {
+  primary_service: 'websites',
+  service_variant: 'institutional_website',
+  secondary_services: [],
+  budget_normalization_status: 'normalized',
+  stated_budget_min: 10000,
+  stated_budget_max: 10000,
+  stated_budget_currency: 'EUR',
+  stated_budget_period: 'project',
+};
+const alignmentG = evaluateFinancialAlignment(financialBaseG);
+assert(alignmentG.status === 'aligned', 'TESTE FINANCEIRO G: Orçamento acima da faixa continua aligned');
+assert(alignmentG.reason === 'budget_above_typical_reference', 'TESTE FINANCEIRO G: Motivo distingue valor acima da faixa habitual');
+assert(alignmentG.ruleVersion === '1.1', 'TESTE FINANCEIRO G: Nova regra financeira usa versão 1.1');
+const replyGpt = buildDeterministicFinancialReply({
+  ...financialBaseG,
+  financial_alignment_status: alignmentG.status,
+  financial_alignment_reason: alignmentG.reason,
+}, 'pt');
+const replyGen = buildDeterministicFinancialReply({
+  ...financialBaseG,
+  financial_alignment_status: alignmentG.status,
+  financial_alignment_reason: alignmentG.reason,
+}, 'en');
+assert(replyGpt.includes('permite considerar uma solução mais abrangente e personalizada'), 'TESTE FINANCEIRO G: Resposta PT adequada a valor acima da faixa');
+assert(replyGen.includes('allows for a more comprehensive and customized solution'), 'TESTE FINANCEIRO G: Resposta EN adequada a valor acima da faixa');
+console.log('TESTE FINANCEIRO G PASSOU: Orçamento acima da faixa habitual recebe comunicação específica em PT e EN.');
+
+// Teste Financeiro H: valor dentro da faixa habitual preserva aligned normal
+const alignmentH = evaluateFinancialAlignment({
+  ...financialBaseG,
+  stated_budget_min: 1200,
+  stated_budget_max: 1200,
+});
+assert(alignmentH.status === 'aligned', 'TESTE FINANCEIRO H: Orçamento dentro da faixa fica aligned');
+assert(alignmentH.reason === 'budget_at_or_above_minimum', 'TESTE FINANCEIRO H: Motivo normal é preservado dentro da faixa');
+console.log('TESTE FINANCEIRO H PASSOU: Orçamento dentro da faixa habitual preserva a classificação normal.');
 
 // TESTES DE COMUNICAÇÃO PÓS-AGENDAMENTO (1-11):
 const goalMsgAnswerPT = getCommercialGoalMessage('answer_turn_intent', 'pt');
