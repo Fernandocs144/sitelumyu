@@ -364,7 +364,10 @@ export default function CommercialAgentWidget() {
             setIsSending(false);
           } else if (res.status === 429 && typeof data?.code === 'string') {
             setRequestLimitCode(data.code);
-            if (data.code !== 'conversation_limit_reached') {
+            if (
+              data.code !== 'conversation_limit_reached' &&
+              data.code !== 'post_qualification_limit_reached'
+            ) {
               setRequestLimitMessageText(textToSend);
             }
             setIsSending(false);
@@ -623,7 +626,11 @@ export default function CommercialAgentWidget() {
             {requestLimitCode && !isSending && (
               <div className="lumyo-chat-error-banner" role="status">
                 <span>
-                  {requestLimitCode === 'conversation_limit_reached'
+                  {requestLimitCode === 'post_qualification_limit_reached'
+                    ? currentLang === 'en'
+                      ? 'You have reached the limit for this chat. To clarify additional questions, book a diagnostic meeting using the “Choose a time” button.'
+                      : 'Atingiste o limite deste chat. Para esclarecer questões adicionais, agenda uma reunião de diagnóstico através do botão «Escolher horário».'
+                    : requestLimitCode === 'conversation_limit_reached'
                     ? currentLang === 'en'
                       ? 'This conversation has reached its message limit. Please contact us directly to continue.'
                       : 'Esta conversa atingiu o limite de mensagens. Contacta-nos diretamente para continuar.'
@@ -632,6 +639,7 @@ export default function CommercialAgentWidget() {
                     : 'Foram enviadas demasiadas mensagens num curto período. Aguarda um minuto e tenta novamente.'}
                 </span>
                 {requestLimitCode !== 'conversation_limit_reached' &&
+                  requestLimitCode !== 'post_qualification_limit_reached' &&
                   requestLimitMessageText && (
                     <button
                       type="button"
@@ -669,7 +677,8 @@ export default function CommercialAgentWidget() {
                 disabled={
                   sessionStatus !== 'ready' ||
                   isSending ||
-                  requestLimitCode === 'conversation_limit_reached'
+                  requestLimitCode === 'conversation_limit_reached' ||
+                  requestLimitCode === 'post_qualification_limit_reached'
                 }
                 aria-label={
                   currentLang === 'en'
@@ -685,7 +694,8 @@ export default function CommercialAgentWidget() {
                   input.trim().length > 2000 ||
                   sessionStatus !== 'ready' ||
                   isSending ||
-                  requestLimitCode === 'conversation_limit_reached'
+                  requestLimitCode === 'conversation_limit_reached' ||
+                  requestLimitCode === 'post_qualification_limit_reached'
                 }
                 aria-label={
                   currentLang === 'en' ? 'Send message' : 'Enviar mensagem'

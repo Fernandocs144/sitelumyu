@@ -587,16 +587,17 @@ assert(neutralPreBudgetReply.source === 'model_with_closing' && neutralPreBudget
 console.log('TESTES DO COMPOSITOR COMERCIAL PASSARAM COM SUCESSO.');
 console.log('TESTES DE PROTEÇÃO CONTRA PREÇOS ANTECIPADOS PASSARAM COM SUCESSO.');
 
-assert(COMMERCIAL_REQUEST_LIMITS.qualificationSessionMessagesPerMinute === 15, 'LIMITE 1: Qualificação deve permitir até 15 mensagens por minuto por sessão');
+assert(COMMERCIAL_REQUEST_LIMITS.qualificationSessionMessagesPerMinute === 12, 'LIMITE 1: Qualificação deve permitir até 12 mensagens por minuto por sessão');
 assert(COMMERCIAL_REQUEST_LIMITS.qualificationIpMessagesPerMinute === 30, 'LIMITE 2: Qualificação deve permitir até 30 mensagens por minuto por IP');
-assert(COMMERCIAL_REQUEST_LIMITS.qualificationConversationMessagesTotal === 30, 'LIMITE 3: Qualificação deve permitir até 30 mensagens do visitante');
-assert(COMMERCIAL_REQUEST_LIMITS.postQualificationSessionMessagesPerMinute === 5, 'LIMITE 4: Pós-qualificação deve limitar a sessão a 5 mensagens por minuto');
+assert(COMMERCIAL_REQUEST_LIMITS.qualificationConversationMessagesTotal === 20, 'LIMITE 3: Qualificação deve permitir até 20 mensagens do visitante');
+assert(COMMERCIAL_REQUEST_LIMITS.postQualificationSessionMessagesPerMinute === 3, 'LIMITE 4: Pós-qualificação deve limitar a sessão a 3 mensagens por minuto');
 assert(COMMERCIAL_REQUEST_LIMITS.postQualificationIpMessagesPerMinute === 15, 'LIMITE 5: Pós-qualificação deve limitar o IP a 15 mensagens por minuto');
-assert(COMMERCIAL_REQUEST_LIMITS.postQualificationMessagesTotal === 10, 'LIMITE 6: Pós-qualificação deve permitir no máximo 10 mensagens adicionais');
+assert(COMMERCIAL_REQUEST_LIMITS.postQualificationMessagesTotal === 3, 'LIMITE 6: Pós-qualificação deve permitir no máximo 3 mensagens adicionais');
 assert(isCommercialRequestLimitCode('session_rate_limited') === true, 'LIMITE 7: Código de limite por sessão deve ser reconhecido');
 assert(isCommercialRequestLimitCode('ip_rate_limited') === true, 'LIMITE 8: Código de limite por IP deve ser reconhecido');
 assert(isCommercialRequestLimitCode('conversation_limit_reached') === true, 'LIMITE 9: Código de limite total deve ser reconhecido');
-assert(isCommercialRequestLimitCode('invalid_session') === false, 'LIMITE 10: Código interno não deve ser exposto como limite comercial');
+assert(isCommercialRequestLimitCode('post_qualification_limit_reached') === true, 'LIMITE 10: Código de encerramento pós-qualificação deve ser reconhecido');
+assert(isCommercialRequestLimitCode('invalid_session') === false, 'LIMITE 11: Código interno não deve ser exposto como limite comercial');
 console.log('TESTES DE LIMITES DE PEDIDOS PASSARAM COM SUCESSO.');
 
 console.log('\n=== TODOS OS TESTES PERSISTENTES PASSARAM COM SUCESSO ===');
