@@ -1,7 +1,10 @@
 export const COMMERCIAL_REQUEST_LIMITS = Object.freeze({
-  sessionMessagesPerMinute: 8,
-  ipMessagesPerMinute: 20,
-  conversationMessagesTotal: 40,
+  qualificationSessionMessagesPerMinute: 15,
+  qualificationIpMessagesPerMinute: 30,
+  qualificationConversationMessagesTotal: 30,
+  postQualificationSessionMessagesPerMinute: 5,
+  postQualificationIpMessagesPerMinute: 15,
+  postQualificationMessagesTotal: 10,
 });
 
 export const COMMERCIAL_REQUEST_LIMIT_CODES = Object.freeze([
