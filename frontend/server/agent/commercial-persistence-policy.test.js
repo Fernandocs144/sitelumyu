@@ -5,6 +5,10 @@ import { getCommercialGoalMessage } from './commercial-goal-messages.js';
 import { buildSecondPhaseInstructions, getCommercialAgentExtractionPrompt } from './commercial-agent-prompt.js';
 import { buildDeterministicFinancialReply } from './commercial-financial-reply.js';
 import { evaluateFinancialAlignment } from './financial-alignment-evaluator.js';
+import {
+  COMMERCIAL_REQUEST_LIMITS,
+  isCommercialRequestLimitCode,
+} from './commercial-request-limits.js';
 
 function assert(cond, msg) {
   if (!cond) throw new Error(`FALHA NO TESTE: ${msg}`);
@@ -582,5 +586,14 @@ assert(neutralPreBudgetReply.source === 'model_with_closing' && neutralPreBudget
 
 console.log('TESTES DO COMPOSITOR COMERCIAL PASSARAM COM SUCESSO.');
 console.log('TESTES DE PROTEÇÃO CONTRA PREÇOS ANTECIPADOS PASSARAM COM SUCESSO.');
+
+assert(COMMERCIAL_REQUEST_LIMITS.sessionMessagesPerMinute === 8, 'LIMITE 1: Sessão deve permitir no máximo 8 mensagens por minuto');
+assert(COMMERCIAL_REQUEST_LIMITS.ipMessagesPerMinute === 20, 'LIMITE 2: IP deve permitir no máximo 20 mensagens por minuto');
+assert(COMMERCIAL_REQUEST_LIMITS.conversationMessagesTotal === 40, 'LIMITE 3: Conversa deve permitir no máximo 40 mensagens do visitante');
+assert(isCommercialRequestLimitCode('session_rate_limited') === true, 'LIMITE 4: Código de limite por sessão deve ser reconhecido');
+assert(isCommercialRequestLimitCode('ip_rate_limited') === true, 'LIMITE 5: Código de limite por IP deve ser reconhecido');
+assert(isCommercialRequestLimitCode('conversation_limit_reached') === true, 'LIMITE 6: Código de limite total deve ser reconhecido');
+assert(isCommercialRequestLimitCode('invalid_session') === false, 'LIMITE 7: Código interno não deve ser exposto como limite comercial');
+console.log('TESTES DE LIMITES DE PEDIDOS PASSARAM COM SUCESSO.');
 
 console.log('\n=== TODOS OS TESTES PERSISTENTES PASSARAM COM SUCESSO ===');

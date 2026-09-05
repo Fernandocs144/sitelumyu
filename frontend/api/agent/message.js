@@ -17,6 +17,7 @@ import { calculateNextCommercialGoal } from '../../server/agent/commercial-conve
 import { getCommercialGoalMessage } from '../../server/agent/commercial-goal-messages.js';
 import { composeCommercialReply } from '../../server/agent/commercial-reply-composer.js';
 import { buildDeterministicFinancialReply } from '../../server/agent/commercial-financial-reply.js';
+import { isCommercialRequestLimitCode } from '../../server/agent/commercial-request-limits.js';
 
 function bufferToHex(buffer) {
   return Array.from(new Uint8Array(buffer))
@@ -1291,6 +1292,80 @@ async function handleRequest(request) {
       }
     }
 
+    const { data: requestLimitData, error: requestLimitError } = await supabase
+      .rpc('check_commercial_request_limits', {
+        p_session_id: sessionData.id,
+        p_conversation_id: conversationId,
+      })
+      .single();
+
+    if (requestLimitError || !requestLimitData) {
+      console.error('Failed to check commercial request limits', {
+        code: requestLimitError?.code || 'request_limit_result_missing',
+      });
+      return Response.json(
+        {
+          success: false,
+          error: 'Service temporarily unavailable',
+          code: 'REQUEST_LIMIT_CHECK_FAILED',
+        },
+        {
+          status: 503,
+          headers: {
+            'Cache-Control': 'no-store',
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+    }
+
+    if (!requestLimitData.allowed) {
+      if (!isCommercialRequestLimitCode(requestLimitData.reason)) {
+        console.warn('Commercial request limit check rejected invalid context', {
+          code: requestLimitData.reason || 'request_limit_unknown_reason',
+        });
+        return Response.json(
+          {
+            success: false,
+            error: 'Service temporarily unavailable',
+            code: 'REQUEST_LIMIT_CONTEXT_INVALID',
+          },
+          {
+            status: 503,
+            headers: {
+              'Cache-Control': 'no-store',
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+      }
+
+      const limitCode = requestLimitData.reason;
+      const retryAfterSeconds = Math.max(
+        0,
+        Number(requestLimitData.retry_after_seconds) || 0
+      );
+
+      return Response.json(
+        {
+          success: false,
+          error: 'Request limit reached',
+          code: limitCode,
+          retryAfterSeconds,
+        },
+        {
+          status: 429,
+          headers: {
+            'Cache-Control': 'no-store',
+            'Content-Type': 'application/json',
+            ...(retryAfterSeconds > 0
+              ? { 'Retry-After': String(retryAfterSeconds) }
+              : {}),
+          },
+        }
+      );
+    }
+
     const visitorRes = await insertMessageWithSequence(
       supabase,
       conversationId,
@@ -1580,7 +1655,7 @@ async function handleRequest(request) {
                 schema: commercialAgentReplySchema,
               },
             },
-            max_output_tokens: 800,
+            max_output_tokens: 300,
             store: false,
           });
 

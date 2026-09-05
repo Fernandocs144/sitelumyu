@@ -66,6 +66,8 @@ export default function CommercialAgentWidget() {
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [failedMessageText, setFailedMessageText] = useState(null);
+  const [requestLimitCode, setRequestLimitCode] = useState(null);
+  const [requestLimitMessageText, setRequestLimitMessageText] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
 
   const triggerBtnRef = useRef(null);
@@ -297,6 +299,8 @@ export default function CommercialAgentWidget() {
 
       setInput('');
       setFailedMessageText(null);
+      setRequestLimitCode(null);
+      setRequestLimitMessageText(null);
       setIsSending(true);
 
       const makeRequest = async () => {
@@ -357,6 +361,12 @@ export default function CommercialAgentWidget() {
                 bookingAction: data.data.bookingAction || null,
               },
             ]);
+            setIsSending(false);
+          } else if (res.status === 429 && typeof data?.code === 'string') {
+            setRequestLimitCode(data.code);
+            if (data.code !== 'conversation_limit_reached') {
+              setRequestLimitMessageText(textToSend);
+            }
             setIsSending(false);
           } else {
             setFailedMessageText(textToSend);
@@ -610,6 +620,32 @@ export default function CommercialAgentWidget() {
 
           {/* Rodapé / Área de Input */}
           <footer className="lumyo-chat-footer">
+            {requestLimitCode && !isSending && (
+              <div className="lumyo-chat-error-banner" role="status">
+                <span>
+                  {requestLimitCode === 'conversation_limit_reached'
+                    ? currentLang === 'en'
+                      ? 'This conversation has reached its message limit. Please contact us directly to continue.'
+                      : 'Esta conversa atingiu o limite de mensagens. Contacta-nos diretamente para continuar.'
+                    : currentLang === 'en'
+                    ? 'Too many messages in a short time. Please wait one minute and try again.'
+                    : 'Foram enviadas demasiadas mensagens num curto período. Aguarda um minuto e tenta novamente.'}
+                </span>
+                {requestLimitCode !== 'conversation_limit_reached' &&
+                  requestLimitMessageText && (
+                    <button
+                      type="button"
+                      className="lumyo-chat-retry-btn"
+                      onClick={() =>
+                        handleSendMessage(requestLimitMessageText, true)
+                      }
+                    >
+                      {currentLang === 'en' ? 'Try again' : 'Tentar novamente'}
+                    </button>
+                  )}
+              </div>
+            )}
+
             <form
               className="lumyo-chat-form"
               onSubmit={(e) => {
@@ -630,7 +666,11 @@ export default function CommercialAgentWidget() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleTextareaKeyDown}
-                disabled={sessionStatus !== 'ready' || isSending}
+                disabled={
+                  sessionStatus !== 'ready' ||
+                  isSending ||
+                  requestLimitCode === 'conversation_limit_reached'
+                }
                 aria-label={
                   currentLang === 'en'
                     ? 'Type your message'
@@ -644,7 +684,8 @@ export default function CommercialAgentWidget() {
                   !input.trim() ||
                   input.trim().length > 2000 ||
                   sessionStatus !== 'ready' ||
-                  isSending
+                  isSending ||
+                  requestLimitCode === 'conversation_limit_reached'
                 }
                 aria-label={
                   currentLang === 'en' ? 'Send message' : 'Enviar mensagem'
