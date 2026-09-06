@@ -1182,8 +1182,9 @@ const translations = {
         {
           title: '9. Conservação dos dados',
           paragraphs: [
-            'Os dados pessoais são conservados apenas durante o período necessário para as finalidades para que foram recolhidos, para cumprimento de obrigações legais ou durante os prazos necessários à defesa de direitos e interesses legítimos.',
-            'Pedidos de contacto que não resultem numa relação comercial serão eliminados ou anonimizados quando deixarem de ser necessários, salvo quando exista fundamento legal para a sua conservação.',
+            'As mensagens de conversas anónimas são conservadas durante 30 dias. As sessões anónimas, as conversas sem lead e os registos técnicos de limites, repetição, abuso e segurança são conservados durante 90 dias.',
+            'Os dados de potenciais clientes e as conversas associadas são conservados durante 12 meses após a última interação, salvo quando exista uma relação contratual, uma obrigação legal, um pedido de apagamento aplicável ou outro fundamento que justifique um prazo diferente.',
+            'Quando um potencial cliente passa a cliente, os dados necessários à relação contratual, faturação, cumprimento de obrigações legais e defesa de direitos ficam sujeitos aos prazos aplicáveis a essas finalidades.',
           ],
         },
         {
@@ -2475,8 +2476,9 @@ const translations = {
         {
           title: '9. Data retention',
           paragraphs: [
-            'Personal data is retained only for as long as necessary for the purposes for which it was collected, to comply with legal obligations or for the periods required to protect legitimate rights and interests.',
-            'Contact requests that do not result in a commercial relationship will be deleted or anonymised when they are no longer required, unless there is a legal basis for retaining them.',
+            'Messages from anonymous conversations are retained for 30 days. Anonymous sessions, conversations without a lead, and technical records relating to limits, repetition, abuse and security are retained for 90 days.',
+            'Prospective client data and associated conversations are retained for 12 months after the last interaction, unless a contractual relationship, legal obligation, applicable erasure request or another lawful basis requires a different period.',
+            'When a prospective client becomes a client, data required for the contractual relationship, invoicing, compliance with legal obligations and the establishment, exercise or defence of legal claims becomes subject to the retention periods applicable to those purposes.',
           ],
         },
         {

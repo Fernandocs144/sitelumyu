@@ -12,9 +12,24 @@ import {
 } from './commercial-request-limits.js';
 import { classifyCommercialMessageAbuse } from './commercial-abuse-policy.js';
 import { classifyCommercialSecurityIntent } from './commercial-security-policy.js';
+import {
+  COMMERCIAL_LEAD_RETENTION_MONTHS,
+  COMMERCIAL_DATA_RETENTION_DAYS,
+  getCommercialRetentionCutoffs,
+} from './commercial-data-retention.js';
 
 function assert(cond, msg) {
   if (!cond) throw new Error(`FALHA NO TESTE: ${msg}`);
+}
+
+function assertThrows(fn, msg) {
+  let threw = false;
+  try {
+    fn();
+  } catch {
+    threw = true;
+  }
+  assert(threw, msg);
 }
 
 console.log('=== SUITE DE TESTES PERSISTENTE DE INTEGRIDADE DE DADOS E PERSISTÊNCIA ===\n');
@@ -754,5 +769,38 @@ assert(inferShortBusinessGoalAnswer(
   'Qual é o prazo previsto para lançar o projeto?'
 ) === null, 'OBJETIVO CURTO 5: Não inferir objetivo fora da pergunta correta');
 console.log('TESTES DE OBJETIVOS DE NEGÓCIO CURTOS PASSARAM COM SUCESSO.');
+
+assert(
+  COMMERCIAL_DATA_RETENTION_DAYS.anonymousMessages === 30,
+  'RETENÇÃO 1: Mensagens anónimas devem ser conservadas durante 30 dias'
+);
+assert(
+  COMMERCIAL_DATA_RETENTION_DAYS.anonymousTechnicalData === 90,
+  'RETENÇÃO 2: Dados técnicos anónimos devem ser conservados durante 90 dias'
+);
+assert(
+  COMMERCIAL_LEAD_RETENTION_MONTHS === 12,
+  'RETENÇÃO 3: Potenciais clientes devem ser conservados durante 12 meses'
+);
+const retentionCutoffs = getCommercialRetentionCutoffs(
+  new Date('2026-09-06T12:00:00.000Z')
+);
+assert(
+  retentionCutoffs.anonymousMessagesBefore === '2026-08-07T12:00:00.000Z',
+  'RETENÇÃO 4: Limite de mensagens anónimas deve recuar exatamente 30 dias'
+);
+assert(
+  retentionCutoffs.anonymousTechnicalDataBefore === '2026-06-08T12:00:00.000Z',
+  'RETENÇÃO 5: Limite técnico deve recuar exatamente 90 dias'
+);
+assert(
+  retentionCutoffs.prospectiveLeadsBefore === '2025-09-06T12:00:00.000Z',
+  'RETENÇÃO 6: Limite de potenciais clientes deve recuar 12 meses'
+);
+assertThrows(
+  () => getCommercialRetentionCutoffs(new Date('invalid')),
+  'RETENÇÃO 7: Uma data de referência inválida deve ser rejeitada'
+);
+console.log('TESTES DE RETENÇÃO DE DADOS PASSARAM COM SUCESSO.');
 
 console.log('\n=== TODOS OS TESTES PERSISTENTES PASSARAM COM SUCESSO ===');

@@ -794,6 +794,26 @@ export default function CommercialAgentWidget() {
               </button>
             </form>
 
+            <p className="lumyo-chat-privacy-notice">
+              {currentLang === 'en' ? (
+                <>
+                  By using this chat, your data is processed in accordance with our{' '}
+                  <a href="/privacy" target="_blank" rel="noopener noreferrer">
+                    Privacy Policy
+                  </a>
+                  .
+                </>
+              ) : (
+                <>
+                  Ao utilizares este chat, os teus dados são tratados de acordo com a nossa{' '}
+                  <a href="/privacy" target="_blank" rel="noopener noreferrer">
+                    Política de Privacidade
+                  </a>
+                  .
+                </>
+              )}
+            </p>
+
             {failedMessageText && !isSending && (
               <div className="lumyo-chat-error-banner">
                 <span>
