@@ -1,4 +1,4 @@
-import { filterQualificationForPersistence, inferShortBusinessGoalAnswer, isBudgetProvidedInCurrentTurn, isPricingRequestedInCurrentTurn, startSeparateCommercialProject } from '../../api/agent/message.js';
+import { filterQualificationForPersistence, inferShortBusinessGoalAnswer, isBudgetProvidedInCurrentTurn, isPricingRequestedInCurrentTurn, shouldExposeBookingAction, startSeparateCommercialProject } from '../../api/agent/message.js';
 import { calculateNextCommercialGoal, isLeadQualificationComplete } from './commercial-conversation-policy.js';
 import { composeCommercialReply } from './commercial-reply-composer.js';
 import { getCommercialGoalMessage } from './commercial-goal-messages.js';
@@ -154,6 +154,24 @@ const clarificationMessageB = getCommercialGoalMessage('clarify_project_scope', 
 assert(
   clarificationMessageB.action === 'none',
   'CASO B.1: clarificação de projeto não pode expor bookingAction'
+);
+assert(
+  shouldExposeBookingAction({
+    commercialGoal: clarificationGoalB,
+    goalMessage: clarificationMessageB,
+    effectiveLeadState: pendingLeadB,
+    turnIntent: 'possible_new_project',
+  }) === false,
+  'CASO B.1: booking_pending antigo não pode expor bookingAction durante a clarificação'
+);
+assert(
+  shouldExposeBookingAction({
+    commercialGoal: { goal: 'answer_turn_intent' },
+    goalMessage: getCommercialGoalMessage('answer_turn_intent', 'pt'),
+    effectiveLeadState: pendingLeadB,
+    turnIntent: 'direct_question',
+  }) === true,
+  'CASO B.1: uma pergunta direta no booking_pending continua a preservar bookingAction'
 );
 
 let separateProjectRpcArgsB = null;

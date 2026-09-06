@@ -835,6 +835,31 @@ export async function startSeparateCommercialProject({
   };
 }
 
+export function shouldExposeBookingAction({
+  commercialGoal,
+  goalMessage,
+  effectiveLeadState,
+  turnIntent,
+}) {
+  if (
+    commercialGoal?.goal === 'clarify_project_scope' ||
+    turnIntent === 'possible_new_project' ||
+    turnIntent === 'new_project_confirmed'
+  ) {
+    return false;
+  }
+
+  const isBookingState =
+    commercialGoal?.goal === 'show_booking' ||
+    commercialGoal?.goal === 'answer_turn_intent' ||
+    effectiveLeadState?.next_step === 'booking_pending';
+
+  return Boolean(
+    isBookingState &&
+    (goalMessage?.action === 'booking' || effectiveLeadState?.next_step === 'booking_pending')
+  );
+}
+
 async function processLeadQualification(supabase, sessionData, conversationId, activeLanguage, cleanQualification) {
   if (!cleanQualification) return null;
 
@@ -2238,12 +2263,14 @@ async function handleRequest(request) {
 
     // AVALIAÇÃO DETERMINÍSTICA DE BOOKING ACTION
     let bookingAction = null;
-    const isBookingState =
-      commercialGoal.goal === 'show_booking' ||
-      commercialGoal.goal === 'answer_turn_intent' ||
-      effectiveLeadState?.next_step === 'booking_pending';
+    const exposeBookingAction = shouldExposeBookingAction({
+      commercialGoal,
+      goalMessage,
+      effectiveLeadState,
+      turnIntent: cleanQualification?.turn_intent || null,
+    });
 
-    if (isBookingState && (goalMessage.action === 'booking' || effectiveLeadState?.next_step === 'booking_pending')) {
+    if (exposeBookingAction) {
       const associatedLeadId = sessionData.lead_id || effectiveLeadState?.id;
       if (associatedLeadId) {
         const calComBaseUrl = process.env.CALCOM_BOOKING_URL;
