@@ -652,6 +652,30 @@ assert(
   classifyCommercialMessageAbuse('Vou destruir-te.').severity === 'severe',
   'ABUSO 8: Ameaça com hífen deve encerrar imediatamente'
 );
+assert(
+  classifyCommercialMessageAbuse('Vai a merda.').severity === 'abusive',
+  'ABUSO 9: Variante sem preposição para linguagem abusiva deve gerar aviso'
+);
+assert(
+  classifyCommercialMessageAbuse('Vai para o caralho.').severity === 'abusive',
+  'ABUSO 10: Variante com outro palavrão deve gerar aviso'
+);
+assert(
+  classifyCommercialMessageAbuse('Vai pró caralho.').severity === 'abusive',
+  'ABUSO 11: Contração portuguesa não deve contornar a deteção'
+);
+assert(
+  classifyCommercialMessageAbuse('Vai tomar no cu.').severity === 'abusive',
+  'ABUSO 12: Expressão abusiva composta deve gerar aviso'
+);
+assert(
+  classifyCommercialMessageAbuse('FODA-SE!!!').severity === 'abusive',
+  'ABUSO 13: Maiúsculas e hífen não devem contornar a deteção'
+);
+assert(
+  classifyCommercialMessageAbuse('O sistema escreveu a categoria merda no ficheiro e preciso de a corrigir.').severity === 'none',
+  'ABUSO 14: Palavrão citado com contexto operacional útil não deve ser bloqueado'
+);
 console.log('TESTES DE LINGUAGEM ABUSIVA PASSARAM COM SUCESSO.');
 
 assert(inferShortBusinessGoalAnswer(

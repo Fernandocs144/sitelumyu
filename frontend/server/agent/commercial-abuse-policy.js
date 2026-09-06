@@ -13,9 +13,11 @@ const SEVERE_PATTERNS = Object.freeze([
 
 const DIRECT_ABUSE_PATTERNS = Object.freeze([
   /\b(?:vai te|vao se) (?:foder|lixar)\b/,
-  /\bvai para a merda\b/,
+  /\bvai (?:a|para a|para o|pa|po|pra|pro) (?:merda|caralho)\b/,
+  /\bvai (?:foder|tomar no cu)\b/,
+  /\bvai para a puta que te pariu\b/,
   /\bfode te\b/,
-  /\bcala te\b/,
+  /\bcala (?:te|a boca)\b/,
   /\b(?:fuck|screw) you\b/,
   /\b(?:go to hell|shut up)\b/,
   /\b(?:tu es|voce e|voces sao|you are) (?:um |uma )?(?:idiota|burro|burra|estupido|estupida|imbecil|inutil|lixo|merda)\b/,
@@ -29,8 +31,12 @@ const ABUSIVE_ONLY_WORDS = new Set([
   'porra',
   'caralho',
   'foda',
+  'fodasse',
   'foder',
+  'fdp',
+  'pqp',
   'puta',
+  'cu',
   'idiota',
   'burro',
   'burra',
@@ -47,8 +53,9 @@ const ABUSIVE_ONLY_WORDS = new Set([
 ]);
 
 const ABUSIVE_FILLER_WORDS = new Set([
-  'a', 'as', 'da', 'de', 'do', 'e', 'grande', 'o', 'os', 'se', 'seu', 'sua',
-  'tu', 'um', 'uma', 'you', 'your',
+  'a', 'as', 'da', 'de', 'do', 'e', 'grande', 'na', 'no', 'o', 'os', 'pa',
+  'para', 'po', 'pra', 'pro', 'se', 'seu', 'sua', 'te', 'tomar', 'tu', 'um',
+  'uma', 'vai', 'vao', 'vos', 'you', 'your',
 ]);
 
 export function classifyCommercialMessageAbuse(value) {
