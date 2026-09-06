@@ -17,7 +17,10 @@ import { calculateNextCommercialGoal } from '../../server/agent/commercial-conve
 import { getCommercialGoalMessage } from '../../server/agent/commercial-goal-messages.js';
 import { composeCommercialReply } from '../../server/agent/commercial-reply-composer.js';
 import { buildDeterministicFinancialReply } from '../../server/agent/commercial-financial-reply.js';
-import { isCommercialRequestLimitCode } from '../../server/agent/commercial-request-limits.js';
+import {
+  isCommercialRequestLimitCode,
+  normalizeCommercialMessageForFingerprint,
+} from '../../server/agent/commercial-request-limits.js';
 
 function bufferToHex(buffer) {
   return Array.from(new Uint8Array(buffer))
@@ -1240,6 +1243,52 @@ async function handleRequest(request) {
       );
     }
 
+    const { data: blockedConversation, error: blockedConversationError } = await supabase
+      .from('conversations')
+      .select('id')
+      .eq('session_id', sessionData.id)
+      .eq('status', 'completed')
+      .eq('primary_outcome', 'spam_detected')
+      .limit(1)
+      .maybeSingle();
+
+    if (blockedConversationError) {
+      console.error('Failed to verify blocked commercial conversation', {
+        code: blockedConversationError.code || 'unknown',
+      });
+      return Response.json(
+        {
+          success: false,
+          error: 'Internal server error',
+        },
+        {
+          status: 500,
+          headers: {
+            'Cache-Control': 'no-store',
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+    }
+
+    if (blockedConversation) {
+      return Response.json(
+        {
+          success: false,
+          error: 'Conversation closed due to repeated messages',
+          code: 'repeated_message_limit_reached',
+          retryAfterSeconds: 0,
+        },
+        {
+          status: 429,
+          headers: {
+            'Cache-Control': 'no-store',
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+    }
+
     let conversationId;
     let activeLanguage = requestedLanguage;
 
@@ -1337,6 +1386,74 @@ async function handleRequest(request) {
         conversationId = newConv.id;
         activeLanguage = newConv.language;
       }
+    }
+
+    const normalizedMessage = normalizeCommercialMessageForFingerprint(cleanMessage);
+    const messageFingerprint = await sha256Hex(normalizedMessage);
+    const { data: repetitionData, error: repetitionError } = await supabase
+      .rpc('check_commercial_message_repetition', {
+        p_session_id: sessionData.id,
+        p_conversation_id: conversationId,
+        p_message_fingerprint: messageFingerprint,
+      })
+      .single();
+
+    if (repetitionError || !repetitionData) {
+      console.error('Failed to check repeated commercial message', {
+        code: repetitionError?.code || 'repetition_result_missing',
+      });
+      return Response.json(
+        {
+          success: false,
+          error: 'Service temporarily unavailable',
+          code: 'REPETITION_CHECK_FAILED',
+        },
+        {
+          status: 503,
+          headers: {
+            'Cache-Control': 'no-store',
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+    }
+
+    if (!repetitionData.allowed) {
+      if (!isCommercialRequestLimitCode(repetitionData.reason)) {
+        console.warn('Commercial repetition check returned an invalid reason', {
+          code: repetitionData.reason || 'repetition_unknown_reason',
+        });
+        return Response.json(
+          {
+            success: false,
+            error: 'Service temporarily unavailable',
+            code: 'REPETITION_CONTEXT_INVALID',
+          },
+          {
+            status: 503,
+            headers: {
+              'Cache-Control': 'no-store',
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+      }
+
+      return Response.json(
+        {
+          success: false,
+          error: 'Repeated message detected',
+          code: repetitionData.reason,
+          retryAfterSeconds: 0,
+        },
+        {
+          status: 429,
+          headers: {
+            'Cache-Control': 'no-store',
+            'Content-Type': 'application/json',
+          },
+        }
+      );
     }
 
     const { data: requestLimitData, error: requestLimitError } = await supabase

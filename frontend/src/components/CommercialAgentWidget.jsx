@@ -366,7 +366,9 @@ export default function CommercialAgentWidget() {
             setRequestLimitCode(data.code);
             if (
               data.code !== 'conversation_limit_reached' &&
-              data.code !== 'post_qualification_limit_reached'
+              data.code !== 'post_qualification_limit_reached' &&
+              data.code !== 'repeated_message_warning' &&
+              data.code !== 'repeated_message_limit_reached'
             ) {
               setRequestLimitMessageText(textToSend);
             }
@@ -630,6 +632,14 @@ export default function CommercialAgentWidget() {
                     ? currentLang === 'en'
                       ? 'You have reached the limit for this chat. To clarify additional questions, book a diagnostic meeting using the “Choose a time” button.'
                       : 'Atingiste o limite deste chat. Para esclarecer questões adicionais, agenda uma reunião de diagnóstico através do botão «Escolher horário».'
+                    : requestLimitCode === 'repeated_message_limit_reached'
+                    ? currentLang === 'en'
+                      ? 'This chat was closed after repeated messages. To continue, please contact the Lumyo team directly.'
+                      : 'Este chat foi encerrado após o envio repetido da mesma mensagem. Para continuar, contacta diretamente a equipa Lumyo.'
+                    : requestLimitCode === 'repeated_message_warning'
+                    ? currentLang === 'en'
+                      ? 'We have already received this message. Please rephrase it or provide different information to continue.'
+                      : 'Já recebemos esta mensagem. Reformula-a ou acrescenta informação diferente para continuar.'
                     : requestLimitCode === 'conversation_limit_reached'
                     ? currentLang === 'en'
                       ? 'This conversation has reached its message limit. Please contact us directly to continue.'
@@ -640,6 +650,8 @@ export default function CommercialAgentWidget() {
                 </span>
                 {requestLimitCode !== 'conversation_limit_reached' &&
                   requestLimitCode !== 'post_qualification_limit_reached' &&
+                  requestLimitCode !== 'repeated_message_warning' &&
+                  requestLimitCode !== 'repeated_message_limit_reached' &&
                   requestLimitMessageText && (
                     <button
                       type="button"
@@ -678,7 +690,8 @@ export default function CommercialAgentWidget() {
                   sessionStatus !== 'ready' ||
                   isSending ||
                   requestLimitCode === 'conversation_limit_reached' ||
-                  requestLimitCode === 'post_qualification_limit_reached'
+                  requestLimitCode === 'post_qualification_limit_reached' ||
+                  requestLimitCode === 'repeated_message_limit_reached'
                 }
                 aria-label={
                   currentLang === 'en'
@@ -695,7 +708,8 @@ export default function CommercialAgentWidget() {
                   sessionStatus !== 'ready' ||
                   isSending ||
                   requestLimitCode === 'conversation_limit_reached' ||
-                  requestLimitCode === 'post_qualification_limit_reached'
+                  requestLimitCode === 'post_qualification_limit_reached' ||
+                  requestLimitCode === 'repeated_message_limit_reached'
                 }
                 aria-label={
                   currentLang === 'en' ? 'Send message' : 'Enviar mensagem'

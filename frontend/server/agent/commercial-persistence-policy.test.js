@@ -8,6 +8,7 @@ import { evaluateFinancialAlignment } from './financial-alignment-evaluator.js';
 import {
   COMMERCIAL_REQUEST_LIMITS,
   isCommercialRequestLimitCode,
+  normalizeCommercialMessageForFingerprint,
 } from './commercial-request-limits.js';
 
 function assert(cond, msg) {
@@ -597,7 +598,23 @@ assert(isCommercialRequestLimitCode('session_rate_limited') === true, 'LIMITE 7:
 assert(isCommercialRequestLimitCode('ip_rate_limited') === true, 'LIMITE 8: Código de limite por IP deve ser reconhecido');
 assert(isCommercialRequestLimitCode('conversation_limit_reached') === true, 'LIMITE 9: Código de limite total deve ser reconhecido');
 assert(isCommercialRequestLimitCode('post_qualification_limit_reached') === true, 'LIMITE 10: Código de encerramento pós-qualificação deve ser reconhecido');
-assert(isCommercialRequestLimitCode('invalid_session') === false, 'LIMITE 11: Código interno não deve ser exposto como limite comercial');
+assert(isCommercialRequestLimitCode('repeated_message_warning') === true, 'LIMITE 11: Aviso de repetição deve ser reconhecido');
+assert(isCommercialRequestLimitCode('repeated_message_limit_reached') === true, 'LIMITE 12: Encerramento por repetição deve ser reconhecido');
+assert(isCommercialRequestLimitCode('invalid_session') === false, 'LIMITE 13: Código interno não deve ser exposto como limite comercial');
+assert(
+  normalizeCommercialMessageForFingerprint('  QUERO   UM SITE!!! ') === 'quero um site',
+  'REPETIÇÃO 1: Maiúsculas, espaços e pontuação devem ser ignorados'
+);
+assert(
+  normalizeCommercialMessageForFingerprint('Automação de faturação') ===
+    normalizeCommercialMessageForFingerprint('automacao de faturacao.'),
+  'REPETIÇÃO 2: Acentos e pontuação não devem contornar a deteção'
+);
+assert(
+  normalizeCommercialMessageForFingerprint('Quero um site') !==
+    normalizeCommercialMessageForFingerprint('Quero uma automação'),
+  'REPETIÇÃO 3: Mensagens materialmente diferentes não devem coincidir'
+);
 console.log('TESTES DE LIMITES DE PEDIDOS PASSARAM COM SUCESSO.');
 
 assert(inferShortBusinessGoalAnswer(
