@@ -4,23 +4,24 @@ import { Link } from 'react-router-dom';
 import { ArrowUp } from 'lucide-react';
 
 import { useLang } from '../i18n';
+import { openCookiePreferences } from '../analytics/clarity';
 
 export default function Footer({ variant = 'default' }) {
   const { t } = useLang();
   const f = t.footer;
 
   if (variant === 'home') {
-    return <HomeFooter f={f} />;
+    return <HomeFooter f={f} cookieConsent={t.cookieConsent} />;
   }
 
-  return <DefaultFooter f={f} />;
+  return <DefaultFooter f={f} cookieConsent={t.cookieConsent} />;
 }
 
 /* ===================================================== */
 /* HOME FOOTER                                           */
 /* ===================================================== */
 
-function HomeFooter({ f }) {
+function HomeFooter({ f, cookieConsent }) {
   const footerRef = useRef(null);
 
   const scrollToTop = () => {
@@ -221,7 +222,9 @@ function HomeFooter({ f }) {
               </span>
 
               <div className="flex flex-col items-start gap-3">
-                <SocialLabel>LINKEDIN</SocialLabel>
+                <SocialLink href="https://www.linkedin.com/company/lumyo-pt" aria-label="LinkedIn da Lumyo">
+                  LINKEDIN
+                </SocialLink>
                 <SocialLink href="https://www.instagram.com/lumyopt/">
                   INSTAGRAM
                 </SocialLink>
@@ -321,6 +324,13 @@ function HomeFooter({ f }) {
                 >
                   Cookies
                 </Link>
+                <button
+                  type="button"
+                  onClick={openCookiePreferences}
+                  className="inline-flex min-h-[44px] items-center font-head text-[8px] tracking-[0.22em] text-white/50 transition-colors duration-300 hover:text-magenta"
+                >
+                  {cookieConsent.manage}
+                </button>
                 <Link
                   to="/terms"
                   className="inline-flex min-h-[44px] items-center font-head text-[8px] tracking-[0.22em] text-white/50 transition-colors duration-300 hover:text-magenta"
@@ -375,7 +385,7 @@ function HomeFooter({ f }) {
 /* DEFAULT FOOTER                                        */
 /* ===================================================== */
 
-function DefaultFooter({ f }) {
+function DefaultFooter({ f, cookieConsent }) {
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
@@ -537,6 +547,13 @@ function DefaultFooter({ f }) {
               >
                 Cookies
               </Link>
+              <button
+                type="button"
+                onClick={openCookiePreferences}
+                className="inline-flex min-h-[44px] items-center font-head text-[8px] tracking-[0.22em] text-white/50 transition-colors duration-300 hover:text-magenta"
+              >
+                {cookieConsent.manage}
+              </button>
               <Link
                 to="/terms"
                 className="inline-flex min-h-[44px] items-center font-head text-[8px] tracking-[0.22em] text-white/50 transition-colors duration-300 hover:text-magenta"
@@ -660,12 +677,13 @@ function SocialLabel({ children }) {
   );
 }
 
-function SocialLink({ href, children }) {
+function SocialLink({ href, 'aria-label': ariaLabel, children }) {
   return (
     <a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
+      aria-label={ariaLabel || (typeof children === 'string' ? `${children} da Lumyo` : undefined)}
       className="
         group
         relative

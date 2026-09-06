@@ -1129,7 +1129,7 @@ const translations = {
           title: '2. Dados pessoais que podemos recolher',
           paragraphs: [
             'Podemos recolher dados fornecidos diretamente através dos formulários ou outros canais de contacto, nomeadamente nome, endereço de email, telefone, empresa, informação sobre o projeto ou serviço pretendido e o conteúdo das mensagens enviadas.',
-            'Quando forem utilizadas ferramentas de análise, segurança ou comunicação, poderão também ser tratados dados técnicos, como endereço IP, tipo de dispositivo, navegador, páginas visitadas, origem da visita e informação relacionada com a utilização do website.',
+            'Quando o utilizador aceita cookies de análise, o Microsoft Clarity pode tratar dados técnicos e de utilização, como tipo de dispositivo, navegador, páginas visitadas, origem da visita, cliques e deslocamento. O conteúdo do chatbot é explicitamente mascarado nas gravações.',
           ],
         },
         {
@@ -1161,15 +1161,15 @@ const translations = {
         {
           title: '6. Chatbot e inteligência artificial',
           paragraphs: [
-            'A Lumyo poderá disponibilizar um assistente ou chatbot baseado em inteligência artificial para responder a questões, prestar informações e encaminhar pedidos.',
-            'As informações introduzidas numa conversa poderão ser processadas pelos fornecedores tecnológicos necessários ao funcionamento do serviço. Não deves introduzir informação sensível ou confidencial que não seja necessária para o pedido.',
-            'Antes da ativação deste serviço, esta política será atualizada com informação adicional sobre os fornecedores utilizados, as finalidades do tratamento e, quando aplicável, transferências internacionais de dados.',
+            'A Lumyo disponibiliza um assistente baseado em inteligência artificial para responder a questões, recolher informação sobre potenciais projetos, qualificar pedidos e permitir o agendamento de uma reunião.',
+            'As mensagens e os dados fornecidos na conversa podem ser processados através da OpenAI para gerar respostas e extrair informação comercial, e armazenados na infraestrutura Supabase utilizada pela Lumyo para gerir a conversa e o potencial contacto comercial.',
+            'Não deves introduzir informação sensível, confidencial ou desnecessária. O conteúdo do chatbot é explicitamente mascarado e não é enviado para as gravações de sessão do Microsoft Clarity.',
           ],
         },
         {
           title: '7. Partilha de dados',
           paragraphs: [
-            'Os dados pessoais poderão ser tratados por fornecedores que prestem serviços necessários ao funcionamento do website e à atividade da Lumyo, como alojamento, infraestrutura tecnológica, email, segurança, análise de utilização ou comunicação.',
+            'Os dados pessoais poderão ser tratados, na medida necessária, por fornecedores que suportam o website e o agente comercial, incluindo Vercel para alojamento e execução da aplicação, Supabase para base de dados e sessões, OpenAI para processamento das conversas, Microsoft Clarity para análise consentida da utilização e Cal.com quando o visitante abre o agendamento.',
             'Estes fornecedores apenas deverão tratar os dados na medida necessária à prestação dos respetivos serviços e de acordo com as obrigações legais aplicáveis.',
           ],
         },
@@ -1182,8 +1182,9 @@ const translations = {
         {
           title: '9. Conservação dos dados',
           paragraphs: [
-            'Os dados pessoais são conservados apenas durante o período necessário para as finalidades para que foram recolhidos, para cumprimento de obrigações legais ou durante os prazos necessários à defesa de direitos e interesses legítimos.',
-            'Pedidos de contacto que não resultem numa relação comercial serão eliminados ou anonimizados quando deixarem de ser necessários, salvo quando exista fundamento legal para a sua conservação.',
+            'As mensagens de conversas anónimas são conservadas durante 30 dias. As sessões anónimas, as conversas sem lead e os registos técnicos de limites, repetição, abuso e segurança são conservados durante 90 dias.',
+            'Os dados de potenciais clientes e as conversas associadas são conservados durante 12 meses após a última interação, salvo quando exista uma relação contratual, uma obrigação legal, um pedido de apagamento aplicável ou outro fundamento que justifique um prazo diferente.',
+            'Quando um potencial cliente passa a cliente, os dados necessários à relação contratual, faturação, cumprimento de obrigações legais e defesa de direitos ficam sujeitos aos prazos aplicáveis a essas finalidades.',
           ],
         },
         {
@@ -1215,6 +1216,17 @@ const translations = {
       ],
     },
 
+    cookieConsent: {
+      title: 'Cookies de análise',
+      description:
+        'Utilizamos cookies necessários para o chatbot. Com a tua autorização, utilizamos também o Microsoft Clarity para perceber como o website é utilizado e melhorar a experiência.',
+      learnMore: 'Consultar a Política de Cookies.',
+      reject: 'REJEITAR ANÁLISE',
+      accept: 'ACEITAR ANÁLISE',
+      manage: 'GERIR COOKIES',
+      currentChoice: 'Podes alterar ou retirar a tua escolha a qualquer momento.',
+    },
+
     cookies: {
       seoTitle: 'Política de Cookies | Lumyo',
       seoDescription:
@@ -1231,15 +1243,20 @@ const translations = {
         {
           title: '2. Cookies estritamente necessários',
           paragraphs: [
-            'O website pode utilizar cookies ou tecnologias estritamente necessárias ao seu funcionamento, segurança, gestão de sessão ou prestação de funcionalidades expressamente solicitadas pelo utilizador.',
-            'Estas tecnologias não dependem de consentimento quando são estritamente necessárias para fornecer o serviço solicitado.',
+            'O website utiliza o cookie próprio lumyo_agent_session quando o visitante abre o chatbot. Este cookie protege e mantém a sessão da conversa, é HttpOnly, SameSite=Lax, Secure em produção e tem a duração máxima de 30 dias.',
+            'As preferências lumyo_lang e lumyo_analytics_consent são guardadas localmente no navegador para manter, respetivamente, o idioma escolhido e a decisão sobre cookies de análise. Estas tecnologias são necessárias para prestar as funcionalidades solicitadas e memorizar a escolha do utilizador.',
           ],
         },
         {
           title: '3. Cookies de análise',
           paragraphs: [
-            'No futuro, a Lumyo poderá utilizar ferramentas de análise, como Google Analytics, para compreender de forma agregada como o website é utilizado, que páginas são visitadas e como os utilizadores chegam ao website.',
-            'Estas tecnologias apenas serão ativadas quando exista uma base legal adequada e, quando exigido, após obtenção do consentimento do utilizador.',
+            'Com consentimento, a Lumyo utiliza o Microsoft Clarity para compreender como o website é utilizado, incluindo páginas visitadas, cliques, deslocamento, dificuldades de navegação e gravações de sessão.',
+            'O Microsoft Clarity e os respetivos cookies só são carregados depois de o utilizador aceitar a categoria de análise. O conteúdo do chatbot é explicitamente mascarado e não é enviado para as gravações do Clarity.',
+          ],
+          list: [
+            '_clck — mantém um identificador pseudónimo do visitante e as preferências do Clarity;',
+            '_clsk — associa diferentes visualizações à mesma sessão;',
+            'CLID, ANONCHK, MR, MUID e SM — cookies da Microsoft que podem ser utilizados pelo Clarity após consentimento.',
           ],
         },
         {
@@ -1252,8 +1269,8 @@ const translations = {
         {
           title: '5. Chatbot e serviços externos',
           paragraphs: [
-            'Algumas funcionalidades, como um chatbot, poderão recorrer a tecnologias de armazenamento local, cookies ou serviços externos necessários ao funcionamento da conversa.',
-            'Quando esta funcionalidade for ativada, esta política será atualizada para identificar as tecnologias relevantes e indicar a sua finalidade e duração, quando aplicável.',
+            'O chatbot utiliza o cookie técnico lumyo_agent_session apenas quando é aberto, para criar, proteger e manter a sessão da conversa durante um máximo de 30 dias.',
+            'Este cookie é estritamente necessário à funcionalidade solicitada e não é utilizado para publicidade ou análise comportamental.',
           ],
         },
         {
@@ -1266,7 +1283,7 @@ const translations = {
         {
           title: '7. Alterar ou retirar o consentimento',
           paragraphs: [
-            'Quando forem utilizados cookies sujeitos a consentimento, será disponibilizado um mecanismo que permita rever ou retirar as preferências anteriormente definidas.',
+            'A preferência pode ser revista ou retirada a qualquer momento através da opção “Gerir cookies” disponível no rodapé. A rejeição posterior termina a recolha pelo Clarity e elimina os respetivos cookies através do mecanismo de consentimento disponibilizado pela Microsoft.',
           ],
         },
         {
@@ -2406,7 +2423,7 @@ const translations = {
           title: '2. Personal data we may collect',
           paragraphs: [
             'We may collect information provided directly through forms or other contact channels, including your name, email address, telephone number, company, information about the project or service you are interested in, and the content of messages you send us.',
-            'Where analytics, security or communication tools are used, technical data may also be processed, including IP address, device type, browser, pages visited, referral source and information relating to your use of the website.',
+            'When the user accepts analytics cookies, Microsoft Clarity may process technical and usage data such as device type, browser, pages visited, referral source, clicks and scrolling. Chatbot content is explicitly masked in recordings.',
           ],
         },
         {
@@ -2438,15 +2455,15 @@ const translations = {
         {
           title: '6. Chatbot and artificial intelligence',
           paragraphs: [
-            'Lumyo may provide an artificial intelligence-based assistant or chatbot to answer questions, provide information and route requests.',
-            'Information entered during a conversation may be processed by technology providers required to operate the service. You should not provide sensitive or confidential information that is not necessary for your request.',
-            'Before this service is activated, this policy will be updated with additional information about the providers used, the purposes of processing and, where applicable, international data transfers.',
+            'Lumyo provides an artificial intelligence-based assistant to answer questions, collect information about potential projects, qualify enquiries and enable meeting scheduling.',
+            'Messages and data provided during the conversation may be processed through OpenAI to generate responses and extract commercial information, and stored in the Supabase infrastructure used by Lumyo to manage the conversation and potential commercial contact.',
+            'You should not provide sensitive, confidential or unnecessary information. Chatbot content is explicitly masked and is not sent to Microsoft Clarity session recordings.',
           ],
         },
         {
           title: '7. Sharing of personal data',
           paragraphs: [
-            'Personal data may be processed by providers supplying services necessary for the operation of the website and Lumyo’s activities, such as hosting, technology infrastructure, email, security, usage analytics or communications.',
+            'Personal data may be processed, where necessary, by providers supporting the website and commercial agent, including Vercel for hosting and application execution, Supabase for database and sessions, OpenAI for conversation processing, Microsoft Clarity for consented usage analytics, and Cal.com when the visitor opens the scheduling service.',
             'These providers should only process personal data to the extent necessary to provide their respective services and in accordance with applicable legal requirements.',
           ],
         },
@@ -2459,8 +2476,9 @@ const translations = {
         {
           title: '9. Data retention',
           paragraphs: [
-            'Personal data is retained only for as long as necessary for the purposes for which it was collected, to comply with legal obligations or for the periods required to protect legitimate rights and interests.',
-            'Contact requests that do not result in a commercial relationship will be deleted or anonymised when they are no longer required, unless there is a legal basis for retaining them.',
+            'Messages from anonymous conversations are retained for 30 days. Anonymous sessions, conversations without a lead, and technical records relating to limits, repetition, abuse and security are retained for 90 days.',
+            'Prospective client data and associated conversations are retained for 12 months after the last interaction, unless a contractual relationship, legal obligation, applicable erasure request or another lawful basis requires a different period.',
+            'When a prospective client becomes a client, data required for the contractual relationship, invoicing, compliance with legal obligations and the establishment, exercise or defence of legal claims becomes subject to the retention periods applicable to those purposes.',
           ],
         },
         {
@@ -2492,6 +2510,17 @@ const translations = {
       ],
     },
 
+    cookieConsent: {
+      title: 'Analytics cookies',
+      description:
+        'We use necessary cookies for the chatbot. With your permission, we also use Microsoft Clarity to understand how the website is used and improve the experience.',
+      learnMore: 'Read the Cookie Policy.',
+      reject: 'REJECT ANALYTICS',
+      accept: 'ACCEPT ANALYTICS',
+      manage: 'MANAGE COOKIES',
+      currentChoice: 'You can change or withdraw your choice at any time.',
+    },
+
     cookies: {
       seoTitle: 'Cookie Policy | Lumyo',
       seoDescription:
@@ -2508,15 +2537,20 @@ const translations = {
         {
           title: '2. Strictly necessary cookies',
           paragraphs: [
-            'The website may use cookies or similar technologies that are strictly necessary for its operation, security, session management or to provide functionality expressly requested by the user.',
-            'These technologies do not require consent where they are strictly necessary to provide the requested service.',
+            'The website uses the first-party lumyo_agent_session cookie when a visitor opens the chatbot. It protects and maintains the conversation session, is HttpOnly, SameSite=Lax, Secure in production and has a maximum lifetime of 30 days.',
+            'The lumyo_lang and lumyo_analytics_consent preferences are stored locally in the browser to retain the selected language and the analytics cookie decision, respectively. These technologies are necessary to provide requested functionality and remember the user’s choice.',
           ],
         },
         {
           title: '3. Analytics cookies',
           paragraphs: [
-            'In the future, Lumyo may use analytics tools such as Google Analytics to understand, in aggregate, how the website is used, which pages are visited and how users reach the website.',
-            'These technologies will only be activated where there is an appropriate legal basis and, where required, after obtaining the user’s consent.',
+            'With consent, Lumyo uses Microsoft Clarity to understand how the website is used, including pages visited, clicks, scrolling, navigation difficulties and session recordings.',
+            'Microsoft Clarity and its cookies are only loaded after the user accepts the analytics category. Chatbot content is explicitly masked and is not sent to Clarity recordings.',
+          ],
+          list: [
+            '_clck — retains a pseudonymous visitor identifier and Clarity preferences;',
+            '_clsk — connects different page views to the same session;',
+            'CLID, ANONCHK, MR, MUID and SM — Microsoft cookies that may be used by Clarity after consent.',
           ],
         },
         {
@@ -2529,8 +2563,8 @@ const translations = {
         {
           title: '5. Chatbot and external services',
           paragraphs: [
-            'Some features, such as a chatbot, may use local storage technologies, cookies or external services required for the operation of the conversation.',
-            'When this functionality is activated, this policy will be updated to identify the relevant technologies and explain their purpose and duration, where applicable.',
+            'The chatbot uses the technical lumyo_agent_session cookie only when it is opened, to create, protect and maintain the conversation session for up to 30 days.',
+            'This cookie is strictly necessary for the requested functionality and is not used for advertising or behavioural analytics.',
           ],
         },
         {
@@ -2543,7 +2577,7 @@ const translations = {
         {
           title: '7. Changing or withdrawing consent',
           paragraphs: [
-            'Where cookies subject to consent are used, a mechanism will be provided allowing users to review or withdraw their previously selected preferences.',
+            'The preference can be reviewed or withdrawn at any time through the “Manage cookies” option in the footer. Subsequent rejection stops Clarity collection and deletes its cookies through Microsoft’s consent mechanism.',
           ],
         },
         {
