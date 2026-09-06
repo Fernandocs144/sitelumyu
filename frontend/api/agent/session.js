@@ -200,6 +200,40 @@ async function handleRequest(request) {
 
         let closureCode = null;
         if (closedConversation) {
+          const { data: closedForSecurity, error: closedForSecurityError } = await supabase
+            .from('commercial_security_attempts')
+            .select('category')
+            .eq('conversation_id', closedConversation.id)
+            .eq('outcome', 'closed')
+            .limit(1)
+            .maybeSingle();
+
+          if (closedForSecurityError) {
+            console.error('Failed to resolve resumed security closure reason', {
+              code: closedForSecurityError.code || 'unknown',
+            });
+
+            return Response.json(
+              {
+                success: false,
+                error: 'Internal server error',
+              },
+              {
+                status: 500,
+                headers: {
+                  'Cache-Control': 'no-store',
+                  'Content-Type': 'application/json',
+                },
+              }
+            );
+          }
+
+          if (closedForSecurity) {
+            closureCode = closedForSecurity.category === 'prompt_injection'
+              ? 'prompt_injection_limit_reached'
+              : 'off_topic_limit_reached';
+          }
+
           const { data: closedForAbuse, error: closedForAbuseError } = await supabase
             .from('commercial_abuse_attempts')
             .select('id')
@@ -228,9 +262,11 @@ async function handleRequest(request) {
             );
           }
 
-          closureCode = closedForAbuse
-            ? 'abusive_message_limit_reached'
-            : 'repeated_message_limit_reached';
+          if (!closureCode) {
+            closureCode = closedForAbuse
+              ? 'abusive_message_limit_reached'
+              : 'repeated_message_limit_reached';
+          }
         }
 
         return Response.json(

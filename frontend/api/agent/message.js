@@ -22,6 +22,7 @@ import {
   normalizeCommercialMessageForFingerprint,
 } from '../../server/agent/commercial-request-limits.js';
 import { classifyCommercialMessageAbuse } from '../../server/agent/commercial-abuse-policy.js';
+import { classifyCommercialSecurityIntent } from '../../server/agent/commercial-security-policy.js';
 
 function bufferToHex(buffer) {
   return Array.from(new Uint8Array(buffer))
@@ -1273,6 +1274,55 @@ async function handleRequest(request) {
     }
 
     if (blockedConversation) {
+      const { data: closedForSecurity, error: closedForSecurityError } = await supabase
+        .from('commercial_security_attempts')
+        .select('category')
+        .eq('conversation_id', blockedConversation.id)
+        .eq('outcome', 'closed')
+        .limit(1)
+        .maybeSingle();
+
+      if (closedForSecurityError) {
+        console.error('Failed to resolve commercial security closure reason', {
+          code: closedForSecurityError.code || 'unknown',
+        });
+        return Response.json(
+          {
+            success: false,
+            error: 'Internal server error',
+          },
+          {
+            status: 500,
+            headers: {
+              'Cache-Control': 'no-store',
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+      }
+
+      if (closedForSecurity) {
+        const closureCode = closedForSecurity.category === 'prompt_injection'
+          ? 'prompt_injection_limit_reached'
+          : 'off_topic_limit_reached';
+
+        return Response.json(
+          {
+            success: false,
+            error: 'Conversation closed',
+            code: closureCode,
+            retryAfterSeconds: 0,
+          },
+          {
+            status: 429,
+            headers: {
+              'Cache-Control': 'no-store',
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+      }
+
       const { data: closedForAbuse, error: closedForAbuseError } = await supabase
         .from('commercial_abuse_attempts')
         .select('id')
@@ -1418,6 +1468,73 @@ async function handleRequest(request) {
         conversationId = newConv.id;
         activeLanguage = newConv.language;
       }
+    }
+
+    const securityClassification = classifyCommercialSecurityIntent(cleanMessage);
+    if (securityClassification.category !== 'none') {
+      const { data: securityData, error: securityError } = await supabase
+        .rpc('check_commercial_security_intent', {
+          p_session_id: sessionData.id,
+          p_conversation_id: conversationId,
+          p_category: securityClassification.category,
+        })
+        .single();
+
+      if (securityError || !securityData) {
+        console.error('Failed to check commercial security intent', {
+          code: securityError?.code || 'security_result_missing',
+        });
+        return Response.json(
+          {
+            success: false,
+            error: 'Service temporarily unavailable',
+            code: 'SECURITY_CHECK_FAILED',
+          },
+          {
+            status: 503,
+            headers: {
+              'Cache-Control': 'no-store',
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+      }
+
+      if (!isCommercialRequestLimitCode(securityData.reason)) {
+        console.warn('Commercial security check returned an invalid reason', {
+          code: securityData.reason || 'security_unknown_reason',
+        });
+        return Response.json(
+          {
+            success: false,
+            error: 'Service temporarily unavailable',
+            code: 'SECURITY_CONTEXT_INVALID',
+          },
+          {
+            status: 503,
+            headers: {
+              'Cache-Control': 'no-store',
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+      }
+
+      return Response.json(
+        {
+          success: false,
+          error: 'Unsupported message detected',
+          code: securityData.reason,
+          retryAfterSeconds: 0,
+        },
+        {
+          status: 429,
+          headers: {
+            'Cache-Control': 'no-store',
+            'Content-Type': 'application/json',
+          },
+        }
+      );
     }
 
     const abuseClassification = classifyCommercialMessageAbuse(cleanMessage);

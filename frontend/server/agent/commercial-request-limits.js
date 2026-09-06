@@ -16,6 +16,10 @@ export const COMMERCIAL_REQUEST_LIMIT_CODES = Object.freeze([
   'repeated_message_limit_reached',
   'abusive_message_warning',
   'abusive_message_limit_reached',
+  'prompt_injection_warning',
+  'prompt_injection_limit_reached',
+  'off_topic_redirect',
+  'off_topic_limit_reached',
 ]);
 
 export function isCommercialRequestLimitCode(value) {

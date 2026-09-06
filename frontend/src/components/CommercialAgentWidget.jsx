@@ -62,6 +62,8 @@ function isPermanentCommercialClosureCode(code) {
     'post_qualification_limit_reached',
     'repeated_message_limit_reached',
     'abusive_message_limit_reached',
+    'prompt_injection_limit_reached',
+    'off_topic_limit_reached',
   ].includes(code);
 }
 
@@ -229,6 +231,8 @@ export default function CommercialAgentWidget() {
             [
               'repeated_message_limit_reached',
               'abusive_message_limit_reached',
+              'prompt_injection_limit_reached',
+              'off_topic_limit_reached',
             ].includes(data?.data?.closureCode)
           ) {
             setRequestLimitCode(data.data.closureCode);
@@ -394,7 +398,11 @@ export default function CommercialAgentWidget() {
               data.code !== 'repeated_message_warning' &&
               data.code !== 'repeated_message_limit_reached' &&
               data.code !== 'abusive_message_warning' &&
-              data.code !== 'abusive_message_limit_reached'
+              data.code !== 'abusive_message_limit_reached' &&
+              data.code !== 'prompt_injection_warning' &&
+              data.code !== 'prompt_injection_limit_reached' &&
+              data.code !== 'off_topic_redirect' &&
+              data.code !== 'off_topic_limit_reached'
             ) {
               setRequestLimitMessageText(textToSend);
             }
@@ -676,6 +684,22 @@ export default function CommercialAgentWidget() {
                     ? currentLang === 'en'
                       ? 'Please keep the conversation respectful. You can continue by sending a business-related message.'
                       : 'Mantém uma linguagem respeitosa. Para continuares, envia uma mensagem relacionada com o teu projeto.'
+                    : requestLimitCode === 'prompt_injection_limit_reached'
+                    ? currentLang === 'en'
+                      ? 'This chat was closed after repeated attempts to manipulate the assistant. Please contact the Lumyo team directly if you have a business enquiry.'
+                      : 'Este chat foi encerrado após tentativas repetidas de manipular o assistente. Se tiveres uma questão comercial, contacta diretamente a equipa Lumyo.'
+                    : requestLimitCode === 'prompt_injection_warning'
+                    ? currentLang === 'en'
+                      ? 'I cannot change or reveal my internal instructions. You can continue with a question about a Lumyo project or service.'
+                      : 'Não posso alterar nem revelar as minhas instruções internas. Podes continuar com uma questão sobre um projeto ou serviço da Lumyo.'
+                    : requestLimitCode === 'off_topic_limit_reached'
+                    ? currentLang === 'en'
+                      ? 'This chat was closed after repeated requests unrelated to Lumyo services. Please contact the Lumyo team directly if you have a business enquiry.'
+                      : 'Este chat foi encerrado após pedidos repetidos sem relação com os serviços da Lumyo. Se tiveres uma questão comercial, contacta diretamente a equipa Lumyo.'
+                    : requestLimitCode === 'off_topic_redirect'
+                    ? currentLang === 'en'
+                      ? 'This assistant is limited to Lumyo projects and services. You can continue with a business-related question.'
+                      : 'Este assistente está limitado aos projetos e serviços da Lumyo. Podes continuar com uma questão comercial.'
                     : requestLimitCode === 'conversation_limit_reached'
                     ? currentLang === 'en'
                       ? 'This conversation has reached its message limit. Please contact us directly to continue.'
@@ -690,6 +714,10 @@ export default function CommercialAgentWidget() {
                   requestLimitCode !== 'repeated_message_limit_reached' &&
                   requestLimitCode !== 'abusive_message_warning' &&
                   requestLimitCode !== 'abusive_message_limit_reached' &&
+                  requestLimitCode !== 'prompt_injection_warning' &&
+                  requestLimitCode !== 'prompt_injection_limit_reached' &&
+                  requestLimitCode !== 'off_topic_redirect' &&
+                  requestLimitCode !== 'off_topic_limit_reached' &&
                   requestLimitMessageText && (
                     <button
                       type="button"
