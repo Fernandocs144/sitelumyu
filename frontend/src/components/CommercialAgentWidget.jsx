@@ -56,6 +56,15 @@ function LumyoRobotIcon({ size = 24, className = '' }) {
   );
 }
 
+function isPermanentCommercialClosureCode(code) {
+  return [
+    'conversation_limit_reached',
+    'post_qualification_limit_reached',
+    'repeated_message_limit_reached',
+    'abusive_message_limit_reached',
+  ].includes(code);
+}
+
 export default function CommercialAgentWidget() {
   const { lang } = useLang();
   const currentLang = lang === 'en' ? 'en' : 'pt';
@@ -217,9 +226,12 @@ export default function CommercialAgentWidget() {
             resetConversationalState();
           } else if (
             data?.data?.chatClosed === true &&
-            data?.data?.closureCode === 'repeated_message_limit_reached'
+            [
+              'repeated_message_limit_reached',
+              'abusive_message_limit_reached',
+            ].includes(data?.data?.closureCode)
           ) {
-            setRequestLimitCode('repeated_message_limit_reached');
+            setRequestLimitCode(data.data.closureCode);
             setRequestLimitMessageText(null);
           }
           setSessionStatus('ready');
@@ -260,7 +272,7 @@ export default function CommercialAgentWidget() {
     if (
       isOpen &&
       sessionStatus === 'ready' &&
-      requestLimitCode !== 'repeated_message_limit_reached'
+      !isPermanentCommercialClosureCode(requestLimitCode)
     ) {
       const timer = setTimeout(() => {
         textareaRef.current?.focus();
@@ -380,7 +392,9 @@ export default function CommercialAgentWidget() {
               data.code !== 'conversation_limit_reached' &&
               data.code !== 'post_qualification_limit_reached' &&
               data.code !== 'repeated_message_warning' &&
-              data.code !== 'repeated_message_limit_reached'
+              data.code !== 'repeated_message_limit_reached' &&
+              data.code !== 'abusive_message_warning' &&
+              data.code !== 'abusive_message_limit_reached'
             ) {
               setRequestLimitMessageText(textToSend);
             }
@@ -558,7 +572,7 @@ export default function CommercialAgentWidget() {
 
             {sessionStatus === 'ready' &&
               messages.length === 0 &&
-              requestLimitCode !== 'repeated_message_limit_reached' && (
+              !isPermanentCommercialClosureCode(requestLimitCode) && (
               <div className="lumyo-chat-empty-state">
                 <h2 className="lumyo-chat-empty-title">
                   {currentLang === 'en'
@@ -654,6 +668,14 @@ export default function CommercialAgentWidget() {
                     ? currentLang === 'en'
                       ? 'We have already received this message. Please rephrase it or provide different information to continue.'
                       : 'Já recebemos esta mensagem. Reformula-a ou acrescenta informação diferente para continuar.'
+                    : requestLimitCode === 'abusive_message_limit_reached'
+                    ? currentLang === 'en'
+                      ? 'This chat was closed due to abusive language. To continue, please contact the Lumyo team directly.'
+                      : 'Este chat foi encerrado devido a linguagem abusiva. Para continuar, contacta diretamente a equipa Lumyo.'
+                    : requestLimitCode === 'abusive_message_warning'
+                    ? currentLang === 'en'
+                      ? 'Please keep the conversation respectful. You can continue by sending a business-related message.'
+                      : 'Mantém uma linguagem respeitosa. Para continuares, envia uma mensagem relacionada com o teu projeto.'
                     : requestLimitCode === 'conversation_limit_reached'
                     ? currentLang === 'en'
                       ? 'This conversation has reached its message limit. Please contact us directly to continue.'
@@ -666,6 +688,8 @@ export default function CommercialAgentWidget() {
                   requestLimitCode !== 'post_qualification_limit_reached' &&
                   requestLimitCode !== 'repeated_message_warning' &&
                   requestLimitCode !== 'repeated_message_limit_reached' &&
+                  requestLimitCode !== 'abusive_message_warning' &&
+                  requestLimitCode !== 'abusive_message_limit_reached' &&
                   requestLimitMessageText && (
                     <button
                       type="button"
@@ -703,9 +727,7 @@ export default function CommercialAgentWidget() {
                 disabled={
                   sessionStatus !== 'ready' ||
                   isSending ||
-                  requestLimitCode === 'conversation_limit_reached' ||
-                  requestLimitCode === 'post_qualification_limit_reached' ||
-                  requestLimitCode === 'repeated_message_limit_reached'
+                  isPermanentCommercialClosureCode(requestLimitCode)
                 }
                 aria-label={
                   currentLang === 'en'
@@ -721,9 +743,7 @@ export default function CommercialAgentWidget() {
                   input.trim().length > 2000 ||
                   sessionStatus !== 'ready' ||
                   isSending ||
-                  requestLimitCode === 'conversation_limit_reached' ||
-                  requestLimitCode === 'post_qualification_limit_reached' ||
-                  requestLimitCode === 'repeated_message_limit_reached'
+                  isPermanentCommercialClosureCode(requestLimitCode)
                 }
                 aria-label={
                   currentLang === 'en' ? 'Send message' : 'Enviar mensagem'

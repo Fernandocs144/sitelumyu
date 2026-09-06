@@ -10,6 +10,7 @@ import {
   isCommercialRequestLimitCode,
   normalizeCommercialMessageForFingerprint,
 } from './commercial-request-limits.js';
+import { classifyCommercialMessageAbuse } from './commercial-abuse-policy.js';
 
 function assert(cond, msg) {
   if (!cond) throw new Error(`FALHA NO TESTE: ${msg}`);
@@ -600,7 +601,9 @@ assert(isCommercialRequestLimitCode('conversation_limit_reached') === true, 'LIM
 assert(isCommercialRequestLimitCode('post_qualification_limit_reached') === true, 'LIMITE 10: Código de encerramento pós-qualificação deve ser reconhecido');
 assert(isCommercialRequestLimitCode('repeated_message_warning') === true, 'LIMITE 11: Aviso de repetição deve ser reconhecido');
 assert(isCommercialRequestLimitCode('repeated_message_limit_reached') === true, 'LIMITE 12: Encerramento por repetição deve ser reconhecido');
-assert(isCommercialRequestLimitCode('invalid_session') === false, 'LIMITE 13: Código interno não deve ser exposto como limite comercial');
+assert(isCommercialRequestLimitCode('abusive_message_warning') === true, 'LIMITE 13: Aviso de linguagem abusiva deve ser reconhecido');
+assert(isCommercialRequestLimitCode('abusive_message_limit_reached') === true, 'LIMITE 14: Encerramento por linguagem abusiva deve ser reconhecido');
+assert(isCommercialRequestLimitCode('invalid_session') === false, 'LIMITE 15: Código interno não deve ser exposto como limite comercial');
 assert(
   normalizeCommercialMessageForFingerprint('  QUERO   UM SITE!!! ') === 'quero um site',
   'REPETIÇÃO 1: Maiúsculas, espaços e pontuação devem ser ignorados'
@@ -616,6 +619,40 @@ assert(
   'REPETIÇÃO 3: Mensagens materialmente diferentes não devem coincidir'
 );
 console.log('TESTES DE LIMITES DE PEDIDOS PASSARAM COM SUCESSO.');
+
+assert(
+  classifyCommercialMessageAbuse('O processo atual é uma merda e provoca erros nas faturas.').severity === 'none',
+  'ABUSO 1: Linguagem frustrada com necessidade comercial legítima não deve ser bloqueada'
+);
+assert(
+  classifyCommercialMessageAbuse('Tu és um idiota.').severity === 'abusive',
+  'ABUSO 2: Insulto direto em português deve gerar aviso'
+);
+assert(
+  classifyCommercialMessageAbuse('FUCK YOU!!!').severity === 'abusive',
+  'ABUSO 3: Insulto direto em inglês deve gerar aviso'
+);
+assert(
+  classifyCommercialMessageAbuse('Vou-te matar.').severity === 'severe',
+  'ABUSO 4: Ameaça explícita em português deve encerrar imediatamente'
+);
+assert(
+  classifyCommercialMessageAbuse('I will kill you.').severity === 'severe',
+  'ABUSO 5: Ameaça explícita em inglês deve encerrar imediatamente'
+);
+assert(
+  classifyCommercialMessageAbuse('Preciso de automatizar a classificação das faturas.').severity === 'none',
+  'ABUSO 6: Mensagem comercial normal deve continuar sem bloqueio'
+);
+assert(
+  classifyCommercialMessageAbuse('Vai para a merda.').severity === 'abusive',
+  'ABUSO 7: Expressão abusiva dirigida ao assistente deve gerar aviso'
+);
+assert(
+  classifyCommercialMessageAbuse('Vou destruir-te.').severity === 'severe',
+  'ABUSO 8: Ameaça com hífen deve encerrar imediatamente'
+);
+console.log('TESTES DE LINGUAGEM ABUSIVA PASSARAM COM SUCESSO.');
 
 assert(inferShortBusinessGoalAnswer(
   'notoriedade da marca',

@@ -21,6 +21,7 @@ import {
   isCommercialRequestLimitCode,
   normalizeCommercialMessageForFingerprint,
 } from '../../server/agent/commercial-request-limits.js';
+import { classifyCommercialMessageAbuse } from '../../server/agent/commercial-abuse-policy.js';
 
 function bufferToHex(buffer) {
   return Array.from(new Uint8Array(buffer))
@@ -1272,11 +1273,42 @@ async function handleRequest(request) {
     }
 
     if (blockedConversation) {
+      const { data: closedForAbuse, error: closedForAbuseError } = await supabase
+        .from('commercial_abuse_attempts')
+        .select('id')
+        .eq('conversation_id', blockedConversation.id)
+        .eq('outcome', 'closed')
+        .limit(1)
+        .maybeSingle();
+
+      if (closedForAbuseError) {
+        console.error('Failed to resolve commercial conversation closure reason', {
+          code: closedForAbuseError.code || 'unknown',
+        });
+        return Response.json(
+          {
+            success: false,
+            error: 'Internal server error',
+          },
+          {
+            status: 500,
+            headers: {
+              'Cache-Control': 'no-store',
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+      }
+
+      const closureCode = closedForAbuse
+        ? 'abusive_message_limit_reached'
+        : 'repeated_message_limit_reached';
+
       return Response.json(
         {
           success: false,
-          error: 'Conversation closed due to repeated messages',
-          code: 'repeated_message_limit_reached',
+          error: 'Conversation closed',
+          code: closureCode,
           retryAfterSeconds: 0,
         },
         {
@@ -1386,6 +1418,73 @@ async function handleRequest(request) {
         conversationId = newConv.id;
         activeLanguage = newConv.language;
       }
+    }
+
+    const abuseClassification = classifyCommercialMessageAbuse(cleanMessage);
+    if (abuseClassification.severity !== 'none') {
+      const { data: abuseData, error: abuseError } = await supabase
+        .rpc('check_commercial_message_abuse', {
+          p_session_id: sessionData.id,
+          p_conversation_id: conversationId,
+          p_severity: abuseClassification.severity,
+        })
+        .single();
+
+      if (abuseError || !abuseData) {
+        console.error('Failed to check abusive commercial message', {
+          code: abuseError?.code || 'abuse_result_missing',
+        });
+        return Response.json(
+          {
+            success: false,
+            error: 'Service temporarily unavailable',
+            code: 'ABUSE_CHECK_FAILED',
+          },
+          {
+            status: 503,
+            headers: {
+              'Cache-Control': 'no-store',
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+      }
+
+      if (!isCommercialRequestLimitCode(abuseData.reason)) {
+        console.warn('Commercial abuse check returned an invalid reason', {
+          code: abuseData.reason || 'abuse_unknown_reason',
+        });
+        return Response.json(
+          {
+            success: false,
+            error: 'Service temporarily unavailable',
+            code: 'ABUSE_CONTEXT_INVALID',
+          },
+          {
+            status: 503,
+            headers: {
+              'Cache-Control': 'no-store',
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+      }
+
+      return Response.json(
+        {
+          success: false,
+          error: 'Abusive message detected',
+          code: abuseData.reason,
+          retryAfterSeconds: 0,
+        },
+        {
+          status: 429,
+          headers: {
+            'Cache-Control': 'no-store',
+            'Content-Type': 'application/json',
+          },
+        }
+      );
     }
 
     const normalizedMessage = normalizeCommercialMessageForFingerprint(cleanMessage);

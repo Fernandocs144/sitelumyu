@@ -198,6 +198,41 @@ async function handleRequest(request) {
           );
         }
 
+        let closureCode = null;
+        if (closedConversation) {
+          const { data: closedForAbuse, error: closedForAbuseError } = await supabase
+            .from('commercial_abuse_attempts')
+            .select('id')
+            .eq('conversation_id', closedConversation.id)
+            .eq('outcome', 'closed')
+            .limit(1)
+            .maybeSingle();
+
+          if (closedForAbuseError) {
+            console.error('Failed to resolve resumed conversation closure reason', {
+              code: closedForAbuseError.code || 'unknown',
+            });
+
+            return Response.json(
+              {
+                success: false,
+                error: 'Internal server error',
+              },
+              {
+                status: 500,
+                headers: {
+                  'Cache-Control': 'no-store',
+                  'Content-Type': 'application/json',
+                },
+              }
+            );
+          }
+
+          closureCode = closedForAbuse
+            ? 'abusive_message_limit_reached'
+            : 'repeated_message_limit_reached';
+        }
+
         return Response.json(
           {
             success: true,
@@ -205,9 +240,7 @@ async function handleRequest(request) {
               resumed: true,
               expiresAt: resumedSession.expires_at,
               chatClosed: Boolean(closedConversation),
-              closureCode: closedConversation
-                ? 'repeated_message_limit_reached'
-                : null,
+              closureCode,
             },
           },
           {

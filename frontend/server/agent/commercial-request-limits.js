@@ -14,6 +14,8 @@ export const COMMERCIAL_REQUEST_LIMIT_CODES = Object.freeze([
   'post_qualification_limit_reached',
   'repeated_message_warning',
   'repeated_message_limit_reached',
+  'abusive_message_warning',
+  'abusive_message_limit_reached',
 ]);
 
 export function isCommercialRequestLimitCode(value) {
