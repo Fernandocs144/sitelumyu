@@ -145,7 +145,7 @@ async function handleRequest(request) {
         .update({ last_seen_at: resumedAt })
         .eq('session_token_hash', tokenHash)
         .gt('expires_at', resumedAt)
-        .select('expires_at')
+        .select('id, expires_at')
         .maybeSingle();
 
       if (resumeError) {
@@ -169,12 +169,45 @@ async function handleRequest(request) {
       }
 
       if (resumedSession) {
+        const { data: closedConversation, error: closedConversationError } = await supabase
+          .from('conversations')
+          .select('id')
+          .eq('session_id', resumedSession.id)
+          .eq('status', 'completed')
+          .eq('primary_outcome', 'spam_detected')
+          .limit(1)
+          .maybeSingle();
+
+        if (closedConversationError) {
+          console.error('Failed to query closed commercial conversation', {
+            code: closedConversationError.code || 'unknown',
+          });
+
+          return Response.json(
+            {
+              success: false,
+              error: 'Internal server error',
+            },
+            {
+              status: 500,
+              headers: {
+                'Cache-Control': 'no-store',
+                'Content-Type': 'application/json',
+              },
+            }
+          );
+        }
+
         return Response.json(
           {
             success: true,
             data: {
               resumed: true,
               expiresAt: resumedSession.expires_at,
+              chatClosed: Boolean(closedConversation),
+              closureCode: closedConversation
+                ? 'repeated_message_limit_reached'
+                : null,
             },
           },
           {
@@ -243,6 +276,8 @@ async function handleRequest(request) {
         data: {
           resumed: false,
           expiresAt: expiresAt,
+          chatClosed: false,
+          closureCode: null,
         },
       },
       {

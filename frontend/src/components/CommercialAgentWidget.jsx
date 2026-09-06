@@ -194,6 +194,8 @@ export default function CommercialAgentWidget() {
   const resetConversationalState = useCallback(() => {
     setMessages([]);
     setFailedMessageText(null);
+    setRequestLimitCode(null);
+    setRequestLimitMessageText(null);
   }, []);
 
   // Inicializar sessao via POST /api/agent/session
@@ -213,6 +215,12 @@ export default function CommercialAgentWidget() {
         if (res.ok && data?.success) {
           if (data?.data?.resumed === false) {
             resetConversationalState();
+          } else if (
+            data?.data?.chatClosed === true &&
+            data?.data?.closureCode === 'repeated_message_limit_reached'
+          ) {
+            setRequestLimitCode('repeated_message_limit_reached');
+            setRequestLimitMessageText(null);
           }
           setSessionStatus('ready');
         } else {
@@ -249,13 +257,17 @@ export default function CommercialAgentWidget() {
 
   // Foco automatico no textarea apos sessao estar pronta
   useEffect(() => {
-    if (isOpen && sessionStatus === 'ready') {
+    if (
+      isOpen &&
+      sessionStatus === 'ready' &&
+      requestLimitCode !== 'repeated_message_limit_reached'
+    ) {
       const timer = setTimeout(() => {
         textareaRef.current?.focus();
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [isOpen, sessionStatus]);
+  }, [isOpen, sessionStatus, requestLimitCode]);
 
   // Auto-scroll para a ultima mensagem
   useEffect(() => {
@@ -544,7 +556,9 @@ export default function CommercialAgentWidget() {
               </div>
             )}
 
-            {sessionStatus === 'ready' && messages.length === 0 && (
+            {sessionStatus === 'ready' &&
+              messages.length === 0 &&
+              requestLimitCode !== 'repeated_message_limit_reached' && (
               <div className="lumyo-chat-empty-state">
                 <h2 className="lumyo-chat-empty-title">
                   {currentLang === 'en'
