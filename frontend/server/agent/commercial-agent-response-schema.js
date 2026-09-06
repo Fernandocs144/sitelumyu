@@ -81,6 +81,7 @@ function createQualificationSchema() {
           'correction',
           'scope_change',
           'possible_new_project',
+          'new_project_confirmed',
           'booking_response',
           'other',
           null,

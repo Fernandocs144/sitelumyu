@@ -111,6 +111,15 @@ export function calculateNextCommercialGoal(leadData, options = {}) {
   const intentLevel = typeof data.intent_level === 'string' ? data.intent_level : null;
   const meetingSignal = typeof data.meeting_intent_signal === 'string' ? data.meeting_intent_signal : null;
 
+  // Uma necessidade possivelmente separada tem de ser esclarecida antes de
+  // retomar o estado comercial do projeto atual, incluindo booking_pending.
+  if (turnIntent === 'possible_new_project') {
+    return {
+      goal: 'clarify_project_scope',
+      reason: 'possible_new_project_requires_confirmation',
+    };
+  }
+
   if (nextStep === 'human_contact_requested') {
     return {
       goal: 'human_contact_requested',

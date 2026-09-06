@@ -380,15 +380,21 @@ export default function CommercialAgentWidget() {
         if (isMountedRef.current) {
           if (res.ok && data?.success && typeof data?.data?.reply === 'string') {
             const agentMsgId = `agent_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
-            setMessages((prev) => [
-              ...prev,
-              {
-                id: agentMsgId,
-                sender: 'agent',
-                text: data.data.reply,
-                bookingAction: data.data.bookingAction || null,
-              },
-            ]);
+            const agentMessage = {
+              id: agentMsgId,
+              sender: 'agent',
+              text: data.data.reply,
+              bookingAction: data.data.bookingAction || null,
+            };
+            if (data?.data?.newProjectStarted === true) {
+              const userMsgId = `user_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+              setMessages([
+                { id: userMsgId, sender: 'user', text: textToSend },
+                agentMessage,
+              ]);
+            } else {
+              setMessages((prev) => [...prev, agentMessage]);
+            }
             setIsSending(false);
           } else if (res.status === 429 && typeof data?.code === 'string') {
             setRequestLimitCode(data.code);

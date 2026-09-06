@@ -67,6 +67,7 @@ const ALLOWED_TURN_INTENTS = [
   'correction',
   'scope_change',
   'possible_new_project',
+  'new_project_confirmed',
   'booking_response',
   'other',
 ];
@@ -779,6 +780,59 @@ async function linkConversationToLead(supabase, conversationId, leadId) {
   if (convUpdateErr) {
     console.error('Failed to link lead to conversation', { code: convUpdateErr.code || 'unknown' });
   }
+}
+
+export async function startSeparateCommercialProject({
+  supabase,
+  sessionData,
+  conversationId,
+  visitorMessageId,
+  activeLanguage,
+  cleanQualification,
+}) {
+  if (
+    !sessionData?.id ||
+    !conversationId ||
+    !visitorMessageId ||
+    cleanQualification?.turn_intent !== 'new_project_confirmed'
+  ) {
+    return null;
+  }
+
+  const primaryService = ALLOWED_SERVICES.includes(cleanQualification.primary_service)
+    ? cleanQualification.primary_service
+    : null;
+  const serviceVariant = primaryService === 'websites' && ALLOWED_WEBSITE_VARIANTS.includes(cleanQualification.service_variant)
+    ? cleanQualification.service_variant
+    : null;
+  const secondaryServices = normalizeServicesList(
+    cleanQualification.secondary_services,
+    primaryService
+  );
+
+  const { data, error } = await supabase.rpc('start_separate_commercial_project', {
+    p_session_id: sessionData.id,
+    p_current_conversation_id: conversationId,
+    p_visitor_message_id: visitorMessageId,
+    p_language: activeLanguage,
+    p_primary_service: primaryService,
+    p_service_variant: serviceVariant,
+    p_secondary_services: secondaryServices,
+    p_need_description: cleanQualification.need_description || null,
+  });
+
+  if (error || !data) {
+    console.error('Failed to start separate commercial project', {
+      code: error?.code || 'empty_result',
+    });
+    return null;
+  }
+
+  sessionData.lead_id = data.lead_id;
+  return {
+    conversationId: data.conversation_id,
+    leadId: data.lead_id,
+  };
 }
 
 async function processLeadQualification(supabase, sessionData, conversationId, activeLanguage, cleanQualification) {
@@ -1932,13 +1986,63 @@ async function handleRequest(request) {
           };
         }
 
-        consolidatedLead = await processLeadQualification(
-          supabase,
-          sessionData,
-          conversationId,
-          activeLanguage,
-          cleanQualification
-        );
+        let separateProject = null;
+        if (cleanQualification.turn_intent === 'new_project_confirmed') {
+          separateProject = await startSeparateCommercialProject({
+            supabase,
+            sessionData,
+            conversationId,
+            visitorMessageId: visitorRes.data.id,
+            activeLanguage,
+            cleanQualification,
+          });
+
+          if (!separateProject) {
+            return Response.json(
+              { success: false, error: 'Internal server error' },
+              {
+                status: 500,
+                headers: {
+                  'Cache-Control': 'no-store',
+                  'Content-Type': 'application/json',
+                },
+              }
+            );
+          }
+
+          conversationId = separateProject.conversationId;
+          const { data: newLead, error: newLeadError } = await supabase
+            .from('leads')
+            .select('*')
+            .eq('id', separateProject.leadId)
+            .single();
+
+          if (newLeadError || !newLead) {
+            console.error('Failed to read separate project lead', {
+              code: newLeadError?.code || 'not_found',
+            });
+            return Response.json(
+              { success: false, error: 'Internal server error' },
+              {
+                status: 500,
+                headers: {
+                  'Cache-Control': 'no-store',
+                  'Content-Type': 'application/json',
+                },
+              }
+            );
+          }
+          consolidatedLead = newLead;
+          history = [{ role: 'user', content: cleanMessage }];
+        } else {
+          consolidatedLead = await processLeadQualification(
+            supabase,
+            sessionData,
+            conversationId,
+            activeLanguage,
+            cleanQualification
+          );
+        }
       }
     }
 
@@ -1986,6 +2090,7 @@ async function handleRequest(request) {
       'correction',
       'scope_change',
       'possible_new_project',
+      'new_project_confirmed',
     ].includes(cleanQualification?.turn_intent);
 
     const deterministicFinancialReply =
@@ -2233,6 +2338,9 @@ async function handleRequest(request) {
         data: {
           reply: finalReplyText,
           language: activeLanguage,
+          ...(cleanQualification?.turn_intent === 'new_project_confirmed'
+            ? { newProjectStarted: true }
+            : {}),
           ...(bookingAction ? { bookingAction } : {}),
         },
       },

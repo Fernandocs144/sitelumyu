@@ -244,6 +244,7 @@ STRICT FIELD-BY-FIELD EXTRACTION RULES:
     - "correction": Visitor explicitly corrects or updates previously provided information (e.g. "Actually, I already have a website").
     - "scope_change": Visitor explicitly modifies or expands current project scope (e.g. "I also want e-commerce features on the site").
     - "possible_new_project": Visitor mentions a distinct new service/need that may represent another project (e.g. "I also need automation for customer support"). Do NOT overwrite existing project data.
+    - "new_project_confirmed": Visitor explicitly confirms that the distinct need is a separate/new project or belongs to another company. Extract only facts about the new project from the current message and the immediately preceding clarification; do NOT carry project-specific facts from the previous project. The visitor name and email may remain the same.
     - "booking_response": Visitor accepts, declines, or asks directly about meeting booking/link/time.
     - "qualification_answer": Visitor is answering qualification questions (service, need, timeline, contact, budget).
     - "other": Default when no other category fits.
@@ -329,6 +330,7 @@ REGRAS ESTRITAS DE EXTRAÇÃO CAMPO A CAMPO:
     - "correction": O visitante está a corrigir ou atualizar explicitamente uma informação anterior (ex: "Na realidade, já tenho website").
     - "scope_change": O visitante está a modificar/expandir o âmbito do mesmo projeto (ex: "Também quero loja online no site").
     - "possible_new_project": O visitante menciona um novo serviço/necessidade distinta que pode representar outro projeto (ex: "Também preciso de automação de atendimento"). NÃO substituir o projeto atual.
+    - "new_project_confirmed": O visitante confirma explicitamente que a necessidade distinta é um projeto novo/separado ou pertence a outra empresa. Extrair apenas os factos do novo projeto presentes na mensagem atual e no esclarecimento imediatamente anterior; NÃO transportar factos específicos do projeto anterior. O nome e o email do visitante podem manter-se.
     - "booking_response": O visitante interage sobre a marcação/link/horário da reunião.
     - "qualification_answer": O visitante responde a perguntas de qualificação.
     - "other": Quando nenhuma categoria anterior se aplicar.

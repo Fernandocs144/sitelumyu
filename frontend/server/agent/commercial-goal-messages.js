@@ -270,6 +270,22 @@ export function getCommercialGoalMessage(goal, language) {
         action: 'booking',
       };
 
+    case 'clarify_project_scope':
+      return {
+        goal: 'clarify_project_scope',
+        language: lang,
+        modelInstruction: lang === 'en'
+          ? 'Acknowledge the newly mentioned need briefly. Do not use or repeat qualification data from the current project, do not mention pricing, meetings, links, buttons, or scheduling, and do not ask additional questions. The system will append the scope clarification question.'
+          : 'Reconheça brevemente a nova necessidade mencionada. Não utilize nem repita dados de qualificação do projeto atual, não mencione preços, reuniões, links, botões ou agendamento e não faça perguntas adicionais. O sistema adicionará a pergunta de clarificação do âmbito.',
+        requiredClosing: lang === 'en'
+          ? 'Is this need part of the current project, or should it be handled as a separate project?'
+          : 'Esta necessidade faz parte do projeto atual ou deve ser tratada como um projeto separado?',
+        fallbackReply: lang === 'en'
+          ? 'Is this need part of the current project, or should it be handled as a separate project?'
+          : 'Esta necessidade faz parte do projeto atual ou deve ser tratada como um projeto separado?',
+        action: 'none',
+      };
+
     case 'answer_turn_intent':
       return {
         goal: 'answer_turn_intent',

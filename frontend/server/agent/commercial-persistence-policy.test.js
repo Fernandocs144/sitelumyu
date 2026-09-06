@@ -1,4 +1,4 @@
-import { filterQualificationForPersistence, inferShortBusinessGoalAnswer, isBudgetProvidedInCurrentTurn, isPricingRequestedInCurrentTurn } from '../../api/agent/message.js';
+import { filterQualificationForPersistence, inferShortBusinessGoalAnswer, isBudgetProvidedInCurrentTurn, isPricingRequestedInCurrentTurn, startSeparateCommercialProject } from '../../api/agent/message.js';
 import { calculateNextCommercialGoal, isLeadQualificationComplete } from './commercial-conversation-policy.js';
 import { composeCommercialReply } from './commercial-reply-composer.js';
 import { getCommercialGoalMessage } from './commercial-goal-messages.js';
@@ -137,6 +137,64 @@ assert(resultB.need_description === 'Criar website institucional', 'CASO B: nece
 assert(resultB.timeline === '2 semanas', 'CASO B: prazo deve continuar intacto');
 assert(resultB.stated_budget_raw === '1500', 'CASO B: orçamento deve continuar intacto');
 console.log('B. CASO B PASSOU: possible_new_project não altera a lead nem o escopo atual.');
+
+const pendingLeadB = {
+  ...currentLeadB,
+  next_step: 'booking_pending',
+  intent_level: 'high',
+};
+const clarificationGoalB = calculateNextCommercialGoal(pendingLeadB, {
+  turnIntent: 'possible_new_project',
+});
+assert(
+  clarificationGoalB.goal === 'clarify_project_scope',
+  'CASO B.1: possible_new_project deve preceder booking_pending e pedir clarificação'
+);
+const clarificationMessageB = getCommercialGoalMessage('clarify_project_scope', 'pt');
+assert(
+  clarificationMessageB.action === 'none',
+  'CASO B.1: clarificação de projeto não pode expor bookingAction'
+);
+
+let separateProjectRpcArgsB = null;
+const separateProjectResultB = await startSeparateCommercialProject({
+  supabase: {
+    rpc: async (name, args) => {
+      assert(name === 'start_separate_commercial_project', 'CASO B.2: RPC atómica esperada');
+      separateProjectRpcArgsB = args;
+      return {
+        data: { lead_id: 'new-lead', conversation_id: 'new-conversation' },
+        error: null,
+      };
+    },
+  },
+  sessionData: { id: 'session-1', lead_id: 'old-lead' },
+  conversationId: 'old-conversation',
+  visitorMessageId: 'visitor-message',
+  activeLanguage: 'pt',
+  cleanQualification: {
+    primary_service: 'websites',
+    service_variant: 'institutional_website',
+    secondary_services: [],
+    need_description: 'Criar um website para outra empresa',
+    turn_intent: 'new_project_confirmed',
+  },
+});
+assert(separateProjectResultB?.leadId === 'new-lead', 'CASO B.2: devolve a nova lead');
+assert(separateProjectResultB?.conversationId === 'new-conversation', 'CASO B.2: devolve a nova conversa');
+assert(separateProjectRpcArgsB?.p_current_conversation_id === 'old-conversation', 'CASO B.2: preserva a referência à conversa anterior');
+assert(separateProjectRpcArgsB?.p_primary_service === 'websites', 'CASO B.2: transfere apenas o serviço do novo projeto');
+const extractionPromptNewProjectPT = getCommercialAgentExtractionPrompt('pt');
+const extractionPromptNewProjectEN = getCommercialAgentExtractionPrompt('en');
+assert(
+  extractionPromptNewProjectPT.includes('"new_project_confirmed"'),
+  'CASO B.3: prompt PT reconhece confirmação explícita de projeto separado'
+);
+assert(
+  extractionPromptNewProjectEN.includes('"new_project_confirmed"'),
+  'CASO B.3: prompt EN reconhece confirmação explícita de projeto separado'
+);
+console.log('B.1/B.2 PASSOU: novo projeto é clarificado sem booking e transita por RPC atómica.');
 
 // C. CASO C: Correção Explícita ("Corrijo o que disse anteriormente: já tenho website.")
 const qualCorrectionC = {
