@@ -7,6 +7,7 @@ import {
 } from 'react-router-dom';
 
 import './App.css';
+import { HelmetProvider } from 'react-helmet-async';
 import { LanguageProvider } from './i18n';
 
 import Navbar from './components/Navbar';
@@ -30,8 +31,21 @@ const Cookies = lazy(() => import('./pages/Cookies'));
 const Terms = lazy(() => import('./pages/Terms'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
-import { HelmetProvider } from 'react-helmet-async';
+// Admin pages and infrastructure
+const AdminLoginPage = lazy(() => import('./pages/admin/AdminLoginPage'));
+const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage'));
+const AdminPipelinePage = lazy(() => import('./pages/admin/AdminPipelinePage'));
+const AdminLeadsPage = lazy(() => import('./pages/admin/AdminLeadsPage'));
+const AdminLeadDetailPage = lazy(() => import('./pages/admin/AdminLeadDetailPage'));
+const AdminTasksPage = lazy(() => import('./pages/admin/AdminTasksPage'));
+const AdminFollowUpsPage = lazy(() => import('./pages/admin/AdminFollowUpsPage'));
+const AdminConversationsPage = lazy(() => import('./pages/admin/AdminConversationsPage'));
+const AdminConversationDetailPage = lazy(() => import('./pages/admin/AdminConversationDetailPage'));
+const AdminBookingsPage = lazy(() => import('./pages/admin/AdminBookingsPage'));
 
+import { AdminAuthProvider } from './context/AdminAuthContext';
+import AdminProtectedRoute from './components/admin/AdminProtectedRoute';
+import AdminLayout from './components/admin/AdminLayout';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -50,7 +64,7 @@ function ScrollToTop() {
 function ConditionalFooter() {
   const { pathname } = useLocation();
 
-  if (pathname === '/') {
+  if (pathname === '/' || pathname.startsWith('/admin')) {
     return null;
   }
 
@@ -62,6 +76,36 @@ function AppContent() {
   const { pathname } = useLocation();
 
   const isHome = pathname === '/';
+  const isAdminRoute = pathname.startsWith('/admin');
+
+  if (isAdminRoute) {
+    return (
+      <Suspense fallback={<div className="min-h-screen bg-[#070513]" aria-hidden="true" />}>
+        <Routes>
+          <Route path="/admin/login" element={<AdminLoginPage />} />
+          <Route
+            path="/admin"
+            element={
+              <AdminProtectedRoute>
+                <AdminLayout />
+              </AdminProtectedRoute>
+            }
+          >
+            <Route index element={<AdminDashboardPage />} />
+            <Route path="pipeline" element={<AdminPipelinePage />} />
+            <Route path="leads" element={<AdminLeadsPage />} />
+            <Route path="leads/:id" element={<AdminLeadDetailPage />} />
+            <Route path="tarefas" element={<AdminTasksPage />} />
+            <Route path="follow-ups" element={<AdminFollowUpsPage />} />
+            <Route path="conversas" element={<AdminConversationsPage />} />
+            <Route path="conversas/:id" element={<AdminConversationDetailPage />} />
+            <Route path="reunioes" element={<AdminBookingsPage />} />
+            <Route path="*" element={<AdminDashboardPage />} />
+          </Route>
+        </Routes>
+      </Suspense>
+    );
+  }
 
   return (
     <div
@@ -139,9 +183,11 @@ function App() {
   return (
     <HelmetProvider>
       <LanguageProvider>
-        <BrowserRouter>
-          <AppContent />
-        </BrowserRouter>
+        <AdminAuthProvider>
+          <BrowserRouter>
+            <AppContent />
+          </BrowserRouter>
+        </AdminAuthProvider>
       </LanguageProvider>
     </HelmetProvider>
   );

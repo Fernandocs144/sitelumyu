@@ -1,9 +1,5 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
-const DESTINATION_EMAIL = 'fernando.jcsiilva@gmail.com';
-
 function escapeHtml(value = '') {
   return String(value)
     .replaceAll('&', '&amp;')
@@ -13,8 +9,10 @@ function escapeHtml(value = '') {
     .replaceAll("'", '&#039;');
 }
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export default {
-  async fetch(request) {
+  async fetch(request, options = {}) {
     if (request.method !== 'POST') {
       return Response.json(
         {
@@ -31,6 +29,39 @@ export default {
     }
 
     try {
+      // 1. Fail-closed server configuration check for destination email
+      const destinationEmail = String(process.env.CONTACT_FORM_DESTINATION_EMAIL ?? '').trim();
+
+      if (!destinationEmail || !EMAIL_PATTERN.test(destinationEmail)) {
+        console.error('[Contact API] Missing or invalid CONTACT_FORM_DESTINATION_EMAIL server configuration');
+        return Response.json(
+          {
+            success: false,
+            error: 'Contact form service misconfigured',
+          },
+          {
+            status: 500,
+          }
+        );
+      }
+
+      // 2. Fail-closed server configuration check for Resend API Key
+      const apiKey = process.env.RESEND_API_KEY;
+      const resendClient = options.resendClient || (apiKey ? new Resend(apiKey) : null);
+
+      if (!resendClient) {
+        console.error('[Contact API] Missing RESEND_API_KEY server configuration');
+        return Response.json(
+          {
+            success: false,
+            error: 'Contact form service misconfigured',
+          },
+          {
+            status: 500,
+          }
+        );
+      }
+
       const body = await request.json();
 
       const {
@@ -75,10 +106,7 @@ export default {
         );
       }
 
-      const emailPattern =
-        /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-      if (!emailPattern.test(cleanEmail)) {
+      if (!EMAIL_PATTERN.test(cleanEmail)) {
         return Response.json(
           {
             success: false,
@@ -116,19 +144,9 @@ export default {
       const safeMessage = escapeHtml(cleanMessage)
         .replaceAll('\n', '<br />');
 
-      const { data, error } = await resend.emails.send({
-        /*
-         * Para TESTE, usando a conta Resend associada
-         * ao Gmail de destino.
-         *
-         * Quando o domínio Lumyo estiver novamente activo,
-         * trocamos isto por algo como:
-         *
-         * Lumyo <contacto@lumyo.pt>
-         */
-        from: 'Lumyo Website <onboarding@resend.dev>',
-
-        to: [DESTINATION_EMAIL],
+      const { data, error } = await resendClient.emails.send({
+        from: 'Lumyo Website <comercial@lumyo.pt>',
+        to: [destinationEmail],
 
         /*
          * Ao responderes ao email recebido,

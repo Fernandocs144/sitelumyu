@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { loadLocalEnv } from '../_lib/env.js';
 
 function bufferToHex(buffer) {
   return Array.from(new Uint8Array(buffer))
@@ -98,8 +99,9 @@ async function handleRequest(request) {
     );
   }
 
+  loadLocalEnv();
   const requiredEnvs = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'AGENT_HASH_SECRET'];
-  const missingEnvs = requiredEnvs.filter((key) => !process.env[key]);
+  const missingEnvs = requiredEnvs.filter((key) => !process.env[key] || process.env[key] === '[SENSITIVE]');
 
   if (missingEnvs.length > 0) {
     console.error(`Missing required environment variable(s): ${missingEnvs.join(', ')}`);

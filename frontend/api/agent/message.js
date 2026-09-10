@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { loadLocalEnv } from '../_lib/env.js';
 import OpenAI from 'openai';
 import {
   getCommercialAgentPrompt,
@@ -23,6 +24,10 @@ import {
 } from '../../server/agent/commercial-request-limits.js';
 import { classifyCommercialMessageAbuse } from '../../server/agent/commercial-abuse-policy.js';
 import { classifyCommercialSecurityIntent } from '../../server/agent/commercial-security-policy.js';
+import {
+  transitionLeadPipelineStage,
+  initializeLeadPipelineHistory,
+} from '../../server/pipeline/pipeline-service.js';
 
 function bufferToHex(buffer) {
   return Array.from(new Uint8Array(buffer))
@@ -72,7 +77,7 @@ const ALLOWED_TURN_INTENTS = [
   'other',
 ];
 
-export function buildCalComBookingUrl(baseUrlStr, name, email) {
+export function buildCalComBookingUrl(baseUrlStr, name, email, metadata = null) {
   if (typeof baseUrlStr !== 'string' || !baseUrlStr.trim()) return null;
   let parsedUrl;
   try {
@@ -95,6 +100,17 @@ export function buildCalComBookingUrl(baseUrlStr, name, email) {
   }
   if (cleanEmailVal) {
     parsedUrl.searchParams.set('email', cleanEmailVal);
+  }
+
+  if (metadata && typeof metadata === 'object') {
+    if (metadata.conversation_id) {
+      parsedUrl.searchParams.set('metadata[conversation_id]', metadata.conversation_id);
+      parsedUrl.searchParams.set('conversation_id', metadata.conversation_id);
+    }
+    if (metadata.lead_id) {
+      parsedUrl.searchParams.set('metadata[lead_id]', metadata.lead_id);
+      parsedUrl.searchParams.set('lead_id', metadata.lead_id);
+    }
   }
 
   return parsedUrl.toString();
@@ -767,6 +783,30 @@ async function updateExistingLead(supabase, leadId, activeLanguage, cleanQualifi
     return null;
   }
 
+  // Automação Pipeline CRM (Fase 3B) - Promoção do Agente (new -> qualified)
+  if (updatedLead && ['priority', 'qualified'].includes(updatedLead.lead_classification)) {
+    if (updatedLead.pipeline_stage === 'new') {
+      try {
+        const transRes = await transitionLeadPipelineStage({
+          supabase,
+          leadId: updatedLead.id,
+          toStage: 'qualified',
+          source: 'agent',
+          changedBy: null,
+          allowedFromStages: ['new'],
+        });
+        if (transRes?.lead) {
+          updatedLead.pipeline_stage = transRes.lead.pipeline_stage;
+        }
+      } catch (transErr) {
+        console.error('Failed to promote lead pipeline_stage on update', {
+          code: transErr.code || 'pipeline_transition_failed',
+          message: transErr.message,
+        });
+      }
+    }
+  }
+
   return updatedLead;
 }
 
@@ -826,6 +866,18 @@ export async function startSeparateCommercialProject({
       code: error?.code || 'empty_result',
     });
     return null;
+  }
+
+  if (data?.lead_id) {
+    try {
+      await initializeLeadPipelineHistory({
+        supabase,
+        leadId: data.lead_id,
+        source: 'agent',
+      });
+    } catch (histErr) {
+      console.error('Failed to initialize pipeline history for separate commercial project lead:', histErr.message);
+    }
   }
 
   sessionData.lead_id = data.lead_id;
@@ -1016,6 +1068,42 @@ async function processLeadQualification(supabase, sessionData, conversationId, a
 
     const candidateId = candidateLead.id;
 
+    // Automação Pipeline CRM (Fase 3B) - Inicialização do histórico do pipeline para a nova lead (NULL -> 'new')
+    try {
+      await initializeLeadPipelineHistory({
+        supabase,
+        leadId: candidateId,
+        source: 'agent',
+      });
+    } catch (histErr) {
+      console.error('Failed to initialize pipeline history for candidate lead', {
+        code: histErr.code || 'initial_history_failed',
+        message: histErr.message,
+      });
+    }
+
+    // Automação Pipeline CRM (Fase 3B) - Promoção do Agente (new -> qualified) se a lead nascer já com classificação positiva
+    if (['priority', 'qualified'].includes(candidateLead.lead_classification)) {
+      try {
+        const transRes = await transitionLeadPipelineStage({
+          supabase,
+          leadId: candidateId,
+          toStage: 'qualified',
+          source: 'agent',
+          changedBy: null,
+          allowedFromStages: ['new'],
+        });
+        if (transRes?.lead) {
+          candidateLead.pipeline_stage = transRes.lead.pipeline_stage;
+        }
+      } catch (transErr) {
+        console.error('Failed to promote pipeline_stage on candidate lead creation', {
+          code: transErr.code || 'pipeline_transition_failed',
+          message: transErr.message,
+        });
+      }
+    }
+
     const { data: updatedSession, error: sessUpdateErr } = await supabase
       .from('visitor_sessions')
       .update({ lead_id: candidateId })
@@ -1131,13 +1219,14 @@ async function handleRequest(request) {
     );
   }
 
+  loadLocalEnv();
   const requiredEnvs = [
     'SUPABASE_URL',
     'SUPABASE_SERVICE_ROLE_KEY',
     'OPENAI_API_KEY',
     'OPENAI_MODEL',
   ];
-  const missingEnvs = requiredEnvs.filter((key) => !process.env[key]);
+  const missingEnvs = requiredEnvs.filter((key) => !process.env[key] || process.env[key] === '[SENSITIVE]');
 
   if (missingEnvs.length > 0) {
     console.error(`Missing required environment variable(s): ${missingEnvs.join(', ')}`);
@@ -2290,7 +2379,10 @@ async function handleRequest(request) {
             }
           }
 
-          const calComUrl = buildCalComBookingUrl(calComBaseUrl, leadName, leadEmail);
+          const calComUrl = buildCalComBookingUrl(calComBaseUrl, leadName, leadEmail, {
+            conversation_id: conversationId,
+            lead_id: associatedLeadId,
+          });
 
           if (calComUrl) {
             bookingAction = {
