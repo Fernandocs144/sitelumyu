@@ -111,17 +111,17 @@ export async function handleAdminRouteRequest(request) {
     if (segments.length === 1) {
       return handleGetFollowupsRequest(request);
     }
-    if (second === 'draft') {
-      return handlePostDraftFollowupRequest(request);
+    if (third === 'draft' || second === 'draft') {
+      return handlePostDraftFollowupRequest(request, third === 'draft' ? second : null);
     }
-    if (second === 'approve') {
-      return handlePostApproveFollowupRequest(request);
+    if (third === 'approve' || second === 'approve') {
+      return handlePostApproveFollowupRequest(request, third === 'approve' ? second : null);
     }
-    if (second === 'send') {
-      return handlePostSendFollowupRequest(request);
+    if (third === 'send' || second === 'send') {
+      return handlePostSendFollowupRequest(request, third === 'send' ? second : null);
     }
-    if (segments.length === 3 && third === 'state') {
-      return handlePatchFollowupStateRequest(request, second);
+    if (third === 'state' || second === 'state') {
+      return handlePatchFollowupStateRequest(request, third === 'state' ? second : null);
     }
   }
 
