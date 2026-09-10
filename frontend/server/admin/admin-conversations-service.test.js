@@ -5,7 +5,7 @@ import {
   isValidUuid,
   fetchAdminConversationsFromDatabase,
 } from './admin-conversations-service.js';
-import { handleGetConversationsRequest } from '../../api/admin/conversations.js';
+import { handleGetConversationsRequest } from './handlers/conversations.js';
 
 console.log('=== INICIANDO SUITE COMPLETA DE TESTES DA LISTAGEM E PESQUISA DE CONVERSAS (PASSO 1E.1) ===\n');
 

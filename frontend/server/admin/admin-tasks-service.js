@@ -1,4 +1,4 @@
-import { formatTaskMetadata } from './admin-lead-tasks-service.js';
+import { formatTaskMetadata, sortLeadTasks } from './admin-lead-tasks-service.js';
 
 /**
  * Procura globalmente as tarefas comerciais (public.lead_tasks) com o contexto mínimo da lead (anti-N+1).
@@ -104,8 +104,10 @@ export async function fetchGlobalAdminTasksFromDatabase(supabaseClient, options 
     };
   });
 
+  const sortedTasks = sortLeadTasks(formattedTasks);
+
   return {
-    tasks: formattedTasks,
+    tasks: sortedTasks,
     total,
     truncated,
     limit,

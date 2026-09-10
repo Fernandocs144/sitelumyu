@@ -5,7 +5,7 @@ import {
   getPeriodCutoffDate,
   fetchAdminDashboardFromDatabase,
 } from './admin-dashboard-service.js';
-import { handleGetDashboardRequest } from '../../api/admin/dashboard.js';
+import { handleGetDashboardRequest } from './handlers/dashboard.js';
 
 test('=== INICIANDO SUITE DE TESTES DO DASHBOARD ADMIN (PASSO 1F) ===', async () => {
   // Teste 1: Validação do parâmetro temporal period

@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { loadLocalEnv } from '../../../_lib/env.js';
+import { loadLocalEnv } from '../../../api/_lib/env.js';
 import {
   verifyAdminSession,
   isRequestSecure,
@@ -7,10 +7,10 @@ import {
   createAdminJsonResponse,
   parseAdminRequestUrl,
   parseAdminRequestJson,
-} from '../../../../server/admin/admin-auth-service.js';
-import { isValidUuid } from '../../../../server/admin/admin-lead-detail-service.js';
-import { evaluateFollowUp } from '../../../../server/admin/admin-followup-engine.js';
-import { recordFollowUpStateAction } from '../../../../server/admin/admin-followup-state-service.js';
+} from '../admin-auth-service.js';
+import { isValidUuid } from '../admin-lead-detail-service.js';
+import { evaluateFollowUp } from '../admin-followup-engine.js';
+import { recordFollowUpStateAction } from '../admin-followup-state-service.js';
 
 export async function handlePostFollowUpStateRequest(request, paramsId = null) {
   loadLocalEnv();

@@ -5,11 +5,11 @@ import {
   serializeClearAdminCookies,
   createAdminJsonResponse,
   parseAdminRequestUrl,
-} from '../../server/admin/admin-auth-service.js';
+} from '../admin-auth-service.js';
 import {
   parseLeadsQueryParams,
   fetchAdminLeadsFromDatabase,
-} from '../../server/admin/admin-leads-service.js';
+} from '../admin-leads-service.js';
 
 export async function handleGetLeadsRequest(request) {
   if (request.method !== 'GET') {

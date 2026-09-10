@@ -4,7 +4,7 @@ import {
   MINIMIZED_LEAD_FIELDS,
   fetchAdminLeadsFromDatabase,
 } from './admin-leads-service.js';
-import { handleGetLeadsRequest } from '../../api/admin/leads.js';
+import { handleGetLeadsRequest } from './handlers/leads.js';
 
 console.log('=== INICIANDO SUITE DE TESTES DA LISTAGEM DE LEADS ADMIN (PASSO 1C) ===\n');
 

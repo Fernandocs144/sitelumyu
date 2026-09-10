@@ -1,23 +1,22 @@
 import { createClient } from '@supabase/supabase-js';
-import { loadLocalEnv } from '../_lib/env.js';
 import {
   verifyAdminSession,
   isRequestSecure,
   serializeClearAdminCookies,
   createAdminJsonResponse,
   parseAdminRequestUrl,
-} from '../../server/admin/admin-auth-service.js';
-import { fetchFollowUpRecommendationsFromDatabase } from '../../server/admin/admin-followup-service.js';
+} from '../admin-auth-service.js';
+import {
+  parseDashboardQueryParams,
+  fetchAdminDashboardFromDatabase,
+} from '../admin-dashboard-service.js';
 
-export async function handleGetAdminFollowUpsRequest(request) {
-  loadLocalEnv();
-
-  // 1. Método HTTP deve ser estritamente GET (Read-Only)
+export async function handleGetDashboardRequest(request) {
   if (request.method !== 'GET') {
     return createAdminJsonResponse({ ok: false, error: 'Método não permitido' }, 405);
   }
 
-  // 2. Validar autenticação e autorização administrativa
+  // 1. Validar autenticação e autorização administrativa
   const session = await verifyAdminSession(request);
   const isSecure = isRequestSecure(request);
 
@@ -39,7 +38,7 @@ export async function handleGetAdminFollowUpsRequest(request) {
     );
   }
 
-  // 3. Cliente Supabase exclusivo server-side com service_role
+  // 2. Configurar cliente Supabase exclusivo server-side com service_role
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -55,41 +54,33 @@ export async function handleGetAdminFollowUpsRequest(request) {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
+  // 3. Processar parâmetros de consulta
   const url = parseAdminRequestUrl(request);
-  const showBlocked = url.searchParams.get('show_blocked') === 'true';
-  const limitParam = parseInt(url.searchParams.get('limit') || '200', 10);
-  const limit = isNaN(limitParam) || limitParam <= 0 ? 200 : limitParam;
+  const params = parseDashboardQueryParams(url.searchParams);
 
+  // 4. Executar agregador do dashboard
   try {
-    const result = await fetchFollowUpRecommendationsFromDatabase(serviceClient, {
-      limit,
-      showBlocked,
-      now: new Date()
-    });
+    const dashboardData = await fetchAdminDashboardFromDatabase(serviceClient, params);
 
     return createAdminJsonResponse(
       {
         ok: true,
-        recommendations: result.recommendations,
-        total: result.total,
-        truncated: result.truncated,
-        limit: result.limit,
+        ...dashboardData,
       },
       200,
       session.newCookies
     );
   } catch (err) {
-    const statusCode = err.statusCode || 500;
     return createAdminJsonResponse(
-      { ok: false, error: err.message || 'Erro ao calcular recomendações de follow-up' },
-      statusCode,
+      { ok: false, error: err.message || 'Erro ao carregar o dashboard' },
+      500,
       session.newCookies
     );
   }
 }
 
 export default {
-  async fetch(request, env, ctx) {
-    return handleGetAdminFollowUpsRequest(request);
+  async fetch(request) {
+    return handleGetDashboardRequest(request);
   },
 };

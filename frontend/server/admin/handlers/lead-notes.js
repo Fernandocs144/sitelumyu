@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { loadLocalEnv } from '../../../../_lib/env.js';
+import { loadLocalEnv } from '../../../api/_lib/env.js';
 import {
   verifyAdminSession,
   isRequestSecure,
@@ -7,15 +7,15 @@ import {
   createAdminJsonResponse,
   parseAdminRequestUrl,
   parseAdminRequestJson,
-} from '../../../../../server/admin/admin-auth-service.js';
-import { isValidUuid } from '../../../../../server/admin/admin-lead-detail-service.js';
-import { updateLeadTaskStatusInDatabase } from '../../../../../server/admin/admin-lead-tasks-service.js';
+} from '../admin-auth-service.js';
+import { isValidUuid } from '../admin-lead-detail-service.js';
+import { createLeadNoteInDatabase } from '../admin-lead-notes-service.js';
 
-export async function handlePatchLeadTaskStatusRequest(request, paramsLeadId = null, paramsTaskId = null) {
+export async function handlePostLeadNotesRequest(request, paramsId = null) {
   loadLocalEnv();
 
-  // 1. Método HTTP deve ser estritamente PATCH
-  if (request.method !== 'PATCH') {
+  // 1. Método HTTP deve ser estritamente POST
+  if (request.method !== 'POST') {
     return createAdminJsonResponse({ ok: false, error: 'Método não permitido' }, 405);
   }
 
@@ -41,31 +41,31 @@ export async function handlePatchLeadTaskStatusRequest(request, paramsLeadId = n
     );
   }
 
-  // 3. Extrair leadId e taskId da URL
+  // 3. Extrair ID da URL
   const url = parseAdminRequestUrl(request);
-  let leadId = paramsLeadId || request?.query?.id || request?.query?.leadId;
-  let taskId = paramsTaskId || request?.query?.taskId;
+  let leadId = paramsId;
 
-  if (!leadId || !taskId) {
-    const segments = url.pathname.split('/').filter(Boolean);
-    const tasksIdx = segments.indexOf('tasks');
-    if (tasksIdx > 0 && tasksIdx < segments.length - 1) {
-      leadId = leadId || segments[tasksIdx - 1];
-      taskId = taskId || segments[tasksIdx + 1];
+  if (!leadId) {
+    const queryId = request?.query?.id || request?.query?.leadId || url.searchParams.get('id') || url.searchParams.get('leadId');
+    if (queryId) {
+      leadId = queryId;
+    } else {
+      const segments = url.pathname.split('/').filter(Boolean);
+      const notesIdx = segments.indexOf('notes');
+      if (notesIdx > 0) {
+        leadId = segments[notesIdx - 1];
+      } else {
+        const leadsIdx = segments.indexOf('leads');
+        if (leadsIdx >= 0 && leadsIdx < segments.length - 1) {
+          leadId = segments[leadsIdx + 1];
+        }
+      }
     }
   }
 
   if (!leadId || !isValidUuid(leadId)) {
     return createAdminJsonResponse(
       { ok: false, error: 'ID de lead inválido' },
-      400,
-      session.newCookies
-    );
-  }
-
-  if (!taskId || !isValidUuid(taskId)) {
-    return createAdminJsonResponse(
-      { ok: false, error: 'ID de tarefa inválido' },
       400,
       session.newCookies
     );
@@ -83,17 +83,17 @@ export async function handlePatchLeadTaskStatusRequest(request, paramsLeadId = n
     );
   }
 
-  if (!body || typeof body !== 'object' || !body.status) {
+  if (!body || typeof body !== 'object' || typeof body.content !== 'string' || body.content.trim().length === 0) {
     return createAdminJsonResponse(
-      { ok: false, error: 'O campo status é obrigatório' },
+      { ok: false, error: 'O conteúdo da nota deve ser um texto não vazio' },
       400,
       session.newCookies
     );
   }
 
-  if (!['open', 'completed'].includes(body.status)) {
+  if (body.content.length > 5000) {
     return createAdminJsonResponse(
-      { ok: false, error: 'Estado de tarefa inválido. Valores permitidos: open, completed' },
+      { ok: false, error: 'O conteúdo da nota não pode ter mais de 5000 caracteres' },
       400,
       session.newCookies
     );
@@ -115,28 +115,27 @@ export async function handlePatchLeadTaskStatusRequest(request, paramsLeadId = n
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  const adminUserId = session.adminRecord?.user_id || session.user?.id;
+  const createdBy = session.adminRecord?.user_id || session.user?.id;
 
   try {
-    const task = await updateLeadTaskStatusInDatabase(serviceClient, {
+    const note = await createLeadNoteInDatabase(serviceClient, {
       leadId,
-      taskId,
-      status: body.status,
-      adminUserId,
+      content: body.content,
+      createdBy,
     });
 
     return createAdminJsonResponse(
       {
         ok: true,
-        task,
+        note,
       },
-      200,
+      201,
       session.newCookies
     );
   } catch (err) {
     const statusCode = err.statusCode || 500;
     return createAdminJsonResponse(
-      { ok: false, error: err.message || 'Erro ao alterar estado da tarefa' },
+      { ok: false, error: err.message || 'Erro ao criar nota da lead' },
       statusCode,
       session.newCookies
     );
@@ -145,6 +144,6 @@ export async function handlePatchLeadTaskStatusRequest(request, paramsLeadId = n
 
 export default {
   async fetch(request, env, ctx) {
-    return handlePatchLeadTaskStatusRequest(request);
+    return handlePostLeadNotesRequest(request);
   },
 };

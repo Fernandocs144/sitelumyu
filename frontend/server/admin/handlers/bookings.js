@@ -1,16 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
-import { loadLocalEnv } from '../_lib/env.js';
+import { loadLocalEnv } from '../../../api/_lib/env.js';
 import {
   verifyAdminSession,
   isRequestSecure,
   serializeClearAdminCookies,
   createAdminJsonResponse,
   parseAdminRequestUrl,
-} from '../../server/admin/admin-auth-service.js';
+} from '../admin-auth-service.js';
 import {
   parseBookingsQueryParams,
   fetchAdminBookingsFromDatabase,
-} from '../../server/admin/admin-bookings-service.js';
+} from '../admin-bookings-service.js';
 
 export async function handleGetBookingsRequest(request) {
   loadLocalEnv();

@@ -4,7 +4,7 @@ import {
   LEAD_DETAIL_FIELDS,
   fetchLeadByIdFromDatabase,
 } from './admin-lead-detail-service.js';
-import { handleGetLeadDetailRequest } from '../../api/admin/leads/[id].js';
+import { handleGetLeadDetailRequest } from './handlers/lead-detail.js';
 
 console.log('=== INICIANDO SUITE DE TESTES DO DETALHE DE LEAD ADMIN (PASSO 1D) ===\n');
 

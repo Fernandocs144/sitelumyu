@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { loadLocalEnv } from '../../../_lib/env.js';
+import { loadLocalEnv } from '../../../api/_lib/env.js';
 import {
   verifyAdminSession,
   isRequestSecure,
@@ -7,11 +7,11 @@ import {
   createAdminJsonResponse,
   parseAdminRequestUrl,
   parseAdminRequestJson,
-} from '../../../../server/admin/admin-auth-service.js';
-import { isValidUuid } from '../../../../server/admin/admin-lead-detail-service.js';
-import { approveFollowUpCommunication } from '../../../../server/admin/admin-followup-approval-service.js';
+} from '../admin-auth-service.js';
+import { isValidUuid } from '../admin-lead-detail-service.js';
+import { dispatchApprovedFollowUpCommunication } from '../admin-followup-dispatch-service.js';
 
-export async function handlePostFollowUpApproveRequest(request, paramsId = null) {
+export async function handlePostFollowUpSendRequest(request, paramsId = null) {
   loadLocalEnv();
 
   // 1. Método HTTP deve ser estritamente POST
@@ -43,49 +43,41 @@ export async function handlePostFollowUpApproveRequest(request, paramsId = null)
     );
   }
 
-  // 3. Extrair leadId da URL / parâmetros
+  // 3. Extrair approvedCommunicationId da URL / parâmetros
   const url = parseAdminRequestUrl(request);
-  let leadId = paramsId;
+  let communicationId = paramsId;
 
-  if (!leadId) {
-    const queryId = request?.query?.id || request?.query?.leadId || url.searchParams.get('id') || url.searchParams.get('leadId');
+  if (!communicationId) {
+    const queryId = request?.query?.id || request?.query?.communicationId || url.searchParams.get('id') || url.searchParams.get('communicationId');
     if (queryId) {
-      leadId = queryId;
+      communicationId = queryId;
     } else {
       const segments = url.pathname.split('/').filter(Boolean);
-      const approveIdx = segments.indexOf('approve');
-      if (approveIdx > 0) {
-        leadId = segments[approveIdx - 1];
-      } else {
-        const followUpsIdx = segments.indexOf('follow-ups');
-        if (followUpsIdx >= 0 && followUpsIdx < segments.length - 1) {
-          leadId = segments[followUpsIdx + 1];
-        }
+      const sendIdx = segments.indexOf('send');
+      if (sendIdx > 0) {
+        communicationId = segments[sendIdx - 1];
       }
     }
   }
 
-  if (!leadId || !isValidUuid(leadId)) {
+  if (!communicationId || !isValidUuid(communicationId)) {
     return createAdminJsonResponse(
-      { ok: false, error: 'ID de lead inválido' },
+      { ok: false, error: 'ID de comunicação aprovada inválido' },
       400,
       session.newCookies
     );
   }
 
-  // 4. Parse do corpo da requisição
+  // 4. Parse opcional do corpo da requisição (provider, simulateMode)
   let bodyPayload = {};
   try {
     bodyPayload = await parseAdminRequestJson(request);
   } catch (err) {
-    return createAdminJsonResponse(
-      { ok: false, error: 'JSON de requisição inválido' },
-      400,
-      session.newCookies
-    );
+    // Se o corpo for vazio ou inválido, utiliza defaults
   }
 
-  const { subject, body, generation_source, prompt_version } = bodyPayload || {};
+  const provider = bodyPayload.provider === 'fake' ? 'fake' : 'resend';
+  const simulateMode = bodyPayload.simulateMode || 'accepted';
 
   // 5. Cliente Supabase exclusivo server-side com service_role
   const supabaseUrl = process.env.SUPABASE_URL;
@@ -104,21 +96,19 @@ export async function handlePostFollowUpApproveRequest(request, paramsId = null)
   });
 
   try {
-    const result = await approveFollowUpCommunication(serviceClient, {
+    const result = await dispatchApprovedFollowUpCommunication(serviceClient, {
       adminUserId,
-      leadId,
-      body,
-      subject,
-      generationSource: generation_source || 'manual',
-      promptVersion: prompt_version || null,
+      approvedCommunicationId: communicationId,
+      provider,
+      simulateMode,
       now: new Date()
     });
 
     return createAdminJsonResponse(
       {
         ok: true,
-        communication: result.communication,
-        context_fingerprint: result.context_fingerprint
+        message: 'Email disparado com sucesso e aceite pelo provider.',
+        dispatch: result.dispatch
       },
       200,
       session.newCookies
@@ -126,7 +116,12 @@ export async function handlePostFollowUpApproveRequest(request, paramsId = null)
   } catch (err) {
     const statusCode = err.statusCode || 500;
     return createAdminJsonResponse(
-      { ok: false, error: err.message || 'Erro ao processar aprovação de comunicação' },
+      {
+        ok: false,
+        error: err.message || 'Erro ao processar disparo de email',
+        errorCode: err.errorCode || 'DISPATCH_ERROR',
+        dispatch: err.dispatch || null
+      },
       statusCode,
       session.newCookies
     );
@@ -134,7 +129,7 @@ export async function handlePostFollowUpApproveRequest(request, paramsId = null)
 }
 
 export default async function handler(req, res) {
-  const response = await handlePostFollowUpApproveRequest(req);
+  const response = await handlePostFollowUpSendRequest(req);
   res.status(response.status);
   response.headers.forEach((value, key) => {
     res.setHeader(key, value);

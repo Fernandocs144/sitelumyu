@@ -1,16 +1,17 @@
 import { createClient } from '@supabase/supabase-js';
-import { loadLocalEnv } from '../../../_lib/env.js';
+import { loadLocalEnv } from '../../../api/_lib/env.js';
 import {
   verifyAdminSession,
   isRequestSecure,
   serializeClearAdminCookies,
   createAdminJsonResponse,
   parseAdminRequestUrl,
-} from '../../../../server/admin/admin-auth-service.js';
-import { isValidUuid } from '../../../../server/admin/admin-lead-detail-service.js';
-import { generateFollowUpDraft } from '../../../../server/admin/admin-followup-draft-service.js';
+  parseAdminRequestJson,
+} from '../admin-auth-service.js';
+import { isValidUuid } from '../admin-lead-detail-service.js';
+import { approveFollowUpCommunication } from '../admin-followup-approval-service.js';
 
-export async function handlePostFollowUpDraftRequest(request, paramsId = null) {
+export async function handlePostFollowUpApproveRequest(request, paramsId = null) {
   loadLocalEnv();
 
   // 1. Método HTTP deve ser estritamente POST
@@ -31,7 +32,9 @@ export async function handlePostFollowUpDraftRequest(request, paramsId = null) {
     );
   }
 
-  if (!session.authorized) {
+  const adminUserId = session.adminRecord?.user_id || session.user?.id;
+
+  if (!session.authorized || !adminUserId) {
     const cookiesToApply = session.clearCookies ? serializeClearAdminCookies(isSecure) : null;
     return createAdminJsonResponse(
       { ok: false, error: session.error || 'Acesso não autorizado' },
@@ -50,9 +53,9 @@ export async function handlePostFollowUpDraftRequest(request, paramsId = null) {
       leadId = queryId;
     } else {
       const segments = url.pathname.split('/').filter(Boolean);
-      const draftIdx = segments.indexOf('draft');
-      if (draftIdx > 0) {
-        leadId = segments[draftIdx - 1];
+      const approveIdx = segments.indexOf('approve');
+      if (approveIdx > 0) {
+        leadId = segments[approveIdx - 1];
       } else {
         const followUpsIdx = segments.indexOf('follow-ups');
         if (followUpsIdx >= 0 && followUpsIdx < segments.length - 1) {
@@ -70,7 +73,21 @@ export async function handlePostFollowUpDraftRequest(request, paramsId = null) {
     );
   }
 
-  // 4. Cliente Supabase exclusivo server-side com service_role
+  // 4. Parse do corpo da requisição
+  let bodyPayload = {};
+  try {
+    bodyPayload = await parseAdminRequestJson(request);
+  } catch (err) {
+    return createAdminJsonResponse(
+      { ok: false, error: 'JSON de requisição inválido' },
+      400,
+      session.newCookies
+    );
+  }
+
+  const { subject, body, generation_source, prompt_version } = bodyPayload || {};
+
+  // 5. Cliente Supabase exclusivo server-side com service_role
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -87,17 +104,21 @@ export async function handlePostFollowUpDraftRequest(request, paramsId = null) {
   });
 
   try {
-    const result = await generateFollowUpDraft(serviceClient, {
+    const result = await approveFollowUpCommunication(serviceClient, {
+      adminUserId,
       leadId,
+      body,
+      subject,
+      generationSource: generation_source || 'manual',
+      promptVersion: prompt_version || null,
       now: new Date()
     });
 
     return createAdminJsonResponse(
       {
         ok: true,
-        draft: result.draft,
-        recommendation: result.recommendation,
-        prompt_version: result.prompt_version,
+        communication: result.communication,
+        context_fingerprint: result.context_fingerprint
       },
       200,
       session.newCookies
@@ -105,19 +126,19 @@ export async function handlePostFollowUpDraftRequest(request, paramsId = null) {
   } catch (err) {
     const statusCode = err.statusCode || 500;
     return createAdminJsonResponse(
-      {
-        ok: false,
-        error: err.message || 'Erro ao gerar rascunho de follow-up',
-        blocked_reason: err.blocked_reason || null
-      },
+      { ok: false, error: err.message || 'Erro ao processar aprovação de comunicação' },
       statusCode,
       session.newCookies
     );
   }
 }
 
-export default {
-  async fetch(request, env, ctx) {
-    return handlePostFollowUpDraftRequest(request);
-  },
-};
+export default async function handler(req, res) {
+  const response = await handlePostFollowUpApproveRequest(req);
+  res.status(response.status);
+  response.headers.forEach((value, key) => {
+    res.setHeader(key, value);
+  });
+  const data = await response.json();
+  return res.json(data);
+}

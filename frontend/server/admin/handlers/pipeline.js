@@ -1,15 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
+import { loadLocalEnv } from '../../../api/_lib/env.js';
 import {
   verifyAdminSession,
   isRequestSecure,
   serializeClearAdminCookies,
   createAdminJsonResponse,
-} from '../../server/admin/admin-auth-service.js';
+} from '../admin-auth-service.js';
 import {
   fetchAdminPipelineFromDatabase,
-} from '../../server/admin/admin-pipeline-service.js';
+} from '../admin-pipeline-service.js';
 
 export async function handleGetPipelineRequest(request) {
+  loadLocalEnv();
+
   if (request.method !== 'GET') {
     return createAdminJsonResponse({ ok: false, error: 'Método não permitido' }, 405);
   }

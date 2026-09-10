@@ -5,9 +5,9 @@ import {
   isRequestSecure,
   serializeClearAdminCookies,
   createAdminJsonResponse,
-} from '../../../server/admin/admin-auth-service.js';
+} from '../admin-auth-service.js';
 
-async function handleRequest(request) {
+export async function handleLogoutRequest(request) {
   if (request.method !== 'POST') {
     return createAdminJsonResponse({ ok: false, error: 'Método não permitido' }, 405);
   }
@@ -39,6 +39,6 @@ async function handleRequest(request) {
 
 export default {
   async fetch(request) {
-    return handleRequest(request);
+    return handleLogoutRequest(request);
   },
 };

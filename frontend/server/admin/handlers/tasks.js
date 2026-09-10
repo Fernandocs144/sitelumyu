@@ -1,22 +1,23 @@
 import { createClient } from '@supabase/supabase-js';
+import { loadLocalEnv } from '../../../api/_lib/env.js';
 import {
   verifyAdminSession,
   isRequestSecure,
   serializeClearAdminCookies,
   createAdminJsonResponse,
   parseAdminRequestUrl,
-} from '../../server/admin/admin-auth-service.js';
-import {
-  parseDashboardQueryParams,
-  fetchAdminDashboardFromDatabase,
-} from '../../server/admin/admin-dashboard-service.js';
+} from '../admin-auth-service.js';
+import { fetchGlobalAdminTasksFromDatabase } from '../admin-tasks-service.js';
 
-export async function handleGetDashboardRequest(request) {
+export async function handleGetTasksRequest(request) {
+  loadLocalEnv();
+
+  // 1. Método HTTP deve ser estritamente GET
   if (request.method !== 'GET') {
     return createAdminJsonResponse({ ok: false, error: 'Método não permitido' }, 405);
   }
 
-  // 1. Validar autenticação e autorização administrativa
+  // 2. Validar autenticação e autorização administrativa
   const session = await verifyAdminSession(request);
   const isSecure = isRequestSecure(request);
 
@@ -38,7 +39,7 @@ export async function handleGetDashboardRequest(request) {
     );
   }
 
-  // 2. Configurar cliente Supabase exclusivo server-side com service_role
+  // 3. Cliente Supabase exclusivo server-side com service_role
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -54,33 +55,40 @@ export async function handleGetDashboardRequest(request) {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  // 3. Processar parâmetros de consulta
   const url = parseAdminRequestUrl(request);
-  const params = parseDashboardQueryParams(url.searchParams);
+  const includeCompleted = url.searchParams.get('include_completed') === 'true';
+  const limitParam = parseInt(url.searchParams.get('limit') || '200', 10);
+  const limit = isNaN(limitParam) || limitParam <= 0 ? 200 : limitParam;
 
-  // 4. Executar agregador do dashboard
   try {
-    const dashboardData = await fetchAdminDashboardFromDatabase(serviceClient, params);
+    const result = await fetchGlobalAdminTasksFromDatabase(serviceClient, {
+      limit,
+      includeCompleted,
+    });
 
     return createAdminJsonResponse(
       {
         ok: true,
-        ...dashboardData,
+        tasks: result.tasks,
+        total: result.total,
+        truncated: result.truncated,
+        limit: result.limit,
       },
       200,
       session.newCookies
     );
   } catch (err) {
+    const statusCode = err.statusCode || 500;
     return createAdminJsonResponse(
-      { ok: false, error: err.message || 'Erro ao carregar o dashboard' },
-      500,
+      { ok: false, error: err.message || 'Erro ao consultar tarefas globais' },
+      statusCode,
       session.newCookies
     );
   }
 }
 
 export default {
-  async fetch(request) {
-    return handleGetDashboardRequest(request);
+  async fetch(request, env, ctx) {
+    return handleGetTasksRequest(request);
   },
 };

@@ -5,11 +5,11 @@ import {
   serializeClearAdminCookies,
   createAdminJsonResponse,
   parseAdminRequestUrl,
-} from '../../../server/admin/admin-auth-service.js';
+} from '../admin-auth-service.js';
 import {
   isValidUuid,
   fetchLeadByIdFromDatabase,
-} from '../../../server/admin/admin-lead-detail-service.js';
+} from '../admin-lead-detail-service.js';
 
 export async function handleGetLeadDetailRequest(request, paramsId = null) {
   if (request.method !== 'GET') {

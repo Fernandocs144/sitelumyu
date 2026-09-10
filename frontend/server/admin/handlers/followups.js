@@ -1,18 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
-import { loadLocalEnv } from '../_lib/env.js';
+import { loadLocalEnv } from '../../../api/_lib/env.js';
 import {
   verifyAdminSession,
   isRequestSecure,
   serializeClearAdminCookies,
   createAdminJsonResponse,
   parseAdminRequestUrl,
-} from '../../server/admin/admin-auth-service.js';
-import { fetchGlobalAdminTasksFromDatabase } from '../../server/admin/admin-lead-tasks-service.js';
+} from '../admin-auth-service.js';
+import { fetchFollowUpRecommendationsFromDatabase } from '../admin-followup-service.js';
 
-export async function handleGetTasksRequest(request) {
+export async function handleGetAdminFollowUpsRequest(request) {
   loadLocalEnv();
 
-  // 1. Método HTTP deve ser estritamente GET
+  // 1. Método HTTP deve ser estritamente GET (Read-Only)
   if (request.method !== 'GET') {
     return createAdminJsonResponse({ ok: false, error: 'Método não permitido' }, 405);
   }
@@ -56,20 +56,21 @@ export async function handleGetTasksRequest(request) {
   });
 
   const url = parseAdminRequestUrl(request);
-  const includeCompleted = url.searchParams.get('include_completed') === 'true';
+  const showBlocked = url.searchParams.get('show_blocked') === 'true';
   const limitParam = parseInt(url.searchParams.get('limit') || '200', 10);
   const limit = isNaN(limitParam) || limitParam <= 0 ? 200 : limitParam;
 
   try {
-    const result = await fetchGlobalAdminTasksFromDatabase(serviceClient, {
+    const result = await fetchFollowUpRecommendationsFromDatabase(serviceClient, {
       limit,
-      includeCompleted,
+      showBlocked,
+      now: new Date()
     });
 
     return createAdminJsonResponse(
       {
         ok: true,
-        tasks: result.tasks,
+        recommendations: result.recommendations,
         total: result.total,
         truncated: result.truncated,
         limit: result.limit,
@@ -80,7 +81,7 @@ export async function handleGetTasksRequest(request) {
   } catch (err) {
     const statusCode = err.statusCode || 500;
     return createAdminJsonResponse(
-      { ok: false, error: err.message || 'Erro ao consultar tarefas globais' },
+      { ok: false, error: err.message || 'Erro ao calcular recomendações de follow-up' },
       statusCode,
       session.newCookies
     );
@@ -89,6 +90,6 @@ export async function handleGetTasksRequest(request) {
 
 export default {
   async fetch(request, env, ctx) {
-    return handleGetAdminTasksRequest(request);
+    return handleGetAdminFollowUpsRequest(request);
   },
 };

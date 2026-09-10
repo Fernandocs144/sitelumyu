@@ -1,14 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
-import { loadLocalEnv } from '../../../_lib/env.js';
+import { loadLocalEnv } from '../../../api/_lib/env.js';
 import {
   verifyAdminSession,
   isRequestSecure,
   serializeClearAdminCookies,
   createAdminJsonResponse,
   parseAdminRequestUrl,
-} from '../../../../server/admin/admin-auth-service.js';
-import { isValidUuid } from '../../../../server/admin/admin-lead-detail-service.js';
-import { cancelApprovedCommunication } from '../../../../server/admin/admin-followup-approval-service.js';
+} from '../admin-auth-service.js';
+import { isValidUuid } from '../admin-lead-detail-service.js';
+import { cancelApprovedCommunication } from '../admin-followup-approval-service.js';
 
 export async function handlePostCancelApprovedCommunicationRequest(request, paramsId = null) {
   loadLocalEnv();

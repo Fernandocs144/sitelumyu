@@ -4,7 +4,7 @@ import {
   isValidUuid,
   fetchAdminConversationDetailFromDatabase,
 } from './admin-conversation-detail-service.js';
-import { handleGetConversationDetailRequest } from '../../api/admin/conversations/[id].js';
+import { handleGetConversationDetailRequest } from './handlers/conversation-detail.js';
 
 test('=== INICIANDO SUITE DE TESTES DO DETALHE DE CONVERSA ADMIN (PASSO 1E.2) ===', async () => {
   // Teste 1: Validação de UUID

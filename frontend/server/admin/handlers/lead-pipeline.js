@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { loadLocalEnv } from '../../../_lib/env.js';
+import { loadLocalEnv } from '../../../api/_lib/env.js';
 import {
   verifyAdminSession,
   isRequestSecure,
@@ -7,15 +7,17 @@ import {
   createAdminJsonResponse,
   parseAdminRequestUrl,
   parseAdminRequestJson,
-} from '../../../../server/admin/admin-auth-service.js';
-import { isValidUuid } from '../../../../server/admin/admin-lead-detail-service.js';
-import { createLeadTaskInDatabase } from '../../../../server/admin/admin-lead-tasks-service.js';
+} from '../admin-auth-service.js';
+import {
+  transitionLeadPipelineStage,
+  isValidUuid,
+} from '../../pipeline/pipeline-service.js';
 
-export async function handlePostLeadTasksRequest(request, paramsId = null) {
+export async function handlePatchLeadPipelineRequest(request, paramsId = null) {
   loadLocalEnv();
 
-  // 1. Método HTTP deve ser estritamente POST
-  if (request.method !== 'POST') {
+  // 1. Método HTTP deve ser estritamente PATCH
+  if (request.method !== 'PATCH') {
     return createAdminJsonResponse({ ok: false, error: 'Método não permitido' }, 405);
   }
 
@@ -41,7 +43,7 @@ export async function handlePostLeadTasksRequest(request, paramsId = null) {
     );
   }
 
-  // 3. Extrair leadId da URL
+  // 3. Extrair ID da URL
   const url = parseAdminRequestUrl(request);
   let leadId = paramsId;
 
@@ -51,9 +53,9 @@ export async function handlePostLeadTasksRequest(request, paramsId = null) {
       leadId = queryId;
     } else {
       const segments = url.pathname.split('/').filter(Boolean);
-      const tasksIdx = segments.indexOf('tasks');
-      if (tasksIdx > 0) {
-        leadId = segments[tasksIdx - 1];
+      const pipelineIdx = segments.indexOf('pipeline');
+      if (pipelineIdx > 0) {
+        leadId = segments[pipelineIdx - 1];
       } else {
         const leadsIdx = segments.indexOf('leads');
         if (leadsIdx >= 0 && leadsIdx < segments.length - 1) {
@@ -83,35 +85,9 @@ export async function handlePostLeadTasksRequest(request, paramsId = null) {
     );
   }
 
-  if (!body || typeof body !== 'object') {
+  if (!body || typeof body !== 'object' || !body.pipeline_stage) {
     return createAdminJsonResponse(
-      { ok: false, error: 'O corpo da requisição é obrigatório' },
-      400,
-      session.newCookies
-    );
-  }
-
-  const { title, priority, due_at, assigned_to } = body;
-
-  if (typeof title !== 'string' || title.trim().length === 0) {
-    return createAdminJsonResponse(
-      { ok: false, error: 'O título da tarefa deve ser um texto não vazio' },
-      400,
-      session.newCookies
-    );
-  }
-
-  if (title.length > 255) {
-    return createAdminJsonResponse(
-      { ok: false, error: 'O título da tarefa não pode ter mais de 255 caracteres' },
-      400,
-      session.newCookies
-    );
-  }
-
-  if (priority && !['low', 'normal', 'high'].includes(priority)) {
-    return createAdminJsonResponse(
-      { ok: false, error: 'Prioridade inválida. Valores permitidos: low, normal, high' },
+      { ok: false, error: 'O campo pipeline_stage é obrigatório' },
       400,
       session.newCookies
     );
@@ -133,56 +109,31 @@ export async function handlePostLeadTasksRequest(request, paramsId = null) {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
+  // 6. Forçar de forma incondicional source='admin_user' e changedBy=admin.user_id
   const adminUserId = session.adminRecord?.user_id || session.user?.id;
 
-  // Se assigned_to for fornecido pelo browser, validar se é um admin válido
-  let targetAssignedTo = adminUserId;
-  if (assigned_to) {
-    if (!isValidUuid(assigned_to)) {
-      return createAdminJsonResponse(
-        { ok: false, error: 'ID de utilizador responsável (assigned_to) inválido' },
-        400,
-        session.newCookies
-      );
-    }
-    const { data: targetAdmin, error: adminErr } = await serviceClient
-      .from('admin_users')
-      .select('user_id')
-      .eq('user_id', assigned_to)
-      .maybeSingle();
-
-    if (adminErr || !targetAdmin) {
-      return createAdminJsonResponse(
-        { ok: false, error: 'O utilizador responsável especificado não é um administrador autorizado' },
-        400,
-        session.newCookies
-      );
-    }
-    targetAssignedTo = targetAdmin.user_id;
-  }
-
   try {
-    const task = await createLeadTaskInDatabase(serviceClient, {
+    const result = await transitionLeadPipelineStage({
+      supabase: serviceClient,
       leadId,
-      title,
-      priority: priority || 'normal',
-      dueAt: due_at || null,
-      assignedTo: targetAssignedTo,
-      createdBy: adminUserId,
+      toStage: body.pipeline_stage,
+      source: 'admin_user',
+      changedBy: adminUserId,
     });
 
     return createAdminJsonResponse(
       {
         ok: true,
-        task,
+        changed: result.changed,
+        lead: result.lead,
       },
-      201,
+      200,
       session.newCookies
     );
   } catch (err) {
     const statusCode = err.statusCode || 500;
     return createAdminJsonResponse(
-      { ok: false, error: err.message || 'Erro ao criar tarefa comercial' },
+      { ok: false, error: err.message || 'Erro ao processar transição de pipeline' },
       statusCode,
       session.newCookies
     );
@@ -191,6 +142,6 @@ export async function handlePostLeadTasksRequest(request, paramsId = null) {
 
 export default {
   async fetch(request, env, ctx) {
-    return handlePostLeadTasksRequest(request);
+    return handlePatchLeadPipelineRequest(request);
   },
 };

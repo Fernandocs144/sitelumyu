@@ -5,11 +5,11 @@ import {
   serializeClearAdminCookies,
   createAdminJsonResponse,
   parseAdminRequestUrl,
-} from '../../../server/admin/admin-auth-service.js';
+} from '../admin-auth-service.js';
 import {
   isValidUuid,
   fetchAdminConversationDetailFromDatabase,
-} from '../../../server/admin/admin-conversation-detail-service.js';
+} from '../admin-conversation-detail-service.js';
 
 export async function handleGetConversationDetailRequest(request, paramsId = null) {
   if (request.method !== 'GET') {

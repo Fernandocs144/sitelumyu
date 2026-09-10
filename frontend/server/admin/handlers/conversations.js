@@ -5,11 +5,11 @@ import {
   serializeClearAdminCookies,
   createAdminJsonResponse,
   parseAdminRequestUrl,
-} from '../../server/admin/admin-auth-service.js';
+} from '../admin-auth-service.js';
 import {
   parseConversationsQueryParams,
   fetchAdminConversationsFromDatabase,
-} from '../../server/admin/admin-conversations-service.js';
+} from '../admin-conversations-service.js';
 
 export async function handleGetConversationsRequest(request) {
   if (request.method !== 'GET') {
