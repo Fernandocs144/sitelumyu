@@ -1175,16 +1175,6 @@ export default function AdminFollowUpsPage() {
                 </div>
               </div>
 
-              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-300 space-y-1">
-                <div className="font-semibold flex items-center gap-1.5 text-amber-200">
-                  <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0" />
-                  Modo de Teste Seguro Ativo (Safe Test Mode)
-                </div>
-                <p className="text-[11px] text-amber-300/90 leading-normal">
-                  O disparo será validado contra a lista de permissões. O email apenas será entregue se o destinatário for o endereço de teste autorizado (<strong className="text-white font-mono">fjcs_2011@hotmail.com</strong>).
-                </p>
-              </div>
-
               {sendError && (
                 <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2">
