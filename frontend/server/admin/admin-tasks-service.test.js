@@ -307,42 +307,27 @@ console.log('=== INICIANDO SUITE DE TESTES DO MÓDULO DE TAREFAS ADMIN (PASSO 1)
     },
   };
 
-  // Testar criação com reason_code = 'phone_call'
-  const taskPhone = await createLeadTaskInDatabase(mockSupabaseCreate, {
-    leadId: validLeadId,
-    title: 'Telefonar ao cliente para discutir proposta',
-    priority: 'normal',
-    createdBy: validUserId,
-    reasonCode: 'phone_call',
-  });
-  assert.strictEqual(insertPayloadReceived.reason_code, 'phone_call', 'payload reason_code deve ser phone_call');
-  assert.strictEqual(taskPhone.reason_code, 'phone_call', 'task criada deve ter reason_code = phone_call');
-
-  // Testar criação com reason_code = null (tarefa normal)
+  // Testar criação de tarefa manual (reason_code = null por defeito)
   const taskNormal = await createLeadTaskInDatabase(mockSupabaseCreate, {
     leadId: validLeadId,
     title: 'Preparar documento PDF',
     priority: 'normal',
     createdBy: validUserId,
-    reasonCode: null,
   });
-  assert.strictEqual(insertPayloadReceived.reason_code, null, 'payload reason_code deve ser null');
+  assert.strictEqual(insertPayloadReceived.reason_code, null, 'payload reason_code deve ser null para tarefas manuais');
   assert.strictEqual(taskNormal.reason_code, null, 'task criada deve ter reason_code = null');
 
-  // Testar rejeição de motivo inválido para criação manual
-  await assert.rejects(
-    async () => {
-      await createLeadTaskInDatabase(mockSupabaseCreate, {
-        leadId: validLeadId,
-        title: 'Teste Inválido',
-        createdBy: validUserId,
-        reasonCode: 'invalid_code_123',
-      });
-    },
-    { message: 'Tipo de tarefa inválido. Valores permitidos: Tarefa (null) ou Contacto telefónico (phone_call)' }
-  );
+  // Testar preservação de reason_code automático (ex: scheduler_followup)
+  const taskAuto = await createLeadTaskInDatabase(mockSupabaseCreate, {
+    leadId: validLeadId,
+    title: 'Follow-up automático',
+    priority: 'normal',
+    createdBy: validUserId,
+    reasonCode: 'scheduler_followup',
+  });
+  assert.strictEqual(insertPayloadReceived.reason_code, 'scheduler_followup', 'payload reason_code automático deve ser preservado');
 
-  console.log('TESTE 5 PASSOU: Suporte a tarefas do tipo "Contacto telefónico" (reason_code = phone_call | null) verificado.');
+  console.log('TESTE 5 PASSOU: Tarefas manuais criadas com reason_code = null e reason_codes automáticos preservados.');
 }
 
 console.log('\n=== TODOS OS TESTES DO MÓDULO DE TAREFAS PASSARAM COM SUCESSO ===');

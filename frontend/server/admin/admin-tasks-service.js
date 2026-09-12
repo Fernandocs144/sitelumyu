@@ -94,6 +94,7 @@ export async function fetchGlobalAdminTasksFromDatabase(supabaseClient, options 
         id,
         name,
         email,
+        phone,
         company_name,
         pipeline_stage,
         lead_classification,

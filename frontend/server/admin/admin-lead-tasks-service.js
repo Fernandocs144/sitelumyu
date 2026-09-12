@@ -157,12 +157,8 @@ export async function createLeadTaskInDatabase(
 
   const rawReasonCode = reasonCode !== undefined ? reasonCode : (reason_code !== undefined ? reason_code : taskType);
   let normalizedReasonCode = null;
-  if (rawReasonCode === 'phone_call') {
-    normalizedReasonCode = 'phone_call';
-  } else if (rawReasonCode !== null && rawReasonCode !== undefined && rawReasonCode !== '') {
-    const err = new Error('Tipo de tarefa inválido. Valores permitidos: Tarefa (null) ou Contacto telefónico (phone_call)');
-    err.statusCode = 400;
-    throw err;
+  if (rawReasonCode && rawReasonCode !== 'phone_call') {
+    normalizedReasonCode = rawReasonCode;
   }
 
   let formattedDueAt = null;
@@ -375,9 +371,7 @@ export async function updateLeadTaskDetailsInDatabase(
 
   const rawReasonCode = reasonCode !== undefined ? reasonCode : (reason_code !== undefined ? reason_code : taskType);
   if (rawReasonCode !== undefined) {
-    if (rawReasonCode === 'phone_call') {
-      updatePayload.reason_code = 'phone_call';
-    } else if (rawReasonCode === null || rawReasonCode === '') {
+    if (rawReasonCode === 'phone_call' || rawReasonCode === null || rawReasonCode === '') {
       updatePayload.reason_code = null;
     } else {
       updatePayload.reason_code = rawReasonCode;

@@ -828,41 +828,6 @@ export default function AdminLeadDetailPage() {
                 />
               </div>
 
-              {/* TIPO DE TAREFA */}
-              <div>
-                <label className="text-[10px] text-slate-500 uppercase tracking-wider block font-medium mb-1">
-                  Tipo de Tarefa
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setTaskReasonCode(null)}
-                    disabled={savingTask}
-                    className={`py-1.5 px-3 rounded-xl border text-xs font-medium transition-all flex items-center justify-center space-x-2 ${
-                      taskReasonCode === null
-                        ? 'bg-amber-500/20 border-amber-500/40 text-amber-300 font-semibold'
-                        : 'bg-white/[0.02] border-white/[0.08] text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    <ListTodo className="w-3.5 h-3.5" />
-                    <span>Tarefa</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setTaskReasonCode('phone_call')}
-                    disabled={savingTask}
-                    className={`py-1.5 px-3 rounded-xl border text-xs font-medium transition-all flex items-center justify-center space-x-2 ${
-                      taskReasonCode === 'phone_call'
-                        ? 'bg-sky-500/20 border-sky-500/40 text-sky-300 font-semibold'
-                        : 'bg-white/[0.02] border-white/[0.08] text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    <Phone className="w-3.5 h-3.5 text-sky-400" />
-                    <span>Contacto telefónico</span>
-                  </button>
-                </div>
-              </div>
-
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <div>
                   <label className="text-[10px] text-slate-500 uppercase tracking-wider block font-medium mb-1">
@@ -974,40 +939,6 @@ export default function AdminLeadDetailPage() {
 
                           <div>
                             <label className="block text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">
-                              Tipo de Tarefa
-                            </label>
-                            <div className="grid grid-cols-2 gap-2 mb-2">
-                              <button
-                                type="button"
-                                onClick={() => setEditTaskReasonCode(null)}
-                                disabled={savingEditTask}
-                                className={`py-1.5 px-3 rounded-lg border text-xs font-medium transition-all flex items-center justify-center space-x-2 ${
-                                  editTaskReasonCode === null || editTaskReasonCode !== 'phone_call'
-                                    ? 'bg-amber-500/20 border-amber-500/40 text-amber-300 font-semibold'
-                                    : 'bg-white/[0.02] border-white/[0.08] text-slate-400 hover:text-white'
-                                }`}
-                              >
-                                <ListTodo className="w-3.5 h-3.5" />
-                                <span>Tarefa</span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setEditTaskReasonCode('phone_call')}
-                                disabled={savingEditTask}
-                                className={`py-1.5 px-3 rounded-lg border text-xs font-medium transition-all flex items-center justify-center space-x-2 ${
-                                  editTaskReasonCode === 'phone_call'
-                                    ? 'bg-sky-500/20 border-sky-500/40 text-sky-300 font-semibold'
-                                    : 'bg-white/[0.02] border-white/[0.08] text-slate-400 hover:text-white'
-                                }`}
-                              >
-                                <Phone className="w-3.5 h-3.5 text-sky-400" />
-                                <span>Contacto telefónico</span>
-                              </button>
-                            </div>
-                          </div>
-
-                          <div>
-                            <label className="block text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">
                               Título
                             </label>
                             <input
@@ -1111,12 +1042,6 @@ export default function AdminLeadDetailPage() {
                             <span className="font-medium text-slate-200 text-xs break-words">
                               {task.title}
                             </span>
-                            {task.reason_code === 'phone_call' && (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-500/10 text-sky-300 border border-sky-500/20 inline-flex items-center space-x-1">
-                                <Phone className="w-3 h-3 text-sky-400 mr-0.5" />
-                                <span>Contacto telefónico</span>
-                              </span>
-                            )}
                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${prioBadge.className}`}>
                               {prioBadge.label}
                             </span>
@@ -1219,40 +1144,6 @@ export default function AdminLeadDetailPage() {
 
                           <div>
                             <label className="block text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">
-                              Tipo de Tarefa
-                            </label>
-                            <div className="grid grid-cols-2 gap-2 mb-2">
-                              <button
-                                type="button"
-                                onClick={() => setEditTaskReasonCode(null)}
-                                disabled={savingEditTask}
-                                className={`py-1.5 px-3 rounded-lg border text-xs font-medium transition-all flex items-center justify-center space-x-2 ${
-                                  editTaskReasonCode === null || editTaskReasonCode !== 'phone_call'
-                                    ? 'bg-amber-500/20 border-amber-500/40 text-amber-300 font-semibold'
-                                    : 'bg-white/[0.02] border-white/[0.08] text-slate-400 hover:text-white'
-                                }`}
-                              >
-                                <ListTodo className="w-3.5 h-3.5" />
-                                <span>Tarefa</span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setEditTaskReasonCode('phone_call')}
-                                disabled={savingEditTask}
-                                className={`py-1.5 px-3 rounded-lg border text-xs font-medium transition-all flex items-center justify-center space-x-2 ${
-                                  editTaskReasonCode === 'phone_call'
-                                    ? 'bg-sky-500/20 border-sky-500/40 text-sky-300 font-semibold'
-                                    : 'bg-white/[0.02] border-white/[0.08] text-slate-400 hover:text-white'
-                                }`}
-                              >
-                                <Phone className="w-3.5 h-3.5 text-sky-400" />
-                                <span>Contacto telefónico</span>
-                              </button>
-                            </div>
-                          </div>
-
-                          <div>
-                            <label className="block text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">
                               Título
                             </label>
                             <input
@@ -1352,12 +1243,6 @@ export default function AdminLeadDetailPage() {
                             <span className="font-medium text-slate-400 text-xs line-through break-words">
                               {task.title}
                             </span>
-                            {task.reason_code === 'phone_call' && (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-500/10 text-sky-300 border border-sky-500/20 inline-flex items-center space-x-1 opacity-75">
-                                <Phone className="w-3 h-3 text-sky-400 mr-0.5" />
-                                <span>Contacto telefónico</span>
-                              </span>
-                            )}
                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border opacity-75 ${prioBadge.className}`}>
                               {prioBadge.label}
                             </span>
