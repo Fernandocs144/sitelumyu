@@ -132,3 +132,63 @@ export async function fetchLeadByIdFromDatabase(supabaseClient, leadId) {
   };
 }
 
+/**
+ * Atualiza exclusivamente os dados de contacto/identidade de uma lead (name, company_name, phone).
+ * Rejeita/ignora qualquer outro campo enviado para garantir isolamento e segurança.
+ *
+ * @param {import('@supabase/supabase-js').SupabaseClient} supabaseClient
+ * @param {string} leadId
+ * @param {{ name?: string, company_name?: string, phone?: string }} contactData
+ * @returns {Promise<{ lead: object }>}
+ */
+export async function updateLeadContactInDatabase(supabaseClient, leadId, contactData = {}) {
+  if (!isValidUuid(leadId)) {
+    const err = new Error('ID de lead inválido');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const updatePayload = {};
+
+  if (contactData.name !== undefined) {
+    const val = typeof contactData.name === 'string' ? contactData.name.trim() : '';
+    updatePayload.name = val.length > 0 ? val : null;
+  }
+
+  if (contactData.company_name !== undefined) {
+    const val = typeof contactData.company_name === 'string' ? contactData.company_name.trim() : '';
+    updatePayload.company_name = val.length > 0 ? val : null;
+  }
+
+  if (contactData.phone !== undefined) {
+    const val = typeof contactData.phone === 'string' ? contactData.phone.trim() : '';
+    updatePayload.phone = val.length > 0 ? val : null;
+  }
+
+  if (Object.keys(updatePayload).length === 0) {
+    const err = new Error('Nenhum campo de contacto válido fornecido para atualização');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const { data, error } = await supabaseClient
+    .from('leads')
+    .update(updatePayload)
+    .eq('id', leadId)
+    .select(LEAD_DETAIL_FIELDS)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Erro ao atualizar contacto da lead na base de dados: ${error.message}`);
+  }
+
+  if (!data) {
+    const err = new Error('Lead não encontrada');
+    err.statusCode = 404;
+    throw err;
+  }
+
+  return { lead: data };
+}
+
+

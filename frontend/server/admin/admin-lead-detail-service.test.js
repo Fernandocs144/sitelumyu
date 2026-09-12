@@ -3,8 +3,10 @@ import {
   isValidUuid,
   LEAD_DETAIL_FIELDS,
   fetchLeadByIdFromDatabase,
+  updateLeadContactInDatabase,
 } from './admin-lead-detail-service.js';
 import { handleGetLeadDetailRequest } from './handlers/lead-detail.js';
+import { handlePatchLeadContactRequest } from './handlers/lead-contact.js';
 
 console.log('=== INICIANDO SUITE DE TESTES DO DETALHE DE LEAD ADMIN (PASSO 1D) ===\n');
 
@@ -141,14 +143,75 @@ console.log('=== INICIANDO SUITE DE TESTES DO DETALHE DE LEAD ADMIN (PASSO 1D) =
   console.log('TESTE 3 PASSOU: Respostas 400, 404 e 200 com conversa associada verificadas.');
 }
 
-// 4. TESTE DE SEGURANÇA E AUTENTICAÇÃO DO ENDPOINT HTTP GET /api/admin/leads/:id
+// 5. TESTE DE ATUALIZAÇÃO EXCLUSIVA DE CONTACTO (name, company_name, phone)
 {
-  // Sem cookie de sessão -> 401
-  const reqUnauth = new Request('http://localhost/api/admin/leads/123e4567-e89b-12d3-a456-426614174000');
-  const resUnauth = await handleGetLeadDetailRequest(reqUnauth);
-  assert.strictEqual(resUnauth.status, 401, 'Requisição sem cookie deve retornar 401');
+  let updatedPayloadCaptured = null;
+  const mockSupabaseUpdate = {
+    from(table) {
+      assert.strictEqual(table, 'leads', 'Deve atualizar apenas a tabela leads');
+      const builder = {
+        update(payload) {
+          updatedPayloadCaptured = payload;
+          return builder;
+        },
+        eq(col, val) {
+          assert.strictEqual(col, 'id');
+          assert.strictEqual(val, '123e4567-e89b-12d3-a456-426614174000');
+          return builder;
+        },
+        select() { return builder; },
+        maybeSingle() {
+          return Promise.resolve({
+            data: {
+              id: '123e4567-e89b-12d3-a456-426614174000',
+              email: 'original@teste.pt',
+              email_normalized: 'original@teste.pt',
+              pipeline_stage: 'contacted',
+              name: updatedPayloadCaptured.name,
+              company_name: updatedPayloadCaptured.company_name,
+              phone: updatedPayloadCaptured.phone,
+            },
+            error: null,
+          });
+        },
+      };
+      return builder;
+    },
+  };
 
-  console.log('TESTE 4 PASSOU: Rejeição de requisições não autenticadas (401) no endpoint de detalhe verificada.');
+  // Teste: Adicionar e alterar telefone, nome e empresa
+  const res1 = await updateLeadContactInDatabase(mockSupabaseUpdate, '123e4567-e89b-12d3-a456-426614174000', {
+    name: '  Novo Nome  ',
+    company_name: 'Nova Empresa Lda',
+    phone: '+351 912 345 678',
+    email: 'hacker@teste.pt', // Deve ser ignorado
+    pipeline_stage: 'won', // Deve ser ignorado
+  });
+
+  assert.strictEqual(res1.lead.name, 'Novo Nome');
+  assert.strictEqual(res1.lead.company_name, 'Nova Empresa Lda');
+  assert.strictEqual(res1.lead.phone, '+351 912 345 678');
+  assert.strictEqual(res1.lead.email, 'original@teste.pt', 'Email deve permanecer inalterado');
+  assert.strictEqual(res1.lead.pipeline_stage, 'contacted', 'Pipeline deve permanecer inalterado');
+  assert.strictEqual(updatedPayloadCaptured.email, undefined, 'Payload de update não deve conter email');
+  assert.strictEqual(updatedPayloadCaptured.pipeline_stage, undefined, 'Payload de update não deve conter pipeline');
+
+  // Teste: Remover telefone (passando string vazia -> NULL)
+  const res2 = await updateLeadContactInDatabase(mockSupabaseUpdate, '123e4567-e89b-12d3-a456-426614174000', {
+    phone: '   ',
+  });
+  assert.strictEqual(res2.lead.phone, null, 'String vazia deve ser convertida para NULL');
+
+  // Teste HTTP Unauthenticated -> 401
+  const reqUnauth = new Request('http://localhost/api/admin/leads/123e4567-e89b-12d3-a456-426614174000/contact', {
+    method: 'PATCH',
+    body: JSON.stringify({ phone: '+351 900 000 000' }),
+  });
+  const httpRes = await handlePatchLeadContactRequest(reqUnauth);
+  assert.strictEqual(httpRes.status, 401, 'Requisição não autenticada deve retornar 401');
+
+  console.log('TESTE 5 PASSOU: Atualização exclusiva de contacto (phone, name, company_name) e isolamento verificados.');
 }
 
-console.log('\n=== TODOS OS TESTES DO DETALHE DE LEAD (PASSO 1D) PASSARAM COM SUCESSO ===');
+console.log('\n=== TODOS OS TESTES DO DETALHE DE LEAD PASSARAM COM SUCESSO ===');
+

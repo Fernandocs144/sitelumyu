@@ -13,6 +13,7 @@ import { handlePostFollowUpStateRequest as handlePatchFollowupStateRequest } fro
 import { handlePostCancelApprovedCommunicationRequest } from '../../server/admin/handlers/approved-communication-cancel.js';
 import { handleGetLeadsRequest } from '../../server/admin/handlers/leads.js';
 import { handleGetLeadDetailRequest } from '../../server/admin/handlers/lead-detail.js';
+import { handlePatchLeadContactRequest } from '../../server/admin/handlers/lead-contact.js';
 import { handlePostLeadNotesRequest } from '../../server/admin/handlers/lead-notes.js';
 import { handlePatchLeadPipelineRequest } from '../../server/admin/handlers/lead-pipeline.js';
 import { handlePostLeadTasksRequest } from '../../server/admin/handlers/lead-tasks.js';
@@ -86,7 +87,13 @@ export async function handleAdminRouteRequest(request) {
       return handleGetLeadsRequest(request);
     }
     if (segments.length === 2) {
+      if (request.method === 'PATCH' || request.method === 'POST') {
+        return handlePatchLeadContactRequest(request, second);
+      }
       return handleGetLeadDetailRequest(request, second);
+    }
+    if (segments.length === 3 && third === 'contact') {
+      return handlePatchLeadContactRequest(request, second);
     }
     if (segments.length === 3 && third === 'notes') {
       return handlePostLeadNotesRequest(request, second);

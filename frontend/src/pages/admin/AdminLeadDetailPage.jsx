@@ -228,6 +228,14 @@ export default function AdminLeadDetailPage() {
   const [savingEditTask, setSavingEditTask] = useState(false);
   const [editTaskError, setEditTaskError] = useState(null);
 
+  const [isEditingContact, setIsEditingContact] = useState(false);
+  const [contactNameInput, setContactNameInput] = useState('');
+  const [contactCompanyInput, setContactCompanyInput] = useState('');
+  const [contactPhoneInput, setContactPhoneInput] = useState('');
+  const [savingContact, setSavingContact] = useState(false);
+  const [contactError, setContactError] = useState(null);
+  const [contactSuccessMsg, setContactSuccessMsg] = useState(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [statusCode, setStatusCode] = useState(null);
@@ -512,6 +520,77 @@ export default function AdminLeadDetailPage() {
       </div>
     );
   }
+
+  const handleStartEditContact = () => {
+    setContactNameInput(lead?.name || '');
+    setContactCompanyInput(lead?.company_name || '');
+    setContactPhoneInput(lead?.phone || '');
+    setContactError(null);
+    setContactSuccessMsg(null);
+    setIsEditingContact(true);
+  };
+
+  const handleCancelEditContact = () => {
+    setIsEditingContact(false);
+    setContactError(null);
+  };
+
+  const handleSaveContact = async (e) => {
+    e.preventDefault();
+    setSavingContact(true);
+    setContactError(null);
+    setContactSuccessMsg(null);
+
+    try {
+      const response = await fetch(`/api/admin/leads/${id}/contact`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          name: contactNameInput,
+          company_name: contactCompanyInput,
+          phone: contactPhoneInput,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || 'Erro ao guardar dados de contacto');
+      }
+
+      setLead(prev => ({
+        ...prev,
+        name: data.lead.name,
+        company_name: data.lead.company_name,
+        phone: data.lead.phone,
+      }));
+
+      // Atualizar o telefone e nome na lista de tarefas local da Lead360
+      setTasks(prevTasks =>
+        prevTasks.map(t => {
+          if (t.lead) {
+            return {
+              ...t,
+              lead: {
+                ...t.lead,
+                name: data.lead.name,
+                phone: data.lead.phone,
+              },
+            };
+          }
+          return t;
+        })
+      );
+
+      setIsEditingContact(false);
+      setContactSuccessMsg('Contacto atualizado com sucesso.');
+      setTimeout(() => setContactSuccessMsg(null), 3000);
+    } catch (err) {
+      setContactError(err.message || 'Erro ao guardar dados de contacto');
+    } finally {
+      setSavingContact(false);
+    }
+  };
 
   if (!lead) return null;
 
@@ -1530,61 +1609,167 @@ export default function AdminLeadDetailPage() {
 
           {/* BLOCO 6: IDENTIDADE E METADADOS */}
           <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6 backdrop-blur-xl space-y-4">
-            <div className="flex items-center space-x-2 border-b border-white/[0.08] pb-3">
-              <Users className="w-4 h-4 text-blue-400" />
-              <h2 className="text-sm font-semibold text-white tracking-wide uppercase">Identidade e Contacto</h2>
+            <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
+              <div className="flex items-center space-x-2">
+                <Users className="w-4 h-4 text-blue-400" />
+                <h2 className="text-sm font-semibold text-white tracking-wide uppercase">Identidade e Contacto</h2>
+              </div>
+              {!isEditingContact && (
+                <button
+                  type="button"
+                  onClick={handleStartEditContact}
+                  className="flex items-center space-x-1 px-2.5 py-1 text-xs font-medium text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-all"
+                >
+                  <Pencil className="w-3 h-3" />
+                  <span>Editar</span>
+                </button>
+              )}
             </div>
 
-            <div className="space-y-3 text-xs">
-              <div>
-                <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-medium">Nome Completo</span>
-                <span className="text-slate-200 font-medium block mt-0.5">{lead.name || '—'}</span>
+            {contactSuccessMsg && (
+              <div className="p-2.5 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-center space-x-2">
+                <Check className="w-3.5 h-3.5 flex-shrink-0" />
+                <span>{contactSuccessMsg}</span>
               </div>
+            )}
 
-              <div>
-                <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-medium">Empresa</span>
-                <span className="text-slate-200 font-medium block mt-0.5">{lead.company_name || '—'}</span>
+            {contactError && (
+              <div className="p-2.5 text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg flex items-center space-x-2">
+                <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                <span>{contactError}</span>
               </div>
+            )}
 
-              <div>
-                <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-medium">Email</span>
-                {lead.email ? (
-                  <a href={`mailto:${lead.email}`} className="text-indigo-400 hover:underline block mt-0.5">
-                    {lead.email}
-                  </a>
-                ) : (
-                  <span className="text-slate-400 block mt-0.5">Não informado</span>
-                )}
-              </div>
+            {isEditingContact ? (
+              <form onSubmit={handleSaveContact} className="space-y-3 text-xs">
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider block font-medium mb-1">
+                    Nome Completo
+                  </label>
+                  <input
+                    type="text"
+                    value={contactNameInput}
+                    onChange={(e) => setContactNameInput(e.target.value)}
+                    placeholder="Nome completo da lead"
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-slate-200 text-xs focus:outline-none focus:border-indigo-500 transition-colors"
+                  />
+                </div>
 
-              <div>
-                <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-medium">Telefone</span>
-                {lead.phone ? (
-                  <a href={`tel:${lead.phone}`} className="text-indigo-400 hover:underline block mt-0.5">
-                    {lead.phone}
-                  </a>
-                ) : (
-                  <span className="text-slate-400 block mt-0.5">Não informado</span>
-                )}
-              </div>
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider block font-medium mb-1">
+                    Empresa
+                  </label>
+                  <input
+                    type="text"
+                    value={contactCompanyInput}
+                    onChange={(e) => setContactCompanyInput(e.target.value)}
+                    placeholder="Nome da empresa"
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-slate-200 text-xs focus:outline-none focus:border-indigo-500 transition-colors"
+                  />
+                </div>
 
-              <div>
-                <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-medium">Idioma</span>
-                <span className="text-slate-300 font-medium block mt-0.5">
-                  {formatLanguage(lead.language)}
-                </span>
-              </div>
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider block font-medium mb-1">
+                    Email <span className="text-slate-500 font-normal lowercase">(não editável)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={lead.email || ''}
+                    disabled
+                    className="w-full bg-white/[0.02] border border-white/5 rounded-lg px-3 py-1.5 text-slate-500 text-xs cursor-not-allowed"
+                  />
+                </div>
 
-              <div>
-                <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-medium">Data de Criação</span>
-                <span className="text-slate-300 block mt-0.5">{formatDate(lead.created_at)}</span>
-              </div>
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider block font-medium mb-1">
+                    Telefone
+                  </label>
+                  <input
+                    type="text"
+                    value={contactPhoneInput}
+                    onChange={(e) => setContactPhoneInput(e.target.value)}
+                    placeholder="+351 910 000 000"
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-slate-200 text-xs focus:outline-none focus:border-indigo-500 transition-colors"
+                  />
+                </div>
 
-              <div className="pt-2 border-t border-white/[0.06]">
-                <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-medium">ID do Lead</span>
-                <span className="text-[11px] font-mono text-slate-500 block mt-0.5 select-all">{lead.id}</span>
+                <div className="flex items-center space-x-2 pt-2">
+                  <button
+                    type="submit"
+                    disabled={savingContact}
+                    className="flex-1 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition-all disabled:opacity-50 flex items-center justify-center space-x-1"
+                  >
+                    {savingContact ? (
+                      <>
+                        <RefreshCw className="w-3 h-3 animate-spin" />
+                        <span>A guardar...</span>
+                      </>
+                    ) : (
+                      <span>Guardar</span>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCancelEditContact}
+                    disabled={savingContact}
+                    className="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-all disabled:opacity-50"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="space-y-3 text-xs">
+                <div>
+                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-medium">Nome Completo</span>
+                  <span className="text-slate-200 font-medium block mt-0.5">{lead.name || '—'}</span>
+                </div>
+
+                <div>
+                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-medium">Empresa</span>
+                  <span className="text-slate-200 font-medium block mt-0.5">{lead.company_name || '—'}</span>
+                </div>
+
+                <div>
+                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-medium">Email</span>
+                  {lead.email ? (
+                    <a href={`mailto:${lead.email}`} className="text-indigo-400 hover:underline block mt-0.5">
+                      {lead.email}
+                    </a>
+                  ) : (
+                    <span className="text-slate-400 block mt-0.5">Não informado</span>
+                  )}
+                </div>
+
+                <div>
+                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-medium">Telefone</span>
+                  {lead.phone ? (
+                    <a href={`tel:${lead.phone}`} className="text-indigo-400 hover:underline block mt-0.5">
+                      {lead.phone}
+                    </a>
+                  ) : (
+                    <span className="text-slate-400 block mt-0.5">Não informado</span>
+                  )}
+                </div>
+
+                <div>
+                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-medium">Idioma</span>
+                  <span className="text-slate-300 font-medium block mt-0.5">
+                    {formatLanguage(lead.language)}
+                  </span>
+                </div>
+
+                <div>
+                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-medium">Data de Criação</span>
+                  <span className="text-slate-300 block mt-0.5">{formatDate(lead.created_at)}</span>
+                </div>
+
+                <div className="pt-2 border-t border-white/[0.06]">
+                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-medium">ID do Lead</span>
+                  <span className="text-[11px] font-mono text-slate-500 block mt-0.5 select-all">{lead.id}</span>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
