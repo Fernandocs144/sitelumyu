@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import { loadLocalEnv } from '../_lib/env.js';
+import { sendInternalCriticalAlertNotification } from '../../server/email/internal-critical-alert-service.js';
 
 export const SUPPORTED_DISPATCH_EVENTS = new Set([
   'email.sent',
@@ -89,8 +90,8 @@ export async function handleResendWebhookRequest(request) {
   const providerMessageId = payload.data?.email_id || payload.data?.id || payload.email_id || null;
 
   // 4. Inicialização do Cliente Supabase service_role
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !supabaseServiceRoleKey) {
     return new Response(JSON.stringify({ ok: false, error: 'Servidor indisponível' }), {
@@ -167,6 +168,15 @@ export async function handleResendWebhookRequest(request) {
 
       if (rpcErr) {
         console.error('Erro ao avançar estado factual do dispatch via RPC:', rpcErr);
+        try {
+          await sendInternalCriticalAlertNotification({
+            component: 'Resend Webhook',
+            errorType: 'resend_webhook_rpc_failure',
+            errorTitle: 'Erro ao Atualizar Estado Factual do Dispatch',
+            errorMessage: rpcErr.message || 'Falha ao executar RPC advance_communication_dispatch_event',
+            referenceId: providerMessageId
+          });
+        } catch (_) {}
       }
     }
   }

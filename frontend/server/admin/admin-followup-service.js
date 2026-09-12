@@ -15,12 +15,21 @@ import { bulkGetLeadCadenceReadModels } from './admin-followup-cadence-service.j
  * @param {boolean} [options.showBlocked=false] Se inclui leads bloqueadas na resposta
  * @param {Date|string} [options.now] Instante de referência para o motor
  */
-export async function fetchFollowUpRecommendationsFromDatabase(supabaseClient, { limit = 200, showBlocked = false, now = new Date() } = {}) {
+export async function fetchFollowUpRecommendationsFromDatabase(supabaseClient, {
+  page = 1,
+  pageSize = 20,
+  limit,
+  tab = 'all',
+  showBlocked = false,
+  now = new Date()
+} = {}) {
   if (!supabaseClient) {
     throw new Error('SupabaseClient é obrigatório em fetchFollowUpRecommendationsFromDatabase');
   }
 
-  const parsedLimit = Math.min(Math.max(parseInt(limit, 10) || 200, 1), 500);
+  const parsedPage = Math.max(parseInt(page, 10) || 1, 1);
+  const requestedSize = limit ? parseInt(limit, 10) : (parseInt(pageSize, 10) || 20);
+  const parsedPageSize = Math.min(Math.max(requestedSize, 1), 100);
   const evaluationDate = typeof now === 'string' ? new Date(now) : now;
 
   const selectQuery = `
@@ -58,11 +67,11 @@ export async function fetchFollowUpRecommendationsFromDatabase(supabaseClient, {
     )
   `;
 
-  const { data: rawLeads, count: totalCount, error } = await supabaseClient
+  // Consulta sem o hardcoded limit 200 para garantir avaliação de todas as leads
+  const { data: rawLeads, error } = await supabaseClient
     .from('leads')
-    .select(selectQuery, { count: 'exact' })
-    .order('created_at', { ascending: false })
-    .limit(parsedLimit);
+    .select(selectQuery)
+    .order('created_at', { ascending: false });
 
   if (error) {
     console.error('Error fetching leads for follow-up evaluation:', error);
@@ -115,9 +124,7 @@ export async function fetchFollowUpRecommendationsFromDatabase(supabaseClient, {
       _context: context
     };
 
-    if (!recommendationItem.blocked || showBlocked) {
-      rawRecommendations.push(recommendationItem);
-    }
+    rawRecommendations.push(recommendationItem);
   }
 
   // 2. Consulta em Batch Anti-N+1 de Estados e Comunicações Aprovadas
@@ -133,7 +140,7 @@ export async function fetchFollowUpRecommendationsFromDatabase(supabaseClient, {
     bulkGetActiveApprovedCommunications(supabaseClient, fingerprintItems)
   ]);
 
-  const recommendations = rawRecommendations.map(rec => {
+  const allRecommendations = rawRecommendations.map(rec => {
     const { _context, ...cleanRec } = rec;
     if (!cleanRec.lead_id || !cleanRec.needs_follow_up || !cleanRec.reason_code) {
       return {
@@ -175,13 +182,91 @@ export async function fetchFollowUpRecommendationsFromDatabase(supabaseClient, {
     };
   });
 
-  const isTruncated = typeof totalCount === 'number' && totalCount > parsedLimit;
+  // 3. Categorização e Contagens Globais
+  const counts = {
+    attention: 0,
+    scheduled: 0,
+    snoozed: 0,
+    ignored: 0,
+    blocked: 0,
+    total: allRecommendations.length
+  };
+
+  const categorized = {
+    attention: [],
+    scheduled: [],
+    snoozed: [],
+    ignored: [],
+    blocked: []
+  };
+
+  for (const item of allRecommendations) {
+    if (item.blocked) {
+      categorized.blocked.push(item);
+      counts.blocked++;
+    } else if (item.effective_state === 'snoozed') {
+      categorized.snoozed.push(item);
+      counts.snoozed++;
+    } else if (item.effective_state === 'ignored') {
+      categorized.ignored.push(item);
+      counts.ignored++;
+    } else if (item.needs_follow_up) {
+      categorized.attention.push(item);
+      counts.attention++;
+    } else {
+      categorized.scheduled.push(item);
+      counts.scheduled++;
+    }
+  }
+
+  // Ordenação determinística de prioridade na tab Atenção
+  categorized.attention.sort((a, b) => {
+    const rank = (item) => {
+      if (item.reason_code === 'unknown_dispatch_pending_reconciliation') return 1;
+      if (item.reason_code === 'manual_task_due' || item.action_type === 'internal_action') return 2;
+      if (item.cadence?.attempt_number === 2) return 3;
+      if (item.pipeline_stage === 'proposal') return 4;
+      if (item.cadence?.attempt_number === 1 || item.pipeline_stage === 'new') return 5;
+      if (item.cadence?.status === 'exhausted' || item.action_type === 'human_review') return 6;
+      return 7;
+    };
+    return rank(a) - rank(b);
+  });
+
+  // 4. Seleção da lista para a tab solicitada
+  let filteredItems = [];
+  if (tab === 'attention') filteredItems = categorized.attention;
+  else if (tab === 'scheduled') filteredItems = categorized.scheduled;
+  else if (tab === 'snoozed') filteredItems = categorized.snoozed;
+  else if (tab === 'ignored') filteredItems = categorized.ignored;
+  else if (tab === 'blocked') filteredItems = categorized.blocked;
+  else {
+    filteredItems = allRecommendations.filter(item => !item.blocked || showBlocked);
+  }
+
+  if (showBlocked && tab !== 'blocked' && tab !== 'all') {
+    filteredItems = [...filteredItems, ...categorized.blocked];
+  }
+
+  // 5. Fatiamento Paginado Server-Side
+  const totalFiltered = filteredItems.length;
+  const totalPages = Math.max(Math.ceil(totalFiltered / parsedPageSize), 1);
+  const targetPage = Math.min(Math.max(parsedPage, 1), totalPages);
+  const offset = (targetPage - 1) * parsedPageSize;
+  const paginatedRecommendations = filteredItems.slice(offset, offset + parsedPageSize);
 
   return {
     ok: true,
-    recommendations,
-    total: totalCount || (rawLeads || []).length,
-    limit: parsedLimit,
-    truncated: isTruncated
+    recommendations: paginatedRecommendations,
+    pagination: {
+      page: targetPage,
+      pageSize: parsedPageSize,
+      total: totalFiltered,
+      totalPages
+    },
+    counts,
+    total: totalFiltered,
+    limit: parsedPageSize,
+    truncated: false
   };
 }

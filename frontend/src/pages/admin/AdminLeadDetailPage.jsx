@@ -29,6 +29,8 @@ import {
   RotateCcw,
   AlertTriangle,
   User,
+  Pencil,
+  X,
 } from 'lucide-react';
 import {
   formatServiceFull,
@@ -51,6 +53,21 @@ import {
   formatPipelineSource,
   formatBookingStatus,
 } from '../../utils/adminFormatters';
+
+/**
+ * Formata um timestamp ISO para o formato 'YYYY-MM-DDTHH:mm' aceite por <input type="datetime-local">.
+ */
+function formatIsoForDateTimeInput(isoStr) {
+  if (!isoStr) return '';
+  try {
+    const d = new Date(isoStr);
+    if (isNaN(d.getTime())) return '';
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  } catch (e) {
+    return '';
+  }
+}
 
 /**
  * Ordena determinísticamente a lista de tarefas da Lead 360 no cliente:
@@ -198,9 +215,18 @@ export default function AdminLeadDetailPage() {
   const [taskTitle, setTaskTitle] = useState('');
   const [taskPriority, setTaskPriority] = useState('normal');
   const [taskDueAt, setTaskDueAt] = useState('');
+  const [taskReasonCode, setTaskReasonCode] = useState(null);
   const [savingTask, setSavingTask] = useState(false);
   const [taskError, setTaskError] = useState(null);
   const [updatingTaskId, setUpdatingTaskId] = useState(null);
+
+  const [editingTask, setEditingTask] = useState(null);
+  const [editTaskTitle, setEditTaskTitle] = useState('');
+  const [editTaskPriority, setEditTaskPriority] = useState('normal');
+  const [editTaskDueAt, setEditTaskDueAt] = useState('');
+  const [editTaskReasonCode, setEditTaskReasonCode] = useState(null);
+  const [savingEditTask, setSavingEditTask] = useState(false);
+  const [editTaskError, setEditTaskError] = useState(null);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -315,6 +341,7 @@ export default function AdminLeadDetailPage() {
           title: titleToSubmit,
           priority: taskPriority,
           due_at: dueAtIso,
+          reason_code: taskReasonCode,
         }),
       });
 
@@ -330,6 +357,7 @@ export default function AdminLeadDetailPage() {
       setTaskTitle('');
       setTaskPriority('normal');
       setTaskDueAt('');
+      setTaskReasonCode(null);
     } catch (err) {
       setTaskError(err.message || 'Erro ao criar tarefa comercial');
     } finally {
@@ -367,6 +395,77 @@ export default function AdminLeadDetailPage() {
       setTaskError(err.message || 'Erro ao alterar estado da tarefa');
     } finally {
       setUpdatingTaskId(null);
+    }
+  };
+
+  const handleStartEditTask = (task) => {
+    setEditingTask(task);
+    setEditTaskTitle(task.title || '');
+    setEditTaskPriority(task.priority || 'normal');
+    setEditTaskDueAt(formatIsoForDateTimeInput(task.due_at));
+    setEditTaskReasonCode(task.reason_code === 'phone_call' ? 'phone_call' : (task.reason_code || null));
+    setEditTaskError(null);
+  };
+
+  const handleCancelTaskEdit = () => {
+    setEditingTask(null);
+    setEditTaskError(null);
+  };
+
+  const handleSaveTaskEdit = async (e) => {
+    if (e) e.preventDefault();
+    const titleToSubmit = editTaskTitle.trim();
+    if (!titleToSubmit || savingEditTask || !editingTask) return;
+
+    setSavingEditTask(true);
+    setEditTaskError(null);
+
+    let dueAtIso = null;
+    if (editTaskDueAt) {
+      try {
+        const parsed = new Date(editTaskDueAt);
+        if (isNaN(parsed.getTime())) {
+          setEditTaskError('Data/hora de prazo inválida');
+          setSavingEditTask(false);
+          return;
+        }
+        dueAtIso = parsed.toISOString();
+      } catch (err) {
+        setEditTaskError('Data/hora de prazo inválida');
+        setSavingEditTask(false);
+        return;
+      }
+    }
+
+    try {
+      const response = await fetch(`/api/admin/leads/${id}/tasks/${editingTask.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          title: titleToSubmit,
+          priority: editTaskPriority,
+          due_at: dueAtIso,
+          reason_code: editTaskReasonCode,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || 'Erro ao editar tarefa comercial');
+      }
+
+      if (data.task) {
+        setTasks((prevTasks) =>
+          sortLeadTasks(prevTasks.map((t) => (t.id === editingTask.id ? data.task : t)))
+        );
+      }
+      setEditingTask(null);
+    } catch (err) {
+      setEditTaskError(err.message || 'Erro ao editar tarefa comercial');
+    } finally {
+      setSavingEditTask(false);
     }
   };
 
@@ -729,6 +828,41 @@ export default function AdminLeadDetailPage() {
                 />
               </div>
 
+              {/* TIPO DE TAREFA */}
+              <div>
+                <label className="text-[10px] text-slate-500 uppercase tracking-wider block font-medium mb-1">
+                  Tipo de Tarefa
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setTaskReasonCode(null)}
+                    disabled={savingTask}
+                    className={`py-1.5 px-3 rounded-xl border text-xs font-medium transition-all flex items-center justify-center space-x-2 ${
+                      taskReasonCode === null
+                        ? 'bg-amber-500/20 border-amber-500/40 text-amber-300 font-semibold'
+                        : 'bg-white/[0.02] border-white/[0.08] text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <ListTodo className="w-3.5 h-3.5" />
+                    <span>Tarefa</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTaskReasonCode('phone_call')}
+                    disabled={savingTask}
+                    className={`py-1.5 px-3 rounded-xl border text-xs font-medium transition-all flex items-center justify-center space-x-2 ${
+                      taskReasonCode === 'phone_call'
+                        ? 'bg-sky-500/20 border-sky-500/40 text-sky-300 font-semibold'
+                        : 'bg-white/[0.02] border-white/[0.08] text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <Phone className="w-3.5 h-3.5 text-sky-400" />
+                    <span>Contacto telefónico</span>
+                  </button>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <div>
                   <label className="text-[10px] text-slate-500 uppercase tracking-wider block font-medium mb-1">
@@ -807,6 +941,161 @@ export default function AdminLeadDetailPage() {
                     const prioBadge = formatTaskPriority(task.priority);
                     const formattedDue = formatTaskDate(task.due_at);
                     const isUpdating = updatingTaskId === task.id;
+                    const isEditingThisTask = editingTask && editingTask.id === task.id;
+
+                    if (isEditingThisTask) {
+                      return (
+                        <form
+                          key={task.id}
+                          onSubmit={handleSaveTaskEdit}
+                          className="p-4 rounded-xl bg-white/[0.03] border border-amber-500/40 space-y-3 shadow-lg"
+                        >
+                          <div className="flex items-center justify-between border-b border-white/[0.08] pb-2">
+                            <span className="text-xs font-semibold text-amber-400 flex items-center space-x-1.5">
+                              <Pencil className="w-3.5 h-3.5" />
+                              <span>Editar Tarefa Comercial</span>
+                            </span>
+                            <button
+                              type="button"
+                              onClick={handleCancelTaskEdit}
+                              disabled={savingEditTask}
+                              className="text-slate-400 hover:text-white p-1"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+
+                          {editTaskError && (
+                            <div className="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center space-x-2">
+                              <AlertCircle className="w-4 h-4 shrink-0" />
+                              <span>{editTaskError}</span>
+                            </div>
+                          )}
+
+                          <div>
+                            <label className="block text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">
+                              Tipo de Tarefa
+                            </label>
+                            <div className="grid grid-cols-2 gap-2 mb-2">
+                              <button
+                                type="button"
+                                onClick={() => setEditTaskReasonCode(null)}
+                                disabled={savingEditTask}
+                                className={`py-1.5 px-3 rounded-lg border text-xs font-medium transition-all flex items-center justify-center space-x-2 ${
+                                  editTaskReasonCode === null || editTaskReasonCode !== 'phone_call'
+                                    ? 'bg-amber-500/20 border-amber-500/40 text-amber-300 font-semibold'
+                                    : 'bg-white/[0.02] border-white/[0.08] text-slate-400 hover:text-white'
+                                }`}
+                              >
+                                <ListTodo className="w-3.5 h-3.5" />
+                                <span>Tarefa</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEditTaskReasonCode('phone_call')}
+                                disabled={savingEditTask}
+                                className={`py-1.5 px-3 rounded-lg border text-xs font-medium transition-all flex items-center justify-center space-x-2 ${
+                                  editTaskReasonCode === 'phone_call'
+                                    ? 'bg-sky-500/20 border-sky-500/40 text-sky-300 font-semibold'
+                                    : 'bg-white/[0.02] border-white/[0.08] text-slate-400 hover:text-white'
+                                }`}
+                              >
+                                <Phone className="w-3.5 h-3.5 text-sky-400" />
+                                <span>Contacto telefónico</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">
+                              Título
+                            </label>
+                            <input
+                              type="text"
+                              value={editTaskTitle}
+                              onChange={(e) => setEditTaskTitle(e.target.value)}
+                              placeholder="Título da tarefa..."
+                              maxLength={255}
+                              disabled={savingEditTask}
+                              required
+                              className="w-full bg-white/[0.02] border border-white/[0.1] focus:border-amber-500/50 rounded-lg p-2 text-xs text-white placeholder-slate-500 outline-none transition-all disabled:opacity-50"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">
+                                Prioridade
+                              </label>
+                              <select
+                                value={editTaskPriority}
+                                onChange={(e) => setEditTaskPriority(e.target.value)}
+                                disabled={savingEditTask}
+                                className="w-full bg-white/[0.02] border border-white/[0.1] focus:border-amber-500/50 rounded-lg p-2 text-xs text-slate-200 outline-none transition-all disabled:opacity-50"
+                              >
+                                <option value="low" className="bg-[#0c091f] text-slate-200">Baixa</option>
+                                <option value="normal" className="bg-[#0c091f] text-slate-200">Normal</option>
+                                <option value="high" className="bg-[#0c091f] text-slate-200">Alta</option>
+                              </select>
+                            </div>
+
+                            <div>
+                              <div className="flex items-center justify-between mb-1">
+                                <label className="block text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
+                                  Prazo (due_at)
+                                </label>
+                                {editTaskDueAt && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditTaskDueAt('')}
+                                    disabled={savingEditTask}
+                                    className="text-[10px] text-rose-400 hover:underline font-medium"
+                                  >
+                                    Remover prazo
+                                  </button>
+                                )}
+                              </div>
+                              <input
+                                type="datetime-local"
+                                value={editTaskDueAt}
+                                onChange={(e) => setEditTaskDueAt(e.target.value)}
+                                disabled={savingEditTask}
+                                className="w-full bg-white/[0.02] border border-white/[0.1] focus:border-amber-500/50 rounded-lg p-2 text-xs text-slate-200 outline-none transition-all disabled:opacity-50"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-end space-x-2 pt-2 border-t border-white/[0.06]">
+                            <button
+                              type="button"
+                              onClick={handleCancelTaskEdit}
+                              disabled={savingEditTask}
+                              className="px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 text-xs font-medium border border-white/[0.08] transition-colors disabled:opacity-50"
+                            >
+                              Cancelar
+                            </button>
+
+                            <button
+                              type="submit"
+                              disabled={savingEditTask || !editTaskTitle.trim()}
+                              className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-medium transition-colors disabled:opacity-50 shadow-md shadow-amber-600/10"
+                            >
+                              {savingEditTask ? (
+                                <>
+                                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                  <span>A guardar...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Check className="w-3.5 h-3.5" />
+                                  <span>Guardar Alterações</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </form>
+                      );
+                    }
 
                     return (
                       <div
@@ -822,6 +1111,12 @@ export default function AdminLeadDetailPage() {
                             <span className="font-medium text-slate-200 text-xs break-words">
                               {task.title}
                             </span>
+                            {task.reason_code === 'phone_call' && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-500/10 text-sky-300 border border-sky-500/20 inline-flex items-center space-x-1">
+                                <Phone className="w-3 h-3 text-sky-400 mr-0.5" />
+                                <span>Contacto telefónico</span>
+                              </span>
+                            )}
                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${prioBadge.className}`}>
                               {prioBadge.label}
                             </span>
@@ -847,19 +1142,31 @@ export default function AdminLeadDetailPage() {
                           </div>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => handleToggleTaskStatus(task)}
-                          disabled={isUpdating}
-                          className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 rounded-lg border border-emerald-500/20 text-xs font-medium transition-colors shrink-0 disabled:opacity-50"
-                        >
-                          {isUpdating ? (
-                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                          ) : (
-                            <Check className="w-3.5 h-3.5" />
-                          )}
-                          <span>Concluir</span>
-                        </button>
+                        <div className="flex items-center space-x-2 shrink-0 self-end sm:self-center">
+                          <button
+                            type="button"
+                            onClick={() => handleStartEditTask(task)}
+                            disabled={isUpdating || savingEditTask}
+                            className="inline-flex items-center space-x-1 px-2.5 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 rounded-lg border border-white/[0.08] text-xs font-medium transition-colors disabled:opacity-50"
+                          >
+                            <Pencil className="w-3.5 h-3.5 text-slate-400" />
+                            <span>Editar</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleToggleTaskStatus(task)}
+                            disabled={isUpdating || savingEditTask}
+                            className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 rounded-lg border border-emerald-500/20 text-xs font-medium transition-colors disabled:opacity-50"
+                          >
+                            {isUpdating ? (
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Check className="w-3.5 h-3.5" />
+                            )}
+                            <span>Concluir</span>
+                          </button>
+                        </div>
                       </div>
                     );
                   })}
@@ -879,6 +1186,161 @@ export default function AdminLeadDetailPage() {
                     const prioBadge = formatTaskPriority(task.priority);
                     const formattedComp = formatTaskDate(task.completed_at || task.updated_at);
                     const isUpdating = updatingTaskId === task.id;
+                    const isEditingThisTask = editingTask && editingTask.id === task.id;
+
+                    if (isEditingThisTask) {
+                      return (
+                        <form
+                          key={task.id}
+                          onSubmit={handleSaveTaskEdit}
+                          className="p-4 rounded-xl bg-white/[0.03] border border-amber-500/40 space-y-3 shadow-lg"
+                        >
+                          <div className="flex items-center justify-between border-b border-white/[0.08] pb-2">
+                            <span className="text-xs font-semibold text-amber-400 flex items-center space-x-1.5">
+                              <Pencil className="w-3.5 h-3.5" />
+                              <span>Editar Tarefa Comercial</span>
+                            </span>
+                            <button
+                              type="button"
+                              onClick={handleCancelTaskEdit}
+                              disabled={savingEditTask}
+                              className="text-slate-400 hover:text-white p-1"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+
+                          {editTaskError && (
+                            <div className="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center space-x-2">
+                              <AlertCircle className="w-4 h-4 shrink-0" />
+                              <span>{editTaskError}</span>
+                            </div>
+                          )}
+
+                          <div>
+                            <label className="block text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">
+                              Tipo de Tarefa
+                            </label>
+                            <div className="grid grid-cols-2 gap-2 mb-2">
+                              <button
+                                type="button"
+                                onClick={() => setEditTaskReasonCode(null)}
+                                disabled={savingEditTask}
+                                className={`py-1.5 px-3 rounded-lg border text-xs font-medium transition-all flex items-center justify-center space-x-2 ${
+                                  editTaskReasonCode === null || editTaskReasonCode !== 'phone_call'
+                                    ? 'bg-amber-500/20 border-amber-500/40 text-amber-300 font-semibold'
+                                    : 'bg-white/[0.02] border-white/[0.08] text-slate-400 hover:text-white'
+                                }`}
+                              >
+                                <ListTodo className="w-3.5 h-3.5" />
+                                <span>Tarefa</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEditTaskReasonCode('phone_call')}
+                                disabled={savingEditTask}
+                                className={`py-1.5 px-3 rounded-lg border text-xs font-medium transition-all flex items-center justify-center space-x-2 ${
+                                  editTaskReasonCode === 'phone_call'
+                                    ? 'bg-sky-500/20 border-sky-500/40 text-sky-300 font-semibold'
+                                    : 'bg-white/[0.02] border-white/[0.08] text-slate-400 hover:text-white'
+                                }`}
+                              >
+                                <Phone className="w-3.5 h-3.5 text-sky-400" />
+                                <span>Contacto telefónico</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">
+                              Título
+                            </label>
+                            <input
+                              type="text"
+                              value={editTaskTitle}
+                              onChange={(e) => setEditTaskTitle(e.target.value)}
+                              placeholder="Título da tarefa..."
+                              maxLength={255}
+                              disabled={savingEditTask}
+                              required
+                              className="w-full bg-white/[0.02] border border-white/[0.1] focus:border-amber-500/50 rounded-lg p-2 text-xs text-white placeholder-slate-500 outline-none transition-all disabled:opacity-50"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">
+                                Prioridade
+                              </label>
+                              <select
+                                value={editTaskPriority}
+                                onChange={(e) => setEditTaskPriority(e.target.value)}
+                                disabled={savingEditTask}
+                                className="w-full bg-white/[0.02] border border-white/[0.1] focus:border-amber-500/50 rounded-lg p-2 text-xs text-slate-200 outline-none transition-all disabled:opacity-50"
+                              >
+                                <option value="low" className="bg-[#0c091f] text-slate-200">Baixa</option>
+                                <option value="normal" className="bg-[#0c091f] text-slate-200">Normal</option>
+                                <option value="high" className="bg-[#0c091f] text-slate-200">Alta</option>
+                              </select>
+                            </div>
+
+                            <div>
+                              <div className="flex items-center justify-between mb-1">
+                                <label className="block text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
+                                  Prazo (due_at)
+                                </label>
+                                {editTaskDueAt && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditTaskDueAt('')}
+                                    disabled={savingEditTask}
+                                    className="text-[10px] text-rose-400 hover:underline font-medium"
+                                  >
+                                    Remover prazo
+                                  </button>
+                                )}
+                              </div>
+                              <input
+                                type="datetime-local"
+                                value={editTaskDueAt}
+                                onChange={(e) => setEditTaskDueAt(e.target.value)}
+                                disabled={savingEditTask}
+                                className="w-full bg-white/[0.02] border border-white/[0.1] focus:border-amber-500/50 rounded-lg p-2 text-xs text-slate-200 outline-none transition-all disabled:opacity-50"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-end space-x-2 pt-2 border-t border-white/[0.06]">
+                            <button
+                              type="button"
+                              onClick={handleCancelTaskEdit}
+                              disabled={savingEditTask}
+                              className="px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 text-xs font-medium border border-white/[0.08] transition-colors disabled:opacity-50"
+                            >
+                              Cancelar
+                            </button>
+
+                            <button
+                              type="submit"
+                              disabled={savingEditTask || !editTaskTitle.trim()}
+                              className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-medium transition-colors disabled:opacity-50 shadow-md shadow-amber-600/10"
+                            >
+                              {savingEditTask ? (
+                                <>
+                                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                  <span>A guardar...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Check className="w-3.5 h-3.5" />
+                                  <span>Guardar Alterações</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </form>
+                      );
+                    }
 
                     return (
                       <div
@@ -890,6 +1352,12 @@ export default function AdminLeadDetailPage() {
                             <span className="font-medium text-slate-400 text-xs line-through break-words">
                               {task.title}
                             </span>
+                            {task.reason_code === 'phone_call' && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-500/10 text-sky-300 border border-sky-500/20 inline-flex items-center space-x-1 opacity-75">
+                                <Phone className="w-3 h-3 text-sky-400 mr-0.5" />
+                                <span>Contacto telefónico</span>
+                              </span>
+                            )}
                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border opacity-75 ${prioBadge.className}`}>
                               {prioBadge.label}
                             </span>
@@ -904,19 +1372,31 @@ export default function AdminLeadDetailPage() {
                           </div>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => handleToggleTaskStatus(task)}
-                          disabled={isUpdating}
-                          className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-slate-500/10 hover:bg-slate-500/20 text-slate-300 rounded-lg border border-slate-500/20 text-xs font-medium transition-colors shrink-0 disabled:opacity-50"
-                        >
-                          {isUpdating ? (
-                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                          ) : (
-                            <RotateCcw className="w-3.5 h-3.5" />
-                          )}
-                          <span>Reabrir</span>
-                        </button>
+                        <div className="flex items-center space-x-2 shrink-0 self-end sm:self-center">
+                          <button
+                            type="button"
+                            onClick={() => handleStartEditTask(task)}
+                            disabled={isUpdating || savingEditTask}
+                            className="inline-flex items-center space-x-1 px-2.5 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 rounded-lg border border-white/[0.08] text-xs font-medium transition-colors disabled:opacity-50"
+                          >
+                            <Pencil className="w-3.5 h-3.5 text-slate-400" />
+                            <span>Editar</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleToggleTaskStatus(task)}
+                            disabled={isUpdating || savingEditTask}
+                            className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-slate-500/10 hover:bg-slate-500/20 text-slate-300 rounded-lg border border-slate-500/20 text-xs font-medium transition-colors shrink-0 disabled:opacity-50"
+                          >
+                            {isUpdating ? (
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <RotateCcw className="w-3.5 h-3.5" />
+                            )}
+                            <span>Reabrir</span>
+                          </button>
+                        </div>
                       </div>
                     );
                   })}

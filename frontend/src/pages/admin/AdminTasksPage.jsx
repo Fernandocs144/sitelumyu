@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ListTodo,
@@ -11,36 +11,19 @@ import {
   Filter,
   CheckCircle2,
   Building2,
-  Tag,
   ChevronRight,
   ArrowUpRight,
   Search,
+  Plus,
+  Pencil,
+  X,
+  ChevronLeft,
+  Check,
+  RotateCcw,
+  UserCheck,
+  Phone,
 } from 'lucide-react';
 import { formatPipelineStage } from '../../utils/adminFormatters';
-
-/**
- * Classifica dinamicamente uma tarefa no fuso horário do browser do utilizador.
- *
- * @param {object} task
- * @returns {'overdue'|'today'|'upcoming'|'nodue'|'completed'}
- */
-export function classifyTaskTemporalCategory(task) {
-  if (task.status === 'completed') return 'completed';
-  if (!task.due_at) return 'nodue';
-
-  const now = new Date();
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
-  const startOfTomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
-  const due = new Date(task.due_at);
-
-  if (due < startOfToday) {
-    return 'overdue';
-  } else if (due >= startOfToday && due < startOfTomorrow) {
-    return 'today';
-  } else {
-    return 'upcoming';
-  }
-}
 
 /**
  * Formata prioridade visual de tarefas.
@@ -77,197 +60,355 @@ function formatTaskDate(dateStr) {
 }
 
 /**
- * Peso numérico de prioridade para ordenação.
+ * Formata um timestamp ISO para o formato 'YYYY-MM-DDTHH:mm' aceite por <input type="datetime-local">.
  */
-function getPriorityWeight(priority) {
-  switch (priority) {
-    case 'high':
-      return 3;
-    case 'normal':
-      return 2;
-    case 'low':
-      return 1;
-    default:
-      return 0;
+function formatIsoForDateTimeInput(isoStr) {
+  if (!isoStr) return '';
+  try {
+    const d = new Date(isoStr);
+    if (isNaN(d.getTime())) return '';
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  } catch (e) {
+    return '';
   }
-}
-
-/**
- * Ordena determinística de tarefas globais por categoria temporal e prioridade.
- */
-function sortGlobalTasks(tasks, category) {
-  if (!Array.isArray(tasks)) return [];
-
-  return [...tasks].sort((a, b) => {
-    if (category === 'completed') {
-      const aComp = a.completed_at ? new Date(a.completed_at).getTime() : 0;
-      const bComp = b.completed_at ? new Date(b.completed_at).getTime() : 0;
-      return bComp - aComp;
-    }
-
-    if (category === 'overdue') {
-      const aDue = a.due_at ? new Date(a.due_at).getTime() : 0;
-      const bDue = b.due_at ? new Date(b.due_at).getTime() : 0;
-      if (aDue !== bDue) return aDue - bDue;
-      return getPriorityWeight(b.priority) - getPriorityWeight(a.priority);
-    }
-
-    if (category === 'nodue') {
-      const prioDiff = getPriorityWeight(b.priority) - getPriorityWeight(a.priority);
-      if (prioDiff !== 0) return prioDiff;
-      const aCreated = a.created_at ? new Date(a.created_at).getTime() : 0;
-      const bCreated = b.created_at ? new Date(b.created_at).getTime() : 0;
-      return bCreated - aCreated;
-    }
-
-    // hoje ou próximas
-    const prioDiff = getPriorityWeight(b.priority) - getPriorityWeight(a.priority);
-    if (prioDiff !== 0) return prioDiff;
-
-    const aDue = a.due_at ? new Date(a.due_at).getTime() : Infinity;
-    const bDue = b.due_at ? new Date(b.due_at).getTime() : Infinity;
-    return aDue - bDue;
-  });
 }
 
 export default function AdminTasksPage() {
+  // Estado dos filtros e paginação server-side
+  const [category, setCategory] = useState('pending'); // pending, overdue, today, upcoming, nodue, completed
+  const [priority, setPriority] = useState('all'); // all, high, normal, low
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
+  // Dados recebidos do servidor
   const [tasks, setTasks] = useState([]);
   const [total, setTotal] = useState(0);
-  const [truncated, setTruncated] = useState(false);
-  const [limit, setLimit] = useState(200);
+  const [totalPages, setTotalPages] = useState(1);
+  const [counts, setCounts] = useState({
+    openTotal: 0,
+    overdue: 0,
+    today: 0,
+    upcoming: 0,
+    nodue: 0,
+    completed: 0,
+  });
 
+  // Estados de loading e erro
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [updatingTaskId, setUpdatingTaskId] = useState(null);
 
-  // Filtros
-  const [temporalFilter, setTemporalFilter] = useState('all'); // all, overdue, today, upcoming, nodue
-  const [priorityFilter, setPriorityFilter] = useState('all'); // all, high, normal, low
-  const [showCompleted, setShowCompleted] = useState(false);
+  // Estado do Modal de Edição
+  const [editingTask, setEditingTask] = useState(null);
+  const [editTaskTitle, setEditTaskTitle] = useState('');
+  const [editTaskPriority, setEditTaskPriority] = useState('normal');
+  const [editTaskDueAt, setEditTaskDueAt] = useState('');
+  const [editReasonCode, setEditReasonCode] = useState(null);
+  const [savingEditTask, setSavingEditTask] = useState(false);
+  const [editTaskError, setEditTaskError] = useState(null);
+
+  // Estado do Modal de Criação Global
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [leadSearchQuery, setLeadSearchQuery] = useState('');
+  const [searchingLeads, setSearchingLeads] = useState(false);
+  const [leadSearchResults, setLeadSearchResults] = useState([]);
+  const [selectedLead, setSelectedLead] = useState(null);
+  const [createTitle, setCreateTitle] = useState('');
+  const [createPriority, setCreatePriority] = useState('normal');
+  const [createDueAt, setCreateDueAt] = useState('');
+  const [createReasonCode, setCreateReasonCode] = useState(null);
+  const [savingCreate, setSavingCreate] = useState(false);
+  const [createError, setCreateError] = useState(null);
+
+  // Função principal de carregamento server-side
+  const fetchTasksFromServer = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const tzOffset = new Date().getTimezoneOffset();
+      const queryParams = new URLSearchParams({
+        page: String(page),
+        pageSize: String(pageSize),
+        category,
+        priority,
+        timezone_offset: String(tzOffset),
+      });
+
+      const response = await fetch(`/api/admin/tasks?${queryParams.toString()}`, {
+        credentials: 'same-origin',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || 'Erro ao carregar tarefas comerciais');
+      }
+
+      const receivedTasks = data.tasks || [];
+      const receivedTotal = data.total || 0;
+      const calcTotalPages = data.totalPages || Math.ceil(receivedTotal / pageSize) || 1;
+
+      setTasks(receivedTasks);
+      setTotal(receivedTotal);
+      setTotalPages(calcTotalPages);
+
+      if (data.counts) {
+        setCounts(data.counts);
+      }
+
+      // Tratar descontinuidade de páginas (ex: se a página atual deixar de existir)
+      if (page > calcTotalPages && calcTotalPages > 0) {
+        setPage(calcTotalPages);
+      }
+    } catch (err) {
+      setError(err.message || 'Erro na ligação ao servidor');
+    } finally {
+      setLoading(false);
+    }
+  }, [category, priority, page, pageSize]);
 
   useEffect(() => {
+    fetchTasksFromServer();
+  }, [fetchTasksFromServer]);
+
+  // Pesquisa de leads para o Modal de Criação Global (Debounced 300ms)
+  useEffect(() => {
+    if (!showCreateModal) return;
     let isMounted = true;
 
-    async function loadGlobalTasks() {
-      setLoading(true);
-      setError(null);
-
+    const timer = setTimeout(async () => {
+      setSearchingLeads(true);
       try {
-        const queryParams = new URLSearchParams();
-        if (showCompleted) {
-          queryParams.set('include_completed', 'true');
-        }
-        queryParams.set('limit', '200');
-
-        const response = await fetch(`/api/admin/tasks?${queryParams.toString()}`, {
+        const q = leadSearchQuery.trim();
+        const response = await fetch(`/api/admin/leads?search=${encodeURIComponent(q)}&pageSize=10`, {
           credentials: 'same-origin',
         });
-
         const data = await response.json();
-
-        if (!isMounted) return;
-
-        if (!response.ok || !data.ok) {
-          throw new Error(data.error || 'Erro ao carregar tarefas globais');
+        if (isMounted && response.ok && data.ok) {
+          setLeadSearchResults(data.leads || []);
         }
-
-        setTasks(data.tasks || []);
-        setTotal(data.total || 0);
-        setTruncated(Boolean(data.truncated));
-        setLimit(data.limit || 200);
       } catch (err) {
-        if (isMounted) {
-          setError(err.message || 'Erro na ligação ao servidor');
-        }
+        // falha silenciosa
       } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        if (isMounted) setSearchingLeads(false);
       }
-    }
-
-    loadGlobalTasks();
+    }, 300);
 
     return () => {
       isMounted = false;
+      clearTimeout(timer);
     };
-  }, [showCompleted]);
+  }, [leadSearchQuery, showCreateModal]);
 
-  // Derivar categorias e contagens temporais no fuso horário local do utilizador
-  const categorizedTasks = {
-    overdue: [],
-    today: [],
-    upcoming: [],
-    nodue: [],
-    completed: [],
+  // Ações de alteração de filtros (fazem reset para page 1)
+  const handleCategorySelect = (newCategory) => {
+    if (newCategory === category) return;
+    setCategory(newCategory);
+    setPage(1);
   };
 
-  tasks.forEach((task) => {
-    const cat = classifyTaskTemporalCategory(task);
-    if (categorizedTasks[cat]) {
-      categorizedTasks[cat].push(task);
+  const handlePrioritySelect = (newPriority) => {
+    if (newPriority === priority) return;
+    setPriority(newPriority);
+    setPage(1);
+  };
+
+  const handlePageSizeChange = (e) => {
+    const newSize = parseInt(e.target.value, 10);
+    if (isNaN(newSize) || newSize === pageSize) return;
+    setPageSize(newSize);
+    setPage(1);
+  };
+
+  // Alternar Estado da Tarefa (Concluir / Reabrir)
+  const handleToggleStatus = async (task) => {
+    if (!task || updatingTaskId) return;
+
+    const newStatus = task.status === 'completed' ? 'open' : 'completed';
+    setUpdatingTaskId(task.id);
+
+    try {
+      const response = await fetch(`/api/admin/leads/${task.lead_id}/tasks/${task.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || 'Erro ao alterar estado da tarefa');
+      }
+
+      await fetchTasksFromServer();
+    } catch (err) {
+      alert(err.message || 'Erro ao alterar estado da tarefa');
+    } finally {
+      setUpdatingTaskId(null);
     }
-  });
-
-  const counts = {
-    overdue: categorizedTasks.overdue.length,
-    today: categorizedTasks.today.length,
-    upcoming: categorizedTasks.upcoming.length,
-    nodue: categorizedTasks.nodue.length,
-    completed: categorizedTasks.completed.length,
-    openTotal:
-      categorizedTasks.overdue.length +
-      categorizedTasks.today.length +
-      categorizedTasks.upcoming.length +
-      categorizedTasks.nodue.length,
   };
 
-  // Filtragem por prioridade
-  const filterByPriority = (taskList) => {
-    if (priorityFilter === 'all') return taskList;
-    return taskList.filter((t) => t.priority === priorityFilter);
+  // Abrir Modal de Edição
+  const handleStartEdit = (task) => {
+    setEditingTask(task);
+    setEditTaskTitle(task.title || '');
+    setEditTaskPriority(task.priority || 'normal');
+    setEditTaskDueAt(formatIsoForDateTimeInput(task.due_at));
+    setEditReasonCode(task.reason_code === 'phone_call' ? 'phone_call' : (task.reason_code || null));
+    setEditTaskError(null);
   };
 
-  if (loading) {
-    return (
-      <div className="space-y-6 max-w-7xl mx-auto pb-12">
-        <div className="flex items-center space-x-3">
-          <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-            <ListTodo className="w-5 h-5 animate-pulse" />
-          </div>
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold text-white tracking-tight">Centro de Tarefas Comerciais</h1>
-            <p className="text-xs text-slate-400">A carregar tarefas pendentes...</p>
-          </div>
-        </div>
+  const handleCancelEdit = () => {
+    setEditingTask(null);
+    setEditTaskError(null);
+  };
 
-        <div className="min-h-[50vh] flex flex-col items-center justify-center space-y-3 bg-white/[0.02] border border-white/[0.06] rounded-2xl p-12 backdrop-blur-xl">
-          <RefreshCw className="w-8 h-8 animate-spin text-amber-400" />
-          <p className="text-sm text-slate-400">A processar o trabalho comercial pendente...</p>
-        </div>
-      </div>
-    );
-  }
+  const handleSaveEdit = async (e) => {
+    if (e) e.preventDefault();
+    const titleToSubmit = editTaskTitle.trim();
+    if (!titleToSubmit || savingEditTask || !editingTask) return;
 
-  if (error) {
-    return (
-      <div className="max-w-2xl mx-auto space-y-6 pt-12">
-        <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-8 text-center backdrop-blur-xl space-y-4">
-          <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 mx-auto">
-            <AlertCircle className="w-6 h-6" />
-          </div>
-          <h2 className="text-lg font-bold text-white">Erro ao carregar tarefas</h2>
-          <p className="text-xs text-slate-400 max-w-sm mx-auto">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="inline-flex items-center space-x-2 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-medium transition-colors"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span>Tentar novamente</span>
-          </button>
-        </div>
-      </div>
-    );
-  }
+    setSavingEditTask(true);
+    setEditTaskError(null);
+
+    let dueAtIso = null;
+    if (editTaskDueAt) {
+      try {
+        const parsed = new Date(editTaskDueAt);
+        if (isNaN(parsed.getTime())) {
+          setEditTaskError('Data/hora de prazo inválida');
+          setSavingEditTask(false);
+          return;
+        }
+        dueAtIso = parsed.toISOString();
+      } catch (err) {
+        setEditTaskError('Data/hora de prazo inválida');
+        setSavingEditTask(false);
+        return;
+      }
+    }
+
+    try {
+      const response = await fetch(`/api/admin/leads/${editingTask.lead_id}/tasks/${editingTask.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          title: titleToSubmit,
+          priority: editTaskPriority,
+          due_at: dueAtIso,
+          reason_code: editReasonCode,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || 'Erro ao editar tarefa comercial');
+      }
+
+      setEditingTask(null);
+      await fetchTasksFromServer();
+    } catch (err) {
+      setEditTaskError(err.message || 'Erro ao editar tarefa comercial');
+    } finally {
+      setSavingEditTask(false);
+    }
+  };
+
+  // Abrir / Fechar Modal de Criação Global
+  const handleOpenCreateModal = () => {
+    setShowCreateModal(true);
+    setSelectedLead(null);
+    setLeadSearchQuery('');
+    setCreateTitle('');
+    setCreatePriority('normal');
+    setCreateDueAt('');
+    setCreateReasonCode(null);
+    setCreateError(null);
+  };
+
+  const handleCloseCreateModal = () => {
+    setShowCreateModal(false);
+    setSelectedLead(null);
+    setCreateError(null);
+  };
+
+  const handleCreateTask = async (e) => {
+    e.preventDefault();
+    const titleToSubmit = createTitle.trim();
+    if (!selectedLead || !titleToSubmit || savingCreate) return;
+
+    setSavingCreate(true);
+    setCreateError(null);
+
+    let dueAtIso = null;
+    if (createDueAt) {
+      try {
+        const parsed = new Date(createDueAt);
+        if (isNaN(parsed.getTime())) {
+          setCreateError('Data/hora de prazo inválida');
+          setSavingCreate(false);
+          return;
+        }
+        dueAtIso = parsed.toISOString();
+      } catch (err) {
+        setCreateError('Data/hora de prazo inválida');
+        setSavingCreate(false);
+        return;
+      }
+    }
+
+    try {
+      const response = await fetch(`/api/admin/leads/${selectedLead.id}/tasks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          title: titleToSubmit,
+          priority: createPriority,
+          due_at: dueAtIso,
+          reason_code: createReasonCode,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || 'Erro ao criar tarefa comercial');
+      }
+
+      setShowCreateModal(false);
+      setPage(1);
+      await fetchTasksFromServer();
+    } catch (err) {
+      setCreateError(err.message || 'Erro ao criar tarefa comercial');
+    } finally {
+      setSavingCreate(false);
+    }
+  };
+
+  // Títulos descritivos para o cabeçalho do bloco
+  const getCategoryTitle = () => {
+    switch (category) {
+      case 'overdue':
+        return 'Tarefas Vencidas';
+      case 'today':
+        return 'Tarefas para Hoje';
+      case 'upcoming':
+        return 'Próximas Tarefas';
+      case 'nodue':
+        return 'Tarefas Sem Prazo';
+      case 'completed':
+        return 'Tarefas Concluídas';
+      case 'pending':
+      default:
+        return 'Todas as Tarefas Pendentes';
+    }
+  };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
@@ -282,93 +423,64 @@ export default function AdminTasksPage() {
               Centro de Tarefas Comerciais
             </h1>
             <p className="text-xs text-slate-400 mt-0.5">
-              Visão global e acompanhamento do trabalho comercial pendente
+              Gestão operacional, acompanhamento e triagem de tarefas manuais
             </p>
           </div>
         </div>
 
-        {/* ALERTA DE TRUNCAGEM */}
-        {truncated && (
-          <div className="px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs flex items-center space-x-2 shrink-0">
-            <AlertTriangle className="w-4 h-4 shrink-0" />
-            <span>A apresentar {tasks.length} tarefas de um total de {total} registadas.</span>
-          </div>
-        )}
-      </div>
-
-      {/* DASHBOARD DE CARDS / COUNTS TEMPORAIS */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        {/* BOTÃO "+ NOVA TAREFA COMERCIAL" */}
         <button
-          onClick={() => setTemporalFilter('all')}
-          className={`p-4 rounded-xl border text-left transition-all backdrop-blur-xl ${
-            temporalFilter === 'all'
-              ? 'bg-amber-500/15 border-amber-500/40 text-amber-300 font-semibold shadow-inner'
-              : 'bg-white/[0.02] border-white/[0.06] text-slate-400 hover:text-white hover:bg-white/[0.04]'
-          }`}
+          onClick={handleOpenCreateModal}
+          className="inline-flex items-center justify-center space-x-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-medium transition-colors shadow-lg shadow-amber-600/10 shrink-0"
         >
-          <span className="text-[10px] uppercase tracking-wider block font-semibold text-slate-500">Pendentes</span>
-          <span className="text-xl md:text-2xl font-bold text-white mt-1 block">{counts.openTotal}</span>
-        </button>
-
-        <button
-          onClick={() => setTemporalFilter('overdue')}
-          className={`p-4 rounded-xl border text-left transition-all backdrop-blur-xl ${
-            temporalFilter === 'overdue'
-              ? 'bg-rose-500/15 border-rose-500/40 text-rose-300 font-semibold shadow-inner'
-              : 'bg-white/[0.02] border-white/[0.06] text-slate-400 hover:text-white hover:bg-white/[0.04]'
-          }`}
-        >
-          <span className="text-[10px] uppercase tracking-wider block font-semibold text-rose-400 flex items-center space-x-1">
-            <AlertTriangle className="w-3 h-3 mr-1 inline" />
-            <span>Vencidas</span>
-          </span>
-          <span className="text-xl md:text-2xl font-bold text-rose-300 mt-1 block">{counts.overdue}</span>
-        </button>
-
-        <button
-          onClick={() => setTemporalFilter('today')}
-          className={`p-4 rounded-xl border text-left transition-all backdrop-blur-xl ${
-            temporalFilter === 'today'
-              ? 'bg-indigo-500/15 border-indigo-500/40 text-indigo-300 font-semibold shadow-inner'
-              : 'bg-white/[0.02] border-white/[0.06] text-slate-400 hover:text-white hover:bg-white/[0.04]'
-          }`}
-        >
-          <span className="text-[10px] uppercase tracking-wider block font-semibold text-indigo-400">Hoje</span>
-          <span className="text-xl md:text-2xl font-bold text-indigo-200 mt-1 block">{counts.today}</span>
-        </button>
-
-        <button
-          onClick={() => setTemporalFilter('upcoming')}
-          className={`p-4 rounded-xl border text-left transition-all backdrop-blur-xl ${
-            temporalFilter === 'upcoming'
-              ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 font-semibold shadow-inner'
-              : 'bg-white/[0.02] border-white/[0.06] text-slate-400 hover:text-white hover:bg-white/[0.04]'
-          }`}
-        >
-          <span className="text-[10px] uppercase tracking-wider block font-semibold text-emerald-400">Próximas</span>
-          <span className="text-xl md:text-2xl font-bold text-emerald-200 mt-1 block">{counts.upcoming}</span>
-        </button>
-
-        <button
-          onClick={() => setTemporalFilter('nodue')}
-          className={`p-4 rounded-xl border text-left transition-all backdrop-blur-xl col-span-2 sm:col-span-1 ${
-            temporalFilter === 'nodue'
-              ? 'bg-slate-500/15 border-slate-500/40 text-slate-200 font-semibold shadow-inner'
-              : 'bg-white/[0.02] border-white/[0.06] text-slate-400 hover:text-white hover:bg-white/[0.04]'
-          }`}
-        >
-          <span className="text-[10px] uppercase tracking-wider block font-semibold text-slate-400">Sem Prazo</span>
-          <span className="text-xl md:text-2xl font-bold text-slate-300 mt-1 block">{counts.nodue}</span>
+          <Plus className="w-4 h-4" />
+          <span>Nova Tarefa Comercial</span>
         </button>
       </div>
 
-      {/* BARRA DE FILTROS E CONCLUÍDAS */}
+      {/* DASHBOARD DE CARTÕES / CONTAGENS GLOBAIS (FILTROS SERVER-SIDE) */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        {[
+          { id: 'pending', label: 'Pendentes', count: counts.openTotal, color: 'amber', icon: <ListTodo className="w-3.5 h-3.5" /> },
+          { id: 'overdue', label: 'Vencidas', count: counts.overdue, color: 'rose', icon: <AlertTriangle className="w-3.5 h-3.5" /> },
+          { id: 'today', label: 'Hoje', count: counts.today, color: 'indigo', icon: <Clock className="w-3.5 h-3.5" /> },
+          { id: 'upcoming', label: 'Próximas', count: counts.upcoming, color: 'emerald', icon: <Calendar className="w-3.5 h-3.5" /> },
+          { id: 'nodue', label: 'Sem Prazo', count: counts.nodue, color: 'slate', icon: <ListTodo className="w-3.5 h-3.5" /> },
+          { id: 'completed', label: 'Concluídas', count: counts.completed, color: 'emerald', icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
+        ].map((card) => {
+          const isActive = category === card.id;
+          let activeStyles = 'bg-amber-500/15 border-amber-500/40 text-amber-300 shadow-inner font-semibold';
+          if (card.color === 'rose') activeStyles = 'bg-rose-500/15 border-rose-500/40 text-rose-300 shadow-inner font-semibold';
+          if (card.color === 'indigo') activeStyles = 'bg-indigo-500/15 border-indigo-500/40 text-indigo-300 shadow-inner font-semibold';
+          if (card.color === 'emerald') activeStyles = 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 shadow-inner font-semibold';
+          if (card.color === 'slate') activeStyles = 'bg-slate-500/15 border-slate-500/40 text-slate-200 shadow-inner font-semibold';
+
+          return (
+            <button
+              key={card.id}
+              onClick={() => handleCategorySelect(card.id)}
+              className={`p-4 rounded-xl border text-left transition-all backdrop-blur-xl ${
+                isActive
+                  ? activeStyles
+                  : 'bg-white/[0.02] border-white/[0.06] text-slate-400 hover:text-white hover:bg-white/[0.04]'
+              }`}
+            >
+              <span className="text-[10px] uppercase tracking-wider block font-semibold flex items-center justify-between">
+                <span>{card.label}</span>
+                {card.icon}
+              </span>
+              <span className="text-xl md:text-2xl font-bold mt-1.5 block">{card.count}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* BARRA DE FILTRO DE PRIORIDADE */}
       <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-4 backdrop-blur-xl flex flex-wrap items-center justify-between gap-4">
-        {/* FILTRO DE PRIORIDADE */}
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className="text-slate-400 font-medium mr-1 flex items-center space-x-1">
             <Filter className="w-3.5 h-3.5 text-slate-500" />
-            <span>Prioridade:</span>
+            <span>Prioridade (Server-Side):</span>
           </span>
           {[
             { id: 'all', label: 'Todas' },
@@ -378,9 +490,9 @@ export default function AdminTasksPage() {
           ].map((item) => (
             <button
               key={item.id}
-              onClick={() => setPriorityFilter(item.id)}
+              onClick={() => handlePrioritySelect(item.id)}
               className={`px-3 py-1 rounded-xl font-medium transition-colors border ${
-                priorityFilter === item.id
+                priority === item.id
                   ? 'bg-amber-500/20 border-amber-500/30 text-amber-300'
                   : 'bg-white/[0.02] border-white/[0.06] text-slate-400 hover:text-white'
               }`}
@@ -390,218 +502,567 @@ export default function AdminTasksPage() {
           ))}
         </div>
 
-        {/* CHECKBOX PARA MOSTRAR CONCLUÍDAS */}
-        <label className="inline-flex items-center space-x-2 text-xs text-slate-300 cursor-pointer select-none">
-          <input
-            type="checkbox"
-            checked={showCompleted}
-            onChange={(e) => setShowCompleted(e.target.checked)}
-            className="w-4 h-4 rounded bg-white/[0.04] border-white/[0.1] text-amber-500 focus:ring-amber-500/50"
-          />
-          <span>Mostrar concluídas</span>
-        </label>
+        {/* SELECTOR DE TAMANHO DE PÁGINA */}
+        <div className="flex items-center space-x-2 text-xs text-slate-400">
+          <span>Itens por página:</span>
+          <select
+            value={pageSize}
+            onChange={handlePageSizeChange}
+            className="bg-[#0c091f] border border-white/[0.1] rounded-lg px-2.5 py-1 text-xs text-slate-200 outline-none focus:border-amber-500/50"
+          >
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+        </div>
       </div>
 
-      {/* SECTOR DE LISTA DE TAREFAS */}
-      <div className="space-y-6">
-        {/* CATEGORIA: VENCIDAS */}
-        {(temporalFilter === 'all' || temporalFilter === 'overdue') && (
-          <TaskCategoryBlock
-            title="Vencidas"
-            count={counts.overdue}
-            badgeClass="bg-rose-500/20 text-rose-300 border-rose-500/30"
-            icon={<AlertTriangle className="w-4 h-4 text-rose-400" />}
-            emptyMessage="Nenhuma tarefa vencida."
-            tasks={sortGlobalTasks(filterByPriority(categorizedTasks.overdue), 'overdue')}
-          />
-        )}
+      {/* SECTOR DA LISTA DE TAREFAS */}
+      <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6 backdrop-blur-xl space-y-4">
+        <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
+          <div className="flex items-center space-x-2">
+            <h2 className="text-sm font-semibold text-white tracking-wide uppercase">{getCategoryTitle()}</h2>
+            <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+              {total}
+            </span>
+          </div>
+        </div>
 
-        {/* CATEGORIA: HOJE */}
-        {(temporalFilter === 'all' || temporalFilter === 'today') && (
-          <TaskCategoryBlock
-            title="Hoje"
-            count={counts.today}
-            badgeClass="bg-indigo-500/20 text-indigo-300 border-indigo-500/30"
-            icon={<Clock className="w-4 h-4 text-indigo-400" />}
-            emptyMessage="Nenhuma tarefa para hoje."
-            tasks={sortGlobalTasks(filterByPriority(categorizedTasks.today), 'today')}
-          />
-        )}
-
-        {/* CATEGORIA: PRÓXIMAS */}
-        {(temporalFilter === 'all' || temporalFilter === 'upcoming') && (
-          <TaskCategoryBlock
-            title="Próximas"
-            count={counts.upcoming}
-            badgeClass="bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
-            icon={<Calendar className="w-4 h-4 text-emerald-400" />}
-            emptyMessage="Nenhuma tarefa próxima agendada."
-            tasks={sortGlobalTasks(filterByPriority(categorizedTasks.upcoming), 'upcoming')}
-          />
-        )}
-
-        {/* CATEGORIA: SEM PRAZO */}
-        {(temporalFilter === 'all' || temporalFilter === 'nodue') && (
-          <TaskCategoryBlock
-            title="Sem Prazo"
-            count={counts.nodue}
-            badgeClass="bg-slate-500/20 text-slate-300 border-slate-500/30"
-            icon={<ListTodo className="w-4 h-4 text-slate-400" />}
-            emptyMessage="Nenhuma tarefa sem prazo."
-            tasks={sortGlobalTasks(filterByPriority(categorizedTasks.nodue), 'nodue')}
-          />
-        )}
-
-        {/* CATEGORIA: CONCLUÍDAS (SE MOSTRAR CONCLUÍDAS ESTIVER ATIVO) */}
-        {showCompleted && (
-          <TaskCategoryBlock
-            title="Tarefas Concluídas"
-            count={counts.completed}
-            badgeClass="bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-            icon={<CheckCircle2 className="w-4 h-4 text-emerald-400" />}
-            emptyMessage="Nenhuma tarefa concluída no histórico recente."
-            tasks={sortGlobalTasks(filterByPriority(categorizedTasks.completed), 'completed')}
-            isCompletedBlock
-          />
-        )}
-
-        {/* EMPTY STATE GERAL QUANDO NÃO HÁ TAREFAS ABERTAS */}
-        {counts.openTotal === 0 && !showCompleted && (
-          <div className="py-12 text-center bg-white/[0.02] border border-dashed border-white/[0.08] rounded-2xl p-8 backdrop-blur-xl space-y-3">
-            <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto" />
-            <h3 className="text-base font-bold text-white">Não existem tarefas pendentes</h3>
+        {/* LOADING STATE */}
+        {loading ? (
+          <div className="py-12 flex flex-col items-center justify-center space-y-3">
+            <RefreshCw className="w-7 h-7 animate-spin text-amber-400" />
+            <p className="text-xs text-slate-400">A carregar tarefas da categoria selecionada...</p>
+          </div>
+        ) : error ? (
+          /* ERROR STATE */
+          <div className="py-8 text-center space-y-3">
+            <AlertCircle className="w-8 h-8 text-rose-400 mx-auto" />
+            <p className="text-xs text-rose-300 font-medium">{error}</p>
+            <button
+              onClick={() => fetchTasksFromServer()}
+              className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-medium transition-colors"
+            >
+              Tentar novamente
+            </button>
+          </div>
+        ) : tasks.length === 0 ? (
+          /* EMPTY STATE */
+          <div className="py-12 text-center border border-dashed border-white/[0.08] rounded-xl bg-white/[0.01] space-y-2">
+            <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto" />
+            <h3 className="text-sm font-semibold text-white">Nenhuma tarefa encontrada</h3>
             <p className="text-xs text-slate-400 max-w-sm mx-auto">
-              Todas as tarefas comerciais estão em dia.
+              Não existem registos nesta categoria com os filtros aplicados.
             </p>
+          </div>
+        ) : (
+          /* LISTA DE TAREFAS */
+          <div className="space-y-2.5">
+            {tasks.map((task) => {
+              const prioBadge = formatTaskPriority(task.priority);
+              const formattedDue = formatTaskDate(task.due_at);
+              const formattedComp = formatTaskDate(task.completed_at);
+              const pipelineBadge = task.lead?.pipeline_stage ? formatPipelineStage(task.lead.pipeline_stage) : null;
+              const isUpdating = updatingTaskId === task.id;
+              const isCompleted = task.status === 'completed';
+
+              return (
+                <div
+                  key={task.id}
+                  className={`p-4 rounded-xl bg-white/[0.02] border transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 ${
+                    isCompleted
+                      ? 'opacity-70 border-white/[0.04]'
+                      : task.is_overdue
+                      ? 'border-rose-500/30 bg-rose-500/[0.02]'
+                      : 'border-white/[0.06] hover:border-white/[0.12]'
+                  }`}
+                >
+                  {/* METADADOS DA TAREFA E DA LEAD */}
+                  <div className="space-y-2 min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={`font-medium text-xs break-words ${isCompleted ? 'line-through text-slate-400' : 'text-slate-100'}`}>
+                        {task.title}
+                      </span>
+
+                      {task.reason_code === 'phone_call' && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-500/10 text-sky-300 border border-sky-500/20 inline-flex items-center space-x-1">
+                          <Phone className="w-3 h-3 text-sky-400 mr-0.5" />
+                          <span>Contacto telefónico</span>
+                        </span>
+                      )}
+
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${prioBadge.className}`}>
+                        {prioBadge.label}
+                      </span>
+
+                      {task.is_overdue && !isCompleted && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40 inline-flex items-center space-x-1">
+                          <AlertTriangle className="w-3 h-3 mr-0.5" />
+                          <span>Vencida</span>
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-slate-400">
+                      <Link
+                        to={`/admin/leads/${task.lead.id}`}
+                        className="inline-flex items-center space-x-1 font-semibold text-indigo-300 hover:text-indigo-200 transition-colors group"
+                      >
+                        <User className="w-3 h-3 text-indigo-400 group-hover:text-indigo-300" />
+                        <span>{task.lead.display_name}</span>
+                        {task.lead.company_name && (
+                          <span className="text-slate-400 font-normal">({task.lead.company_name})</span>
+                        )}
+                        <ArrowUpRight className="w-3 h-3 text-indigo-400 opacity-70 group-hover:opacity-100" />
+                      </Link>
+
+                      {pipelineBadge && (
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${pipelineBadge.className}`}>
+                          {pipelineBadge.label}
+                        </span>
+                      )}
+
+                      {!isCompleted && formattedDue && (
+                        <div className="flex items-center space-x-1">
+                          <Calendar className="w-3 h-3 text-slate-500" />
+                          <span>Prazo: <strong className={task.is_overdue ? 'text-rose-400' : 'text-slate-200'}>{formattedDue}</strong></span>
+                        </div>
+                      )}
+
+                      {isCompleted && formattedComp && (
+                        <div className="flex items-center space-x-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                          <span>Concluída a: <strong className="text-slate-300">{formattedComp}</strong></span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* AÇÕES DA TAREFA */}
+                  <div className="flex items-center space-x-2 shrink-0 self-end md:self-center">
+                    <button
+                      type="button"
+                      onClick={() => handleStartEdit(task)}
+                      disabled={isUpdating}
+                      className="inline-flex items-center space-x-1 px-2.5 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 rounded-lg border border-white/[0.08] text-xs font-medium transition-colors disabled:opacity-50"
+                    >
+                      <Pencil className="w-3.5 h-3.5 text-slate-400" />
+                      <span>Editar</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleToggleStatus(task)}
+                      disabled={isUpdating}
+                      className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors shrink-0 disabled:opacity-50 ${
+                        isCompleted
+                          ? 'bg-slate-500/10 hover:bg-slate-500/20 text-slate-300 border-slate-500/20'
+                          : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border-emerald-500/20'
+                      }`}
+                    >
+                      {isUpdating ? (
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      ) : isCompleted ? (
+                        <RotateCcw className="w-3.5 h-3.5" />
+                      ) : (
+                        <Check className="w-3.5 h-3.5" />
+                      )}
+                      <span>{isCompleted ? 'Reabrir' : 'Concluir'}</span>
+                    </button>
+
+                    <Link
+                      to={`/admin/leads/${task.lead.id}`}
+                      className="inline-flex items-center space-x-1 px-2.5 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 rounded-lg border border-indigo-500/20 text-xs font-medium transition-colors"
+                    >
+                      <span>Lead 360</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* BARRA DE PAGINAÇÃO SERVER-SIDE */}
+        {!loading && !error && total > 0 && (
+          <div className="pt-4 border-t border-white/[0.08] flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
+            <span className="text-slate-400">
+              A apresentar <strong className="text-white">{tasks.length}</strong> de <strong className="text-white">{total}</strong> tarefas (Página {page} de {totalPages})
+            </span>
+
+            <div className="flex items-center space-x-2">
+              <button
+                type="button"
+                onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                disabled={page <= 1 || loading}
+                className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-slate-300 hover:text-white disabled:opacity-40 transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span>Anterior</span>
+              </button>
+
+              <span className="px-3 py-1.5 rounded-xl bg-white/[0.06] border border-white/[0.1] text-amber-300 font-bold">
+                {page} / {totalPages}
+              </span>
+
+              <button
+                type="button"
+                onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+                disabled={page >= totalPages || loading}
+                className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-slate-300 hover:text-white disabled:opacity-40 transition-colors"
+              >
+                <span>Seguinte</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         )}
       </div>
-    </div>
-  );
-}
 
-/**
- * Componente funcional para renderizar um bloco categórico de tarefas.
- */
-function TaskCategoryBlock({ title, count, badgeClass, icon, emptyMessage, tasks, isCompletedBlock = false }) {
-  if (count === 0 && tasks.length === 0) {
-    return (
-      <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6 backdrop-blur-xl space-y-3">
-        <div className="flex items-center space-x-2 border-b border-white/[0.08] pb-3">
-          {icon}
-          <h2 className="text-sm font-semibold text-white tracking-wide uppercase">{title}</h2>
-          <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold border ${badgeClass}`}>
-            0
-          </span>
-        </div>
-        <p className="text-xs text-slate-500 italic py-2">{emptyMessage}</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6 backdrop-blur-xl space-y-4">
-      <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
-        <div className="flex items-center space-x-2">
-          {icon}
-          <h2 className="text-sm font-semibold text-white tracking-wide uppercase">{title}</h2>
-          <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold border ${badgeClass}`}>
-            {tasks.length}
-          </span>
-        </div>
-      </div>
-
-      <div className="space-y-2.5">
-        {tasks.map((task) => {
-          const prioBadge = formatTaskPriority(task.priority);
-          const formattedDue = formatTaskDate(task.due_at);
-          const formattedComp = formatTaskDate(task.completed_at);
-          const pipelineBadge = task.lead?.pipeline_stage ? formatPipelineStage(task.lead.pipeline_stage) : null;
-
-          return (
-            <div
-              key={task.id}
-              className={`p-4 rounded-xl bg-white/[0.02] border transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 ${
-                isCompletedBlock
-                  ? 'opacity-70 border-white/[0.04]'
-                  : task.is_overdue
-                  ? 'border-rose-500/30 bg-rose-500/[0.02]'
-                  : 'border-white/[0.06] hover:border-white/[0.12]'
-              }`}
-            >
-              {/* LADO ESQUERDO: TÍTULO, BADGES E METADADOS DA LEAD */}
-              <div className="space-y-2 min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className={`font-medium text-xs break-words ${isCompletedBlock ? 'line-through text-slate-400' : 'text-slate-100'}`}>
-                    {task.title}
-                  </span>
-
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${prioBadge.className}`}>
-                    {prioBadge.label}
-                  </span>
-
-                  {task.is_overdue && !isCompletedBlock && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40 inline-flex items-center space-x-1">
-                      <AlertTriangle className="w-3 h-3 mr-0.5" />
-                      <span>Vencida</span>
-                    </span>
-                  )}
-                </div>
-
-                {/* CONTEXTO DA LEAD E PRAZO */}
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-slate-400">
-                  {/* LINK DA LEAD */}
-                  <Link
-                    to={`/admin/leads/${task.lead.id}`}
-                    className="inline-flex items-center space-x-1 font-semibold text-indigo-300 hover:text-indigo-200 transition-colors group"
-                  >
-                    <User className="w-3 h-3 text-indigo-400 group-hover:text-indigo-300" />
-                    <span>{task.lead.display_name}</span>
-                    {task.lead.company_name && (
-                      <span className="text-slate-400 font-normal">({task.lead.company_name})</span>
-                    )}
-                    <ArrowUpRight className="w-3 h-3 text-indigo-400 opacity-70 group-hover:opacity-100" />
-                  </Link>
-
-                  {/* ETAPA PIPELINE DA LEAD */}
-                  {pipelineBadge && (
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${pipelineBadge.className}`}>
-                      {pipelineBadge.label}
-                    </span>
-                  )}
-
-                  {/* PRAZO */}
-                  {!isCompletedBlock && formattedDue && (
-                    <div className="flex items-center space-x-1">
-                      <Calendar className="w-3 h-3 text-slate-500" />
-                      <span>Prazo: <strong className={task.is_overdue ? 'text-rose-400' : 'text-slate-200'}>{formattedDue}</strong></span>
-                    </div>
-                  )}
-
-                  {/* DATA DE CONCLUSÃO */}
-                  {isCompletedBlock && formattedComp && (
-                    <div className="flex items-center space-x-1">
-                      <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                      <span>Concluída a: <strong className="text-slate-300">{formattedComp}</strong></span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* LADO DIREITO: LINK DIRETO LEAD 360 */}
-              <div className="shrink-0 self-end md:self-center">
-                <Link
-                  to={`/admin/leads/${task.lead.id}`}
-                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-slate-300 hover:text-white rounded-xl text-xs font-medium transition-colors"
-                >
-                  <span>Abrir Lead 360</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
+      {/* MODAL 1: + NOVA TAREFA COMERCIAL (COM PESQUISA E SELEÇÃO DE LEAD) */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+          <div className="bg-[#0f0b29] border border-white/[0.1] rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
+              <h3 className="text-base font-bold text-white flex items-center space-x-2">
+                <Plus className="w-4 h-4 text-amber-400" />
+                <span>Nova Tarefa Comercial</span>
+              </h3>
+              <button onClick={handleCloseCreateModal} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
             </div>
-          );
-        })}
-      </div>
+
+            {createError && (
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center space-x-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{createError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleCreateTask} className="space-y-4">
+              {/* PESQUISA DE LEAD */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  1. Selecionar Lead Comercial <span className="text-rose-400">*</span>
+                </label>
+
+                {selectedLead ? (
+                  <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between text-xs">
+                    <div className="flex items-center space-x-2">
+                      <UserCheck className="w-4 h-4 text-amber-400 shrink-0" />
+                      <div>
+                        <strong className="text-white block">{selectedLead.name || selectedLead.email}</strong>
+                        {selectedLead.company_name && (
+                          <span className="text-slate-400 text-[11px] block">{selectedLead.company_name}</span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedLead(null)}
+                      className="text-xs text-rose-400 hover:underline font-medium"
+                    >
+                      Alterar
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+                      <input
+                        type="text"
+                        value={leadSearchQuery}
+                        onChange={(e) => setLeadSearchQuery(e.target.value)}
+                        placeholder="Pesquisar por nome, email ou empresa..."
+                        className="w-full bg-white/[0.02] border border-white/[0.1] rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 outline-none focus:border-amber-500/50"
+                      />
+                    </div>
+
+                    <div className="max-h-36 overflow-y-auto space-y-1 border border-white/[0.06] rounded-xl p-1 bg-white/[0.01]">
+                      {searchingLeads ? (
+                        <p className="text-[11px] text-slate-500 p-2 text-center">A pesquisar leads...</p>
+                      ) : leadSearchResults.length === 0 ? (
+                        <p className="text-[11px] text-slate-500 p-2 text-center">Nenhuma lead encontrada com este termo.</p>
+                      ) : (
+                        leadSearchResults.map((l) => (
+                          <button
+                            key={l.id}
+                            type="button"
+                            onClick={() => setSelectedLead(l)}
+                            className="w-full text-left p-2 rounded-lg hover:bg-white/[0.06] transition-colors flex items-center justify-between text-xs"
+                          >
+                            <span className="font-medium text-slate-200 truncate">{l.name || l.email}</span>
+                            {l.company_name && <span className="text-[10px] text-slate-400 truncate ml-2">({l.company_name})</span>}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* TIPO DE TAREFA */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  2. Tipo de Tarefa
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCreateReasonCode(null)}
+                    disabled={savingCreate}
+                    className={`py-2 px-3 rounded-xl border text-xs font-medium transition-all flex items-center justify-center space-x-2 ${
+                      createReasonCode === null
+                        ? 'bg-amber-500/20 border-amber-500/40 text-amber-300 font-semibold'
+                        : 'bg-white/[0.02] border-white/[0.08] text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <ListTodo className="w-3.5 h-3.5" />
+                    <span>Tarefa</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCreateReasonCode('phone_call')}
+                    disabled={savingCreate}
+                    className={`py-2 px-3 rounded-xl border text-xs font-medium transition-all flex items-center justify-center space-x-2 ${
+                      createReasonCode === 'phone_call'
+                        ? 'bg-sky-500/20 border-sky-500/40 text-sky-300 font-semibold'
+                        : 'bg-white/[0.02] border-white/[0.08] text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <Phone className="w-3.5 h-3.5 text-sky-400" />
+                    <span>Contacto telefónico</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* TÍTULO */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  3. Título da Tarefa <span className="text-rose-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={createTitle}
+                  onChange={(e) => setCreateTitle(e.target.value)}
+                  placeholder="Ex: Enviar proposta comercial atualizada..."
+                  maxLength={255}
+                  required
+                  disabled={savingCreate}
+                  className="w-full bg-white/[0.02] border border-white/[0.1] rounded-xl p-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-amber-500/50 disabled:opacity-50"
+                />
+              </div>
+
+              {/* PRIORIDADE E PRAZO */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">Prioridade</label>
+                  <select
+                    value={createPriority}
+                    onChange={(e) => setCreatePriority(e.target.value)}
+                    disabled={savingCreate}
+                    className="w-full bg-[#0c091f] border border-white/[0.1] rounded-xl p-2.5 text-xs text-slate-200 outline-none focus:border-amber-500/50 disabled:opacity-50"
+                  >
+                    <option value="low">Baixa</option>
+                    <option value="normal">Normal</option>
+                    <option value="high">Alta</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">Prazo (Opcional)</label>
+                  <input
+                    type="datetime-local"
+                    value={createDueAt}
+                    onChange={(e) => setCreateDueAt(e.target.value)}
+                    disabled={savingCreate}
+                    className="w-full bg-[#0c091f] border border-white/[0.1] rounded-xl p-2 text-xs text-slate-200 outline-none focus:border-amber-500/50 disabled:opacity-50"
+                  />
+                </div>
+              </div>
+
+              {/* BOTÕES DO MODAL */}
+              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-white/[0.08]">
+                <button
+                  type="button"
+                  onClick={handleCloseCreateModal}
+                  disabled={savingCreate}
+                  className="px-4 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs font-medium text-slate-300 transition-colors disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={savingCreate || !selectedLead || !createTitle.trim()}
+                  className="inline-flex items-center space-x-1.5 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-medium transition-colors disabled:opacity-50 shadow-lg shadow-amber-600/10"
+                >
+                  {savingCreate ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>A criar...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Criar Tarefa</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: EDITAR TAREFA COMERCIAL */}
+      {editingTask && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+          <div className="bg-[#0f0b29] border border-white/[0.1] rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
+              <h3 className="text-base font-bold text-white flex items-center space-x-2">
+                <Pencil className="w-4 h-4 text-amber-400" />
+                <span>Editar Tarefa Comercial</span>
+              </h3>
+              <button onClick={handleCancelEdit} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* CONTEXTO DA LEAD (READ-ONLY) */}
+            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] text-xs text-slate-400">
+              <span>Lead: </span>
+              <strong className="text-white">{editingTask.lead?.display_name || 'Lead sem nome'}</strong>
+            </div>
+
+            {editTaskError && (
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center space-x-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{editTaskError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSaveEdit} className="space-y-4">
+              {/* TIPO DE TAREFA */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">Tipo de Tarefa</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditReasonCode(null)}
+                    disabled={savingEditTask}
+                    className={`py-2 px-3 rounded-xl border text-xs font-medium transition-all flex items-center justify-center space-x-2 ${
+                      editReasonCode === null || editReasonCode !== 'phone_call'
+                        ? 'bg-amber-500/20 border-amber-500/40 text-amber-300 font-semibold'
+                        : 'bg-white/[0.02] border-white/[0.08] text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <ListTodo className="w-3.5 h-3.5" />
+                    <span>Tarefa</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditReasonCode('phone_call')}
+                    disabled={savingEditTask}
+                    className={`py-2 px-3 rounded-xl border text-xs font-medium transition-all flex items-center justify-center space-x-2 ${
+                      editReasonCode === 'phone_call'
+                        ? 'bg-sky-500/20 border-sky-500/40 text-sky-300 font-semibold'
+                        : 'bg-white/[0.02] border-white/[0.08] text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <Phone className="w-3.5 h-3.5 text-sky-400" />
+                    <span>Contacto telefónico</span>
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">Título</label>
+                <input
+                  type="text"
+                  value={editTaskTitle}
+                  onChange={(e) => setEditTaskTitle(e.target.value)}
+                  placeholder="Título da tarefa..."
+                  maxLength={255}
+                  required
+                  disabled={savingEditTask}
+                  className="w-full bg-white/[0.02] border border-white/[0.1] rounded-xl p-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-amber-500/50 disabled:opacity-50"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">Prioridade</label>
+                  <select
+                    value={editTaskPriority}
+                    onChange={(e) => setEditTaskPriority(e.target.value)}
+                    disabled={savingEditTask}
+                    className="w-full bg-[#0c091f] border border-white/[0.1] rounded-xl p-2.5 text-xs text-slate-200 outline-none focus:border-amber-500/50 disabled:opacity-50"
+                  >
+                    <option value="low">Baixa</option>
+                    <option value="normal">Normal</option>
+                    <option value="high">Alta</option>
+                  </select>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-semibold text-slate-300">Prazo (due_at)</label>
+                    {editTaskDueAt && (
+                      <button
+                        type="button"
+                        onClick={() => setEditTaskDueAt('')}
+                        disabled={savingEditTask}
+                        className="text-[10px] text-rose-400 hover:underline font-medium"
+                      >
+                        Remover prazo
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    type="datetime-local"
+                    value={editTaskDueAt}
+                    onChange={(e) => setEditTaskDueAt(e.target.value)}
+                    disabled={savingEditTask}
+                    className="w-full bg-[#0c091f] border border-white/[0.1] rounded-xl p-2 text-xs text-slate-200 outline-none focus:border-amber-500/50 disabled:opacity-50"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-white/[0.08]">
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  disabled={savingEditTask}
+                  className="px-4 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs font-medium text-slate-300 transition-colors disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={savingEditTask || !editTaskTitle.trim()}
+                  className="inline-flex items-center space-x-1.5 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-medium transition-colors disabled:opacity-50 shadow-lg shadow-amber-600/10"
+                >
+                  {savingEditTask ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>A guardar...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Guardar Alterações</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

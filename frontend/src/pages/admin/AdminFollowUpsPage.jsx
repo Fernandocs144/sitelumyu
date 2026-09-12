@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Sparkles,
@@ -24,10 +24,11 @@ import {
   ShieldAlert,
   ArrowRight,
   Briefcase,
+  ChevronLeft,
+  ChevronRight,
   UserCheck,
   Send
 } from 'lucide-react';
-import AdminLayout from '../../components/admin/AdminLayout';
 import {
   STAGE_LABELS_PT,
   STAGE_BADGE_CLASSES,
@@ -41,9 +42,13 @@ import {
 
 export default function AdminFollowUpsPage() {
   const [recommendations, setRecommendations] = useState([]);
+  const [counts, setCounts] = useState({ attention: 0, scheduled: 0, snoozed: 0, ignored: 0, blocked: 0 });
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [pagination, setPagination] = useState({ page: 1, pageSize: 20, total: 0, totalPages: 1 });
   const [total, setTotal] = useState(0);
   const [truncated, setTruncated] = useState(false);
-  const [limit, setLimit] = useState(200);
+  const [limit, setLimit] = useState(20);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showBlocked, setShowBlocked] = useState(false);
@@ -103,11 +108,17 @@ export default function AdminFollowUpsPage() {
     }
   };
 
-  const loadFollowUps = async () => {
+  const loadFollowUps = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/admin/follow-ups?show_blocked=true&limit=200`);
+      const params = new URLSearchParams();
+      params.set('tab', activeTab);
+      params.set('show_blocked', showBlocked ? 'true' : 'false');
+      params.set('page', page.toString());
+      params.set('pageSize', pageSize.toString());
+
+      const res = await fetch(`/api/admin/follow-ups?${params.toString()}`);
       if (!res.ok) {
         if (res.status === 401) {
           window.location.href = '/admin/login';
@@ -120,19 +131,21 @@ export default function AdminFollowUpsPage() {
         throw new Error(data.error || 'Erro ao carregar dados');
       }
       setRecommendations(data.recommendations || []);
-      setTotal(data.total || 0);
+      setCounts(data.counts || { attention: 0, scheduled: 0, snoozed: 0, ignored: 0, blocked: 0 });
+      setPagination(data.pagination || { page, pageSize, total: (data.recommendations || []).length, totalPages: 1 });
+      setTotal(data.pagination?.total || data.total || 0);
       setTruncated(!!data.truncated);
-      setLimit(data.limit || 200);
+      setLimit(data.limit || pageSize);
     } catch (err) {
       setError('Não foi possível carregar os acompanhamentos.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab, showBlocked, page, pageSize]);
 
   useEffect(() => {
     loadFollowUps();
-  }, []);
+  }, [loadFollowUps]);
 
   const handleGenerateDraft = async (leadId) => {
     if (generatingLeadId) return;
@@ -313,62 +326,8 @@ export default function AdminFollowUpsPage() {
     handleStateAction(leadId, 'restored', null, null);
   };
 
-  // Categorização e Separação por Tabs
-  const categorized = useMemo(() => {
-    const attention = [];
-    const scheduled = [];
-    const snoozed = [];
-    const ignored = [];
-    const blocked = [];
-
-    for (const item of recommendations) {
-      if (item.blocked) {
-        blocked.push(item);
-      } else if (item.effective_state === 'snoozed') {
-        snoozed.push(item);
-      } else if (item.effective_state === 'ignored') {
-        ignored.push(item);
-      } else if (item.needs_follow_up) {
-        attention.push(item);
-      } else {
-        scheduled.push(item);
-      }
-    }
-
-    // Ordenação de prioridade na tab Atenção
-    attention.sort((a, b) => {
-      const rank = (item) => {
-        if (item.reason_code === 'unknown_dispatch_pending_reconciliation') return 1;
-        if (item.reason_code === 'manual_task_due' || item.action_type === 'internal_action') return 2;
-        if (item.cadence?.attempt_number === 2) return 3;
-        if (item.pipeline_stage === 'proposal') return 4;
-        if (item.cadence?.attempt_number === 1 || item.pipeline_stage === 'new') return 5;
-        if (item.cadence?.status === 'exhausted' || item.action_type === 'human_review') return 6;
-        return 7;
-      };
-      return rank(a) - rank(b);
-    });
-
-    return { attention, scheduled, snoozed, ignored, blocked };
-  }, [recommendations]);
-
-  const activeList = useMemo(() => {
-    let list = [];
-    if (activeTab === 'attention') list = categorized.attention;
-    else if (activeTab === 'scheduled') list = categorized.scheduled;
-    else if (activeTab === 'snoozed') list = categorized.snoozed;
-    else if (activeTab === 'ignored') list = categorized.ignored;
-    else if (activeTab === 'blocked') list = categorized.blocked;
-
-    if (showBlocked && activeTab !== 'blocked') {
-      return [...list, ...categorized.blocked];
-    }
-    return list;
-  }, [activeTab, categorized, showBlocked]);
-
   return (
-    <AdminLayout activeTab="followups">
-      <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto">
         {/* Cabeçalho Principal */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -449,7 +408,10 @@ export default function AdminFollowUpsPage() {
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-800 pb-3">
           <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
             <button
-              onClick={() => setActiveTab('attention')}
+              onClick={() => {
+                setActiveTab('attention');
+                setPage(1);
+              }}
               className={`px-3.5 py-2 rounded-lg text-xs font-medium transition-colors flex items-center gap-2 whitespace-nowrap ${
                 activeTab === 'attention'
                   ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 font-semibold shadow-sm'
@@ -457,11 +419,14 @@ export default function AdminFollowUpsPage() {
               }`}
             >
               <AlertCircle className="w-3.5 h-3.5" />
-              Atenção ({categorized.attention.length})
+              Atenção ({counts.attention})
             </button>
 
             <button
-              onClick={() => setActiveTab('scheduled')}
+              onClick={() => {
+                setActiveTab('scheduled');
+                setPage(1);
+              }}
               className={`px-3.5 py-2 rounded-lg text-xs font-medium transition-colors flex items-center gap-2 whitespace-nowrap ${
                 activeTab === 'scheduled'
                   ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold shadow-sm'
@@ -469,11 +434,14 @@ export default function AdminFollowUpsPage() {
               }`}
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
-              Agendados ({categorized.scheduled.length})
+              Agendados ({counts.scheduled})
             </button>
 
             <button
-              onClick={() => setActiveTab('snoozed')}
+              onClick={() => {
+                setActiveTab('snoozed');
+                setPage(1);
+              }}
               className={`px-3.5 py-2 rounded-lg text-xs font-medium transition-colors flex items-center gap-2 whitespace-nowrap ${
                 activeTab === 'snoozed'
                   ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30 font-semibold shadow-sm'
@@ -481,11 +449,14 @@ export default function AdminFollowUpsPage() {
               }`}
             >
               <Clock className="w-3.5 h-3.5" />
-              Adiados ({categorized.snoozed.length})
+              Adiados ({counts.snoozed})
             </button>
 
             <button
-              onClick={() => setActiveTab('ignored')}
+              onClick={() => {
+                setActiveTab('ignored');
+                setPage(1);
+              }}
               className={`px-3.5 py-2 rounded-lg text-xs font-medium transition-colors flex items-center gap-2 whitespace-nowrap ${
                 activeTab === 'ignored'
                   ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30 font-semibold shadow-sm'
@@ -493,11 +464,14 @@ export default function AdminFollowUpsPage() {
               }`}
             >
               <EyeOff className="w-3.5 h-3.5" />
-              Ignorados ({categorized.ignored.length})
+              Ignorados ({counts.ignored})
             </button>
 
             <button
-              onClick={() => setActiveTab('blocked')}
+              onClick={() => {
+                setActiveTab('blocked');
+                setPage(1);
+              }}
               className={`px-3.5 py-2 rounded-lg text-xs font-medium transition-colors flex items-center gap-2 whitespace-nowrap ${
                 activeTab === 'blocked'
                   ? 'bg-gray-800 text-gray-200 border border-gray-700 font-semibold shadow-sm'
@@ -505,7 +479,7 @@ export default function AdminFollowUpsPage() {
               }`}
             >
               <Lock className="w-3.5 h-3.5" />
-              Bloqueados ({categorized.blocked.length})
+              Bloqueados ({counts.blocked})
             </button>
           </div>
 
@@ -515,6 +489,7 @@ export default function AdminFollowUpsPage() {
               checked={showBlocked}
               onChange={(e) => {
                 setShowBlocked(e.target.checked);
+                setPage(1);
                 if (!e.target.checked && activeTab === 'blocked') {
                   setActiveTab('attention');
                 }
@@ -531,7 +506,7 @@ export default function AdminFollowUpsPage() {
             <RefreshCw className="w-6 h-6 animate-spin text-amber-400" />
             <span>A carregar acompanhamentos comerciais...</span>
           </div>
-        ) : activeList.length === 0 ? (
+        ) : recommendations.length === 0 ? (
           <div className="py-16 text-center border border-dashed border-gray-800 rounded-xl bg-gray-900/30 p-8 space-y-2">
             <CheckCircle2 className="w-10 h-10 text-emerald-400/80 mx-auto mb-2" />
             <h3 className="text-base font-semibold text-gray-200">
@@ -547,7 +522,7 @@ export default function AdminFollowUpsPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {activeList.map((item) => {
+            {recommendations.map((item) => {
               const draft = drafts[item.lead_id];
               const approvedComm = item.approved_communication;
               const isGenerating = generatingLeadId === item.lead_id;
@@ -975,9 +950,64 @@ export default function AdminFollowUpsPage() {
             })}
           </div>
         )}
-      </div>
 
-      {/* Modal de Adiar (Snooze) */}
+        {/* BARRA DE PAGINAÇÃO SERVER-SIDE */}
+        {!loading && !error && pagination.total > 0 && (
+          <div className="pt-4 border-t border-gray-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs text-gray-400">
+            <div className="flex flex-wrap items-center gap-4">
+              <span>
+                A apresentar <strong className="text-white">{recommendations.length}</strong> de{' '}
+                <strong className="text-white">{pagination.total}</strong> acompanhamentos (Página{' '}
+                <strong className="text-white">{pagination.page}</strong> de{' '}
+                <strong className="text-white">{pagination.totalPages}</strong>)
+              </span>
+
+              <div className="flex items-center space-x-2">
+                <span className="text-gray-400">Por página:</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setPage(1);
+                  }}
+                  className="bg-gray-900 border border-gray-700 text-gray-200 text-xs rounded-lg px-2 py-1 outline-none focus:border-amber-500"
+                >
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <button
+                type="button"
+                onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                disabled={pagination.page <= 1 || loading}
+                className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-gray-800/80 hover:bg-gray-700/80 border border-gray-700 text-gray-300 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span>Anterior</span>
+              </button>
+
+              <span className="px-3 py-1.5 rounded-xl bg-gray-800 border border-gray-700 text-amber-300 font-bold">
+                {pagination.page} / {pagination.totalPages}
+              </span>
+
+              <button
+                type="button"
+                onClick={() => setPage((prev) => Math.min(prev + 1, pagination.totalPages))}
+                disabled={pagination.page >= pagination.totalPages || loading}
+                className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-gray-800/80 hover:bg-gray-700/80 border border-gray-700 text-gray-300 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                <span>Seguinte</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de Adiar (Snooze) */}
       {snoozeModalLead && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-gray-900 border border-gray-800 rounded-xl max-w-md w-full p-5 space-y-4 shadow-2xl">
@@ -1219,6 +1249,6 @@ export default function AdminFollowUpsPage() {
           </div>
         </div>
       )}
-    </AdminLayout>
+    </div>
   );
 }

@@ -40,9 +40,9 @@ export async function sendEmailWithResendProvider({
 
   // 1. Configuração de Ambiente
   const apiKey = process.env.RESEND_API_KEY;
-  const envFromEmail = process.env.RESEND_FROM_EMAIL || 'noreply@lumyo.pt';
-  const envFromName = process.env.RESEND_FROM_NAME || 'Lumyo';
-  const envReplyTo = process.env.RESEND_REPLY_TO || 'contacto@lumyo.pt';
+  const envFromEmail = process.env.RESEND_FROM_EMAIL || 'comercial@lumyo.pt';
+  const envFromName = process.env.RESEND_FROM_NAME || 'LUMYO';
+  const envReplyTo = process.env.RESEND_REPLY_TO || 'comercial@lumyo.pt';
   const testModeRaw = process.env.RESEND_TEST_MODE;
   const testAllowlistRaw = process.env.RESEND_TEST_RECIPIENT_ALLOWLIST || '';
 
@@ -94,7 +94,8 @@ export async function sendEmailWithResendProvider({
     to: [cleanRecipient],
     subject: subject || 'Acompanhamento Comercial Lumyo',
     text: text || '',
-    replyTo: envReplyTo || undefined
+    replyTo: envReplyTo || undefined,
+    reply_to: envReplyTo || undefined
   };
 
   if (html) {

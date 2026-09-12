@@ -28,6 +28,9 @@ import {
   transitionLeadPipelineStage,
   initializeLeadPipelineHistory,
 } from '../../server/pipeline/pipeline-service.js';
+import { buildFollowUpContextFingerprint } from '../../server/admin/admin-followup-state-service.js';
+import { sendInternalHandoffNotification } from '../../server/email/internal-handoff-notification-service.js';
+import { sendInternalCriticalAlertNotification } from '../../server/email/internal-critical-alert-service.js';
 
 function bufferToHex(buffer) {
   return Array.from(new Uint8Array(buffer))
@@ -2193,6 +2196,19 @@ async function handleRequest(request) {
     const commercialGoal = calculateNextCommercialGoal(effectiveLeadState, {
       turnIntent: cleanQualification?.turn_intent || null,
     });
+
+    const isHumanContactRequested =
+      cleanQualification?.meeting_intent_signal === 'human_contact_requested' ||
+      commercialGoal.goal === 'human_contact_requested' ||
+      effectiveLeadState?.next_step === 'human_contact_requested';
+
+    if (isHumanContactRequested && effectiveLeadState?.id) {
+      try {
+        await processChatHandoffTaskAndEmail(supabase, effectiveLeadState);
+      } catch (handoffErr) {
+        console.error('Failed to handle chat handoff task and notification', handoffErr);
+      }
+    }
     const goalMessage = getCommercialGoalMessage(commercialGoal.goal, activeLanguage);
     const pricingRequestedThisTurn = isPricingRequestedInCurrentTurn(
       cleanMessage,
@@ -2475,6 +2491,14 @@ async function handleRequest(request) {
     console.error('Unexpected message endpoint failure', {
       name: error?.name || 'Error',
     });
+    try {
+      await sendInternalCriticalAlertNotification({
+        component: 'Commercial Agent Chat',
+        errorType: 'agent_fatal_endpoint_failure',
+        errorTitle: 'Erro Fatal na API de Mensagens do Agente',
+        errorMessage: error?.message || 'Exceção não tratada no endpoint de mensagens do agente.'
+      });
+    } catch (_) {}
     return Response.json(
       {
         success: false,
@@ -2489,6 +2513,80 @@ async function handleRequest(request) {
       }
     );
   }
+}
+
+export async function processChatHandoffTaskAndEmail(supabase, leadState, { resendClient = null } = {}) {
+  if (!supabase || !leadState || !leadState.id) return { taskCreated: false, emailSent: false };
+
+  const leadId = leadState.id;
+  const reasonCode = 'human_contact_requested';
+  const taskTitle = 'Contacto humano solicitado pelo visitante';
+
+  let assignedToId = leadState.assigned_to;
+
+  if (!assignedToId) {
+    const { data: admins } = await supabase
+      .from('admin_users')
+      .select('id, user_id')
+      .limit(1);
+
+    if (admins && admins.length > 0) {
+      assignedToId = admins[0].user_id || admins[0].id;
+    }
+  }
+
+  if (!assignedToId) {
+    console.warn('[Chat Handoff] Nenhum admin encontrado para atribuição da tarefa.');
+    return { taskCreated: false, emailSent: false };
+  }
+
+  const context = {
+    lead: leadState,
+    tasks: []
+  };
+
+  const recommendation = {
+    lead_id: leadId,
+    pipeline_stage: leadState.pipeline_stage || 'new',
+    reason_code: reasonCode
+  };
+
+  const fingerprint = buildFollowUpContextFingerprint(context, recommendation);
+
+  const { data: rpcRes, error: rpcErr } = await supabase.rpc('create_automatic_lead_task', {
+    p_lead_id: leadId,
+    p_assigned_to: assignedToId,
+    p_title: taskTitle,
+    p_priority: 'high',
+    p_due_at: new Date().toISOString(),
+    p_reason_code: reasonCode,
+    p_context_fingerprint: fingerprint
+  });
+
+  if (rpcErr) {
+    console.error('[Chat Handoff] Erro ao criar tarefa via RPC:', rpcErr);
+    return { taskCreated: false, emailSent: false };
+  }
+
+  const isTaskCreated = rpcRes?.inserted === true;
+
+  if (isTaskCreated) {
+    try {
+      const emailRes = await sendInternalHandoffNotification({
+        lead: leadState,
+        reasonCode,
+        taskTitle,
+        fingerprint,
+        resendClient
+      });
+      return { taskCreated: true, emailSent: emailRes?.ok === true, emailRes };
+    } catch (emailErr) {
+      console.error('[Chat Handoff] Erro ao disparar notificação interna de email:', emailErr);
+      return { taskCreated: true, emailSent: false };
+    }
+  }
+
+  return { taskCreated: false, emailSent: false, existing: true };
 }
 
 export default {

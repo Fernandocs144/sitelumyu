@@ -22,17 +22,22 @@ import { getLeadCadenceReadModel } from './admin-followup-cadence-service.js';
  * @param {Date|string} [params.now=new Date()]
  */
 export async function approveFollowUpCommunication(supabaseClient, {
-  adminUserId,
+  adminUserId = null,
   leadId,
   body,
   subject = null,
   generationSource = 'manual',
   promptVersion = null,
+  approvalMode = 'manual',
   now = new Date()
 }) {
   if (!supabaseClient) throw new Error('SupabaseClient é obrigatório em approveFollowUpCommunication');
-  if (!adminUserId) throw new Error('adminUserId é obrigatório em approveFollowUpCommunication');
   if (!leadId) throw new Error('leadId é obrigatório em approveFollowUpCommunication');
+
+  const mode = approvalMode === 'automatic' ? 'automatic' : 'manual';
+  if (mode === 'manual' && !adminUserId) {
+    throw new Error('adminUserId é obrigatório para aprovações manuais em approveFollowUpCommunication');
+  }
 
   // 1. Validação estrita do corpo e assunto da mensagem
   if (typeof body !== 'string' || body.trim().length === 0) {
@@ -222,7 +227,8 @@ export async function approveFollowUpCommunication(supabaseClient, {
     generation_source: source,
     prompt_version: promptVersion || null,
     status: 'approved',
-    approved_by: adminUserId,
+    approval_mode: mode,
+    approved_by: mode === 'manual' ? adminUserId : null,
     approved_at: new Date().toISOString()
   };
 

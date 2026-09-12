@@ -57,12 +57,17 @@ export async function handleGetAdminFollowUpsRequest(request) {
 
   const url = parseAdminRequestUrl(request);
   const showBlocked = url.searchParams.get('show_blocked') === 'true';
-  const limitParam = parseInt(url.searchParams.get('limit') || '200', 10);
-  const limit = isNaN(limitParam) || limitParam <= 0 ? 200 : limitParam;
+  const pageParam = parseInt(url.searchParams.get('page') || '1', 10);
+  const page = isNaN(pageParam) || pageParam <= 0 ? 1 : pageParam;
+  const pageSizeParam = parseInt(url.searchParams.get('pageSize') || url.searchParams.get('limit') || '20', 10);
+  const pageSize = isNaN(pageSizeParam) || pageSizeParam <= 0 ? 20 : pageSizeParam;
+  const tab = url.searchParams.get('tab') || 'attention';
 
   try {
     const result = await fetchFollowUpRecommendationsFromDatabase(serviceClient, {
-      limit,
+      page,
+      pageSize,
+      tab,
       showBlocked,
       now: new Date()
     });
@@ -71,6 +76,8 @@ export async function handleGetAdminFollowUpsRequest(request) {
       {
         ok: true,
         recommendations: result.recommendations,
+        pagination: result.pagination,
+        counts: result.counts,
         total: result.total,
         truncated: result.truncated,
         limit: result.limit,

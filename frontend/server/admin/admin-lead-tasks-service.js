@@ -94,7 +94,7 @@ export async function fetchLeadTasksFromDatabase(supabaseClient, leadId, limit =
 
   const { data, error } = await supabaseClient
     .from('lead_tasks')
-    .select('id, lead_id, title, status, priority, due_at, assigned_to, created_by, created_at, completed_at, completed_by')
+    .select('id, lead_id, title, status, priority, due_at, assigned_to, created_by, created_at, completed_at, completed_by, reason_code')
     .eq('lead_id', leadId)
     .limit(limit);
 
@@ -115,7 +115,7 @@ export async function fetchLeadTasksFromDatabase(supabaseClient, leadId, limit =
  */
 export async function createLeadTaskInDatabase(
   supabaseClient,
-  { leadId, title, priority = 'normal', dueAt = null, assignedTo = null, createdBy }
+  { leadId, title, priority = 'normal', dueAt = null, assignedTo = null, createdBy, reasonCode, reason_code, taskType }
 ) {
   if (!isValidUuid(leadId)) {
     const err = new Error('ID de lead inválido');
@@ -151,6 +151,16 @@ export async function createLeadTaskInDatabase(
   const allowedPriorities = ['low', 'normal', 'high'];
   if (!allowedPriorities.includes(priority)) {
     const err = new Error('Prioridade de tarefa inválida. Valores permitidos: low, normal, high');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const rawReasonCode = reasonCode !== undefined ? reasonCode : (reason_code !== undefined ? reason_code : taskType);
+  let normalizedReasonCode = null;
+  if (rawReasonCode === 'phone_call') {
+    normalizedReasonCode = 'phone_call';
+  } else if (rawReasonCode !== null && rawReasonCode !== undefined && rawReasonCode !== '') {
+    const err = new Error('Tipo de tarefa inválido. Valores permitidos: Tarefa (null) ou Contacto telefónico (phone_call)');
     err.statusCode = 400;
     throw err;
   }
@@ -195,8 +205,9 @@ export async function createLeadTaskInDatabase(
       due_at: formattedDueAt,
       assigned_to: effectiveAssignedTo,
       created_by: createdBy,
+      reason_code: normalizedReasonCode,
     })
-    .select('id, lead_id, title, status, priority, due_at, assigned_to, created_by, created_at, completed_at, completed_by')
+    .select('id, lead_id, title, status, priority, due_at, assigned_to, created_by, created_at, completed_at, completed_by, reason_code')
     .single();
 
   if (error) {
@@ -271,7 +282,7 @@ export async function updateLeadTaskStatusInDatabase(
     .update(updatePayload)
     .eq('id', taskId)
     .eq('lead_id', leadId)
-    .select('id, lead_id, title, status, priority, due_at, assigned_to, created_by, created_at, completed_at, completed_by')
+    .select('id, lead_id, title, status, priority, due_at, assigned_to, created_by, created_at, completed_at, completed_by, reason_code')
     .single();
 
   if (error) {
@@ -281,6 +292,120 @@ export async function updateLeadTaskStatusInDatabase(
   return formatTaskMetadata(data);
 }
 
+/**
+ * Atualiza os detalhes de uma tarefa comercial existente (título, prioridade, prazo, tipo/reason_code).
+ *
+ * @param {import('@supabase/supabase-js').SupabaseClient} supabaseClient
+ * @param {{ leadId: string, taskId: string, title?: string, priority?: string, dueAt?: string|null, reasonCode?: string|null, reason_code?: string|null, taskType?: string|null }} params
+ * @returns {Promise<object>}
+ */
+export async function updateLeadTaskDetailsInDatabase(
+  supabaseClient,
+  { leadId, taskId, title, priority, dueAt, reasonCode, reason_code, taskType }
+) {
+  if (!isValidUuid(leadId)) {
+    const err = new Error('ID de lead inválido');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  if (!isValidUuid(taskId)) {
+    const err = new Error('ID de tarefa inválido');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  // Verificar pertença da tarefa à lead
+  const { data: existingTask, error: taskErr } = await supabaseClient
+    .from('lead_tasks')
+    .select('id, lead_id, title, priority, due_at, reason_code')
+    .eq('id', taskId)
+    .eq('lead_id', leadId)
+    .maybeSingle();
+
+  if (taskErr) {
+    throw new Error(`Erro ao consultar tarefa: ${taskErr.message}`);
+  }
+
+  if (!existingTask) {
+    const err = new Error('Tarefa não encontrada para esta lead');
+    err.statusCode = 404;
+    throw err;
+  }
+
+  const updatePayload = {};
+
+  if (title !== undefined) {
+    if (typeof title !== 'string' || title.trim().length === 0) {
+      const err = new Error('O título da tarefa não pode estar vazio');
+      err.statusCode = 400;
+      throw err;
+    }
+    if (title.length > 255) {
+      const err = new Error('O título da tarefa não pode ter mais de 255 caracteres');
+      err.statusCode = 400;
+      throw err;
+    }
+    updatePayload.title = title.trim();
+  }
+
+  if (priority !== undefined) {
+    const allowedPriorities = ['low', 'normal', 'high'];
+    if (!allowedPriorities.includes(priority)) {
+      const err = new Error('Prioridade de tarefa inválida. Valores permitidos: low, normal, high');
+      err.statusCode = 400;
+      throw err;
+    }
+    updatePayload.priority = priority;
+  }
+
+  if (dueAt !== undefined) {
+    if (dueAt === null || dueAt === '') {
+      updatePayload.due_at = null;
+    } else {
+      const parsedDate = new Date(dueAt);
+      if (isNaN(parsedDate.getTime())) {
+        const err = new Error('Data/hora de prazo (due_at) inválida');
+        err.statusCode = 400;
+        throw err;
+      }
+      updatePayload.due_at = parsedDate.toISOString();
+    }
+  }
+
+  const rawReasonCode = reasonCode !== undefined ? reasonCode : (reason_code !== undefined ? reason_code : taskType);
+  if (rawReasonCode !== undefined) {
+    if (rawReasonCode === 'phone_call') {
+      updatePayload.reason_code = 'phone_call';
+    } else if (rawReasonCode === null || rawReasonCode === '') {
+      updatePayload.reason_code = null;
+    } else {
+      updatePayload.reason_code = rawReasonCode;
+    }
+  }
+
+  if (Object.keys(updatePayload).length === 0) {
+    const err = new Error('Nenhum campo para atualizar foi fornecido');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const { data, error } = await supabaseClient
+    .from('lead_tasks')
+    .update(updatePayload)
+    .eq('id', taskId)
+    .eq('lead_id', leadId)
+    .select('id, lead_id, title, status, priority, due_at, assigned_to, created_by, created_at, completed_at, completed_by, reason_code')
+    .single();
+
+  if (error) {
+    throw new Error(`Erro ao atualizar detalhes da tarefa: ${error.message}`);
+  }
+
+  return formatTaskMetadata(data);
+}
+
 export { fetchGlobalAdminTasksFromDatabase } from './admin-tasks-service.js';
+
 
 

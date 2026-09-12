@@ -9,13 +9,16 @@ import {
   parseAdminRequestJson,
 } from '../admin-auth-service.js';
 import { isValidUuid } from '../admin-lead-detail-service.js';
-import { updateLeadTaskStatusInDatabase } from '../admin-lead-tasks-service.js';
+import {
+  updateLeadTaskStatusInDatabase,
+  updateLeadTaskDetailsInDatabase,
+} from '../admin-lead-tasks-service.js';
 
 export async function handlePatchLeadTaskStatusRequest(request, paramsLeadId = null, paramsTaskId = null) {
   loadLocalEnv();
 
-  // 1. Método HTTP deve ser estritamente PATCH
-  if (request.method !== 'PATCH') {
+  // 1. Método HTTP deve ser PATCH ou PUT
+  if (!['PATCH', 'PUT'].includes(request.method)) {
     return createAdminJsonResponse({ ok: false, error: 'Método não permitido' }, 405);
   }
 
@@ -83,17 +86,21 @@ export async function handlePatchLeadTaskStatusRequest(request, paramsLeadId = n
     );
   }
 
-  if (!body || typeof body !== 'object' || !body.status) {
+  if (!body || typeof body !== 'object') {
     return createAdminJsonResponse(
-      { ok: false, error: 'O campo status é obrigatório' },
+      { ok: false, error: 'O corpo da requisição é obrigatório' },
       400,
       session.newCookies
     );
   }
 
-  if (!['open', 'completed'].includes(body.status)) {
+  const targetReasonCode = body.reason_code !== undefined ? body.reason_code : (body.reasonCode !== undefined ? body.reasonCode : (body.taskType !== undefined ? body.taskType : body.task_type));
+  const hasStatusUpdate = Boolean(body.status);
+  const hasDetailsUpdate = body.title !== undefined || body.priority !== undefined || body.due_at !== undefined || body.dueAt !== undefined || targetReasonCode !== undefined;
+
+  if (!hasStatusUpdate && !hasDetailsUpdate) {
     return createAdminJsonResponse(
-      { ok: false, error: 'Estado de tarefa inválido. Valores permitidos: open, completed' },
+      { ok: false, error: 'Forneça status, title, priority, due_at ou reason_code para atualizar' },
       400,
       session.newCookies
     );
@@ -118,17 +125,40 @@ export async function handlePatchLeadTaskStatusRequest(request, paramsLeadId = n
   const adminUserId = session.adminRecord?.user_id || session.user?.id;
 
   try {
-    const task = await updateLeadTaskStatusInDatabase(serviceClient, {
-      leadId,
-      taskId,
-      status: body.status,
-      adminUserId,
-    });
+    let updatedTask = null;
+
+    if (hasStatusUpdate) {
+      if (!['open', 'completed'].includes(body.status)) {
+        return createAdminJsonResponse(
+          { ok: false, error: 'Estado de tarefa inválido. Valores permitidos: open, completed' },
+          400,
+          session.newCookies
+        );
+      }
+      updatedTask = await updateLeadTaskStatusInDatabase(serviceClient, {
+        leadId,
+        taskId,
+        status: body.status,
+        adminUserId,
+      });
+    }
+
+    if (hasDetailsUpdate) {
+      const dueAtValue = body.due_at !== undefined ? body.due_at : body.dueAt;
+      updatedTask = await updateLeadTaskDetailsInDatabase(serviceClient, {
+        leadId,
+        taskId,
+        title: body.title,
+        priority: body.priority,
+        dueAt: dueAtValue,
+        reasonCode: targetReasonCode,
+      });
+    }
 
     return createAdminJsonResponse(
       {
         ok: true,
-        task,
+        task: updatedTask,
       },
       200,
       session.newCookies
@@ -136,7 +166,7 @@ export async function handlePatchLeadTaskStatusRequest(request, paramsLeadId = n
   } catch (err) {
     const statusCode = err.statusCode || 500;
     return createAdminJsonResponse(
-      { ok: false, error: err.message || 'Erro ao alterar estado da tarefa' },
+      { ok: false, error: err.message || 'Erro ao atualizar tarefa comercial' },
       statusCode,
       session.newCookies
     );
@@ -148,3 +178,4 @@ export default {
     return handlePatchLeadTaskStatusRequest(request);
   },
 };
+

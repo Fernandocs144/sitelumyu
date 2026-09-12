@@ -91,7 +91,8 @@ export async function handlePostLeadTasksRequest(request, paramsId = null) {
     );
   }
 
-  const { title, priority, due_at, assigned_to } = body;
+  const { title, priority, due_at, assigned_to, reason_code, reasonCode, taskType, task_type } = body;
+  const targetReasonCode = reason_code !== undefined ? reason_code : (reasonCode !== undefined ? reasonCode : (taskType !== undefined ? taskType : task_type));
 
   if (typeof title !== 'string' || title.trim().length === 0) {
     return createAdminJsonResponse(
@@ -169,6 +170,7 @@ export async function handlePostLeadTasksRequest(request, paramsId = null) {
       dueAt: due_at || null,
       assignedTo: targetAssignedTo,
       createdBy: adminUserId,
+      reasonCode: targetReasonCode,
     });
 
     return createAdminJsonResponse(

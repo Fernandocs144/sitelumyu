@@ -148,12 +148,22 @@ test('=== INICIANDO SUITE COMPLETA DE TESTES DO WEBHOOK CAL.COM (PASSO 1G) ===',
             return {
               eq() {
                 return {
+                  eq() {
+                    return {
+                      async maybeSingle() {
+                        return { data: null, error: null };
+                      },
+                    };
+                  },
                   in() {
                     return {
                       neq() {
                         return Promise.resolve({ data: [], error: null });
                       },
                     };
+                  },
+                  async maybeSingle() {
+                    return { data: null, error: null };
                   },
                 };
               },

@@ -5,6 +5,7 @@ import {
   extractCalComBookingInformation,
   processCalComWebhookEvent,
 } from '../../server/admin/calcom-webhook-service.js';
+import { sendInternalCriticalAlertNotification } from '../../server/email/internal-critical-alert-service.js';
 
 export async function handleCalComWebhookRequest(request) {
   loadLocalEnv();
@@ -80,6 +81,17 @@ export async function handleCalComWebhookRequest(request) {
     });
   } catch (err) {
     const statusCode = err.statusCode || 500;
+    if (statusCode >= 500) {
+      try {
+        await sendInternalCriticalAlertNotification({
+          component: 'Cal.com Webhook',
+          errorType: 'calcom_webhook_fatal_error',
+          errorTitle: 'Erro Fatal no Processamento de Webhook Cal.com',
+          errorMessage: err.message || 'Erro interno no processamento de agendamento.',
+          referenceId: bookingInfo?.externalBookingId || null
+        });
+      } catch (_) {}
+    }
     return new Response(JSON.stringify({ ok: false, error: err.message || 'Erro ao processar webhook' }), {
       status: statusCode,
       headers: { 'Content-Type': 'application/json' },

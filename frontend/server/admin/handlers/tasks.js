@@ -57,12 +57,25 @@ export async function handleGetTasksRequest(request) {
 
   const url = parseAdminRequestUrl(request);
   const includeCompleted = url.searchParams.get('include_completed') === 'true';
-  const limitParam = parseInt(url.searchParams.get('limit') || '200', 10);
-  const limit = isNaN(limitParam) || limitParam <= 0 ? 200 : limitParam;
+  const category = url.searchParams.get('category') || url.searchParams.get('temporal_filter') || url.searchParams.get('temporalFilter') || null;
+  const priority = url.searchParams.get('priority') || 'all';
+
+  const pageParam = parseInt(url.searchParams.get('page') || '1', 10);
+  const page = isNaN(pageParam) || pageParam <= 0 ? 1 : pageParam;
+
+  const pageSizeParam = parseInt(url.searchParams.get('pageSize') || url.searchParams.get('limit') || '20', 10);
+  const pageSize = isNaN(pageSizeParam) || pageSizeParam <= 0 ? 20 : pageSizeParam;
+
+  const tzOffsetParam = parseInt(url.searchParams.get('timezone_offset') || url.searchParams.get('timezoneOffset') || '0', 10);
+  const timezoneOffset = isNaN(tzOffsetParam) ? 0 : tzOffsetParam;
 
   try {
     const result = await fetchGlobalAdminTasksFromDatabase(serviceClient, {
-      limit,
+      page,
+      pageSize,
+      category,
+      priority,
+      timezoneOffset,
       includeCompleted,
     });
 
@@ -71,8 +84,14 @@ export async function handleGetTasksRequest(request) {
         ok: true,
         tasks: result.tasks,
         total: result.total,
-        truncated: result.truncated,
-        limit: result.limit,
+        page: result.page,
+        pageSize: result.pageSize,
+        totalPages: result.totalPages,
+        category: result.category,
+        priority: result.priority,
+        counts: result.counts,
+        truncated: false,
+        limit: result.pageSize,
       },
       200,
       session.newCookies

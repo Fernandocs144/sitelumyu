@@ -122,9 +122,14 @@ export default function AdminBookingDetailDrawer({ booking, isOpen, onClose }) {
       >
         {/* 1. CABEÇALHO DO DRAWER */}
         <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur-md px-6 py-4 border-b border-white/[0.08] flex items-center justify-between">
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3 flex-wrap gap-y-1">
             <h2 className="text-lg font-bold text-white tracking-tight">Reunião</h2>
             {renderStatusBadge(booking.status)}
+            {booking.provider === 'manual' && (
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                Reunião Manual (CRM)
+              </span>
+            )}
           </div>
           <button
             onClick={onClose}
@@ -259,6 +264,18 @@ export default function AdminBookingDetailDrawer({ booking, isOpen, onClose }) {
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* 5.5 NOTAS / OBSERVAÇÕES */}
+          {booking.provider_metadata?.notes && (
+            <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-4 space-y-2 backdrop-blur-xl">
+              <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                Notas / Observações
+              </div>
+              <p className="text-xs text-slate-300 whitespace-pre-wrap pl-2">
+                {booking.provider_metadata.notes}
+              </p>
             </div>
           )}
         </div>

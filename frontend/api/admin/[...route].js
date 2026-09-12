@@ -1,7 +1,7 @@
 import { handleCheckRequest as handleAuthCheckRequest } from '../../server/admin/handlers/auth-check.js';
 import { handleLoginRequest as handleAuthLoginRequest } from '../../server/admin/handlers/auth-login.js';
 import { handleLogoutRequest as handleAuthLogoutRequest } from '../../server/admin/handlers/auth-logout.js';
-import { handleGetBookingsRequest } from '../../server/admin/handlers/bookings.js';
+import { handleGetBookingsRequest, handleBookingsRequest } from '../../server/admin/handlers/bookings.js';
 import { handleGetConversationDetailRequest } from '../../server/admin/handlers/conversation-detail.js';
 import { handleGetConversationsRequest } from '../../server/admin/handlers/conversations.js';
 import { handleGetDashboardRequest } from '../../server/admin/handlers/dashboard.js';
@@ -55,7 +55,7 @@ export async function handleAdminRouteRequest(request) {
   }
 
   if (first === 'bookings' && segments.length === 1) {
-    return handleGetBookingsRequest(request);
+    return handleBookingsRequest(request);
   }
 
   if (first === 'pipeline' && segments.length === 1) {

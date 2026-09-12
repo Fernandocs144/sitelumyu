@@ -4,6 +4,7 @@ import { buildFollowUpContextFingerprint, bulkGetEffectiveFollowUpStates } from 
 import { getLeadCadenceReadModel } from './admin-followup-cadence-service.js';
 import { sendEmailWithResendProvider } from '../email/resend-email-provider-adapter.js';
 import { sendEmailWithFakeProvider } from '../email/fake-email-provider-adapter.js';
+import { sendInternalCriticalAlertNotification } from '../email/internal-critical-alert-service.js';
 
 /**
  * FASE 7F.1 / 7F.1.1 / 7I.1 — FOLLOW-UP DISPATCH SERVICE
@@ -26,7 +27,7 @@ import { sendEmailWithFakeProvider } from '../email/fake-email-provider-adapter.
  * @returns {Promise<Object>} Registo do dispatch criado e atualizado
  */
 export async function dispatchApprovedFollowUpCommunication(supabaseClient, {
-  adminUserId,
+  adminUserId = null,
   approvedCommunicationId,
   provider = 'resend',
   simulateMode = 'accepted',
@@ -34,7 +35,6 @@ export async function dispatchApprovedFollowUpCommunication(supabaseClient, {
   now = new Date()
 }) {
   if (!supabaseClient) throw new Error('SupabaseClient é obrigatório em dispatchApprovedFollowUpCommunication');
-  if (!adminUserId) throw new Error('adminUserId é obrigatório em dispatchApprovedFollowUpCommunication');
   if (!approvedCommunicationId) throw new Error('approvedCommunicationId é obrigatório em dispatchApprovedFollowUpCommunication');
 
   const evaluationDate = typeof now === 'string' ? new Date(now) : now;
@@ -57,6 +57,7 @@ export async function dispatchApprovedFollowUpCommunication(supabaseClient, {
       body,
       generation_source,
       status,
+      approval_mode,
       approved_by,
       approved_at
     `)
@@ -67,6 +68,10 @@ export async function dispatchApprovedFollowUpCommunication(supabaseClient, {
     const err = new Error('Comunicação aprovada não encontrada.');
     err.statusCode = 404;
     throw err;
+  }
+
+  if (approvedComm.approval_mode === 'manual' && !adminUserId && !approvedComm.approved_by) {
+    throw new Error('adminUserId é obrigatório para disparos de comunicações aprovadas manualmente.');
   }
 
   if (approvedComm.status !== 'approved') {
@@ -277,6 +282,21 @@ export async function dispatchApprovedFollowUpCommunication(supabaseClient, {
   const idempotencyKey = crypto.createHash('sha256').update(`${approvedCommunicationId}_try_${technicalAttemptNumber}`).digest('hex');
 
   // 8. Inserir Registo 'pending' em communication_dispatches
+  let effectiveDispatchedBy = adminUserId || approvedComm.approved_by || null;
+  if (!effectiveDispatchedBy && approvedComm.approval_mode === 'automatic') {
+    try {
+      const { data: defaultAdmin } = await supabaseClient
+        .from('admin_users')
+        .select('user_id')
+        .limit(1)
+        .maybeSingle();
+
+      if (defaultAdmin?.user_id) {
+        effectiveDispatchedBy = defaultAdmin.user_id;
+      }
+    } catch (_) {}
+  }
+
   const pendingPayload = {
     approved_communication_id: approvedCommunicationId,
     lead_id: leadId,
@@ -290,7 +310,7 @@ export async function dispatchApprovedFollowUpCommunication(supabaseClient, {
     provider_accepted_at: null,
     error_code: null,
     error_message: null,
-    dispatched_by: adminUserId
+    dispatched_by: effectiveDispatchedBy
   };
 
   const { data: pendingDispatch, error: insertErr } = await supabaseClient
@@ -373,6 +393,20 @@ export async function dispatchApprovedFollowUpCommunication(supabaseClient, {
   }
 
   if (!providerResult.ok) {
+    if (providerResult.errorCode !== 'TEST_RECIPIENT_NOT_ALLOWED') {
+      try {
+        await sendInternalCriticalAlertNotification({
+          component: 'Follow-up Dispatch',
+          errorType: 'dispatch_critical_failure',
+          errorTitle: `Disparo com Estado ${updatedDispatch.status}`,
+          errorMessage: updatedDispatch.error_message || 'Falha no disparo de email.',
+          referenceId: approvedCommunicationId,
+          now: evaluationDate,
+          resendClient
+        });
+      } catch (_) {}
+    }
+
     const err = new Error(updatedDispatch.error_message || 'Falha no disparo de email.');
     err.statusCode = providerResult.errorCode === 'TEST_RECIPIENT_NOT_ALLOWED' ? 422 : 502;
     err.dispatch = updatedDispatch;
