@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Globe, Settings, Sparkles, TrendingUp, ArrowRight } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useLang } from '../i18n';
 import ParticleField from '../components/ParticleField';
 import SolutionCard from '../components/solutions/SolutionCard/SolutionCard';
@@ -17,7 +17,6 @@ const solutionRoutes = [
 
 export default function Solutions() {
   const { t } = useLang();
-  const navigate = useNavigate();
 
   return (
     <div className="page-enter section-bg relative min-h-screen overflow-hidden pt-40 pb-28">
@@ -66,7 +65,7 @@ export default function Solutions() {
               >
                 <SolutionCard
                   number={number}
-                  onClick={() => navigate(solutionRoutes[index])}
+                  to={solutionRoutes[index]}
                 >
                   <div className="flex h-full flex-col">
                     <div className="flex items-start justify-between">

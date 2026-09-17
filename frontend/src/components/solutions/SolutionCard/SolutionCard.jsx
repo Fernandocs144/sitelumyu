@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import './SolutionCard.css';
 
 const ACCENTS = {
@@ -24,6 +25,7 @@ export default function SolutionCard({
   number = '01',
   children,
   onClick,
+  to,
   className = '',
 }) {
   const cardRef = useRef(null);
@@ -186,20 +188,8 @@ export default function SolutionCard({
     }
   };
 
-  return (
-    <article
-      ref={cardRef}
-      className={`solution-card ${className}`}
-      style={{
-        '--accent-primary': accent.primary,
-        '--accent-secondary': accent.secondary,
-      }}
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
-      role={onClick ? 'button' : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      data-solution-card={number}
-    >
+  const cardInnerContent = (
+    <>
       <div className="solution-card__ambient" />
 
       <div className="solution-card__border-glow" />
@@ -246,6 +236,41 @@ export default function SolutionCard({
       <div className="solution-card__content">
         {children}
       </div>
+    </>
+  );
+
+  if (to) {
+    return (
+      <Link
+        ref={cardRef}
+        to={to}
+        className={`solution-card ${className}`}
+        style={{
+          '--accent-primary': accent.primary,
+          '--accent-secondary': accent.secondary,
+        }}
+        data-solution-card={number}
+      >
+        {cardInnerContent}
+      </Link>
+    );
+  }
+
+  return (
+    <article
+      ref={cardRef}
+      className={`solution-card ${className}`}
+      style={{
+        '--accent-primary': accent.primary,
+        '--accent-secondary': accent.secondary,
+      }}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      data-solution-card={number}
+    >
+      {cardInnerContent}
     </article>
   );
 }
